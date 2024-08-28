@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Timetable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Basic reset and font setup */
+        body {
+            font-family: 'Open Sans', sans-serif;
+            padding: 20px;
+        }
+        #timetable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #timetable th, #timetable td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        #timetable th:first-child, #timetable td:first-child {
+            width: 10%;
+            text-align: left;
+        }
+        #timetable td {
+            cursor: pointer;
+        }
+        .selected {
+            background-color: #87CEEB;
+        }
+        #eventForm {
+            display: none;
+            position: absolute;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<table id="timetable">
+    <thead>
+    <tr><th>Time</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
+    </thead>
+    <tbody id="timetable-body">
+    </tbody>
+</table>
+
+<div id="eventForm">
+    <input type="text" id="eventTitle" placeholder="Event title">
+    <button onclick="saveEvent()">Save</button>
+    <button onclick="cancelEvent()">Cancel</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11/dist/interact.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const hours = Array.from({length: 18}, (_, i) => `${i + 6}:00`);
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const tableBody = document.getElementById('timetable-body');
+    const eventForm = document.getElementById('eventForm');
+
+    // Populate table
+    hours.forEach(hour => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${hour}</td>` + days.map(day => `<td data-day="${day}" data-hour="${hour}"></td>`).join('');
+      tableBody.appendChild(row);
+    });
+
+    // Selection logic
+    interact('#timetable td:not(:first-child)')
+      .on('tap', function(event) {
+        const cell = event.target;
+        if (!cell.classList.contains('selected')) {
+          cell.classList.add('selected');
+          showEventForm(cell);
+        } else {
+          cell.classList.remove('selected');
+        }
+      });
+
+    // Show event form
+    function showEventForm(cell) {
+      const rect = cell.getBoundingClientRect();
+      eventForm.style.top = `${rect.top}px`;
+      eventForm.style.left = `${rect.left}px`;
+      eventForm.style.display = 'block';
+      eventForm.dataset.day = cell.dataset.day;
+      eventForm.dataset.hour = cell.dataset.hour;
+    }
+
+    // Save event logic would go here
+    window.saveEvent = function() {
+      const title = document.getElementById('eventTitle').value;
+      const day = eventForm.dataset.day;
+      const hour = eventForm.dataset.hour;
+      console.log(`Event saved: ${title} on ${day} at ${hour}`);
+      hideEventForm();
+    };
+
+    // Cancel event creation
+    window.cancelEvent = function() {
+      hideEventForm();
+    };
+
+    function hideEventForm() {
+      eventForm.style.display = 'none';
+      document.getElementById('eventTitle').value = '';
+    }
+  });
+</script>
+
+</body>
+</html>

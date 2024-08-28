@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Timetable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Basic CSS for structure and style */
+        body { font-family: 'Open Sans', sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        .time-slot { cursor: pointer; }
+        .selected { background-color: #a5d6a7; }
+        .prompt { display: none; position: fixed; padding: 10px; background: white; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .prompt input { width: 100%; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="timetable-container">
+    <table id="timetable"></table>
+</div>
+<div id="slotPrompt" class="prompt">
+    <p>Enter event details:</p>
+    <input type="text" id="eventDetail" placeholder="Event name...">
+    <button onclick="saveEvent()">Save</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11/dist/interact.min.js"></script>
+
+<script src="scripts.js"></script>
+
+</body>
+</html>
