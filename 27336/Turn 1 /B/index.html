@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --background-color: #f4f4f4;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 3fr; /* Sidebar and timetable */
+        }
+        .timetable {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+        }
+        .time-slot {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            cursor: move;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div id="settings"></div>
+    <div id="timetable" class="timetable"></div>
+    <div id="summary"></div>
+</div>
+
+<div id="timeSlotModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="slotDetails">
+            <!-- Form fields for study details -->
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const timetable = document.getElementById('timetable');
+    const modal = document.getElementById('timeSlotModal');
+    const slotForm = document.getElementById('slotDetails');
+
+    // Initialize Sortable for drag and drop
+    new Sortable(timetable, {
+      group: 'shared',
+      multiDrag: true,
+      multiDragKey: 'CTRL',
+      onEnd: function (/**Event*/ evt) {
+        // Handle the end of drag event
+      }
+    });
+
+    // Modal show/hide logic
+    function showModal() {
+      modal.style.display = 'block';
+    }
+
+    function hideModal() {
+      modal.style.display = 'none';
+    }
+
+    // Event listeners for modal
+    modal.querySelector('.close').addEventListener('click', hideModal);
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        hideModal();
+      }
+    };
+
+    // Form submission
+    slotForm.onsubmit = function(e) {
+      e.preventDefault();
+      // Process form data
+      hideModal();
+    };
+
+    // Here you would also implement:
+    // - Customization options
+    // - Tagging and filtering logic
+    // - Summary generation
+    // - Undo/Redo functionality
+  });
+</script>
+</body>
+</html>
