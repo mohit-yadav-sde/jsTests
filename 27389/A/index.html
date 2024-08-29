@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Arial', sans-serif; }
+        .dashboard { display: flex; flex-wrap: wrap; justify-content: space-around; }
+        .chart-container { width: 40%; min-width: 300px; margin: 20px; }
+        #threeD-container { width: 90%; height: 600px; border: 1px solid #ccc; margin: 20px auto; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="chart-container">
+        <canvas id="lineChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="barChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+    </div>
+    <div id="threeD-container"></div>
+    <div id="quiz-container">
+        <h3>Quiz</h3>
+        <div id="question"></div>
+        <button onclick="submitAnswer()">Submit</button>
+        <div id="feedback"></div>
+    </div>
+</div>
+
+<script>
+  // Mock data
+  const studentPerformanceData = {
+    labels: ["Math", "English", "Science", "History"],
+    datasets: [
+      { label: "Performance", data: [85, 75, 90, 80], backgroundColor: "rgba(255, 99, 132, 0.2)" }
+    ],
+    quizQuestions: [
+      { question: "What is 2+2?", answer: "4" },
+      { question: "What is the capital of France?", answer: "Paris" }
+    ]
+  };
+
+  // Chart generation
+  const charts = ['lineChart', 'barChart', 'pieChart'];
+  charts.forEach((chartId, index) => {
+    const ctx = document.getElementById(chartId).getContext('2d');
+    new Chart(ctx, {
+      type: index === 2 ? 'pie' : index ? 'bar' : 'line',
+      data: studentPerformanceData,
+      options: {
+        title: { display: true, text: `Student Performance in ${studentPerformanceData.labels[index]}` }
+      }
+    });
+  });
+
+  // Quiz functionality
+  let currentQuestion = 0;
+  function displayQuestion() {
+    document.getElementById('question').textContent = studentPerformanceData.quizQuestions[currentQuestion].question;
+  }
+  displayQuestion();
+
+  function submitAnswer() {
+    const userAnswer = prompt("Enter your answer:");
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = userAnswer === studentPerformanceData.quizQuestions[currentQuestion].answer ? "Correct!" : "Incorrect!";
+    currentQuestion++;
+    if (currentQuestion < studentPerformanceData.quizQuestions.length) {
+      displayQuestion();
+    } else {
+      feedback.textContent = "Quiz completed!";
+    }
+  }
+
+  // 3D Visualization with Three.js
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById('threeD-container'),
+    antialias: true
+  });
+
+  camera.position.z = 5;
+  renderer.setSize(window.innerWidth * 0.9, 600);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  studentPerformanceData.labels.forEach((label, index) => {
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff * Math.random() });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.x = (index - (studentPerformanceData.labels.length - 1) / 2) * 2;
+    scene.add(sphere);
+  });
+
+  animate();
+</script>
+</body>
+</html>

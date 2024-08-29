@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .dashboard { display: flex; flex-wrap: wrap; justify-content: space-around; padding: 20px; }
+        .quiz, .charts, .visualization { margin: 10px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .quiz { flex-basis: 100%; max-width: 600px; }
+        .charts, .visualization { flex: 1; min-width: 300px; }
+        canvas { width: 100%; max-width: 600px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <section class="quiz" id="quizModule"></section>
+    <section class="charts">
+        <canvas id="performanceChart"></canvas>
+    </section>
+    <section class="visualization">
+        <div id="3dVisualization"></div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // Quiz Module
+  const quizModule = document.getElementById('quizModule');
+  function loadQuiz() {
+    // Simulated function to get questions based on performance
+    const questions = [
+      {q: "What is 2 + 2?", a: "4"},
+      {q: "What is the capital of France?", a: "Paris"}
+    ];
+    let html = '<h2>Quiz</h2>';
+    questions.forEach((question, index) => {
+      html += `<p>${question.q}<br><input type="text" id="q${index}"><button onclick="checkAnswer(${index})">Submit</button></p>`;
+    });
+    quizModule.innerHTML = html;
+  }
+
+  function checkAnswer(index) {
+    // Check answer logic here
+    alert('Answer checked!'); // Placeholder for actual logic
+  }
+
+  // Chart.js for performance dashboard
+  const ctx = document.getElementById('performanceChart').getContext('2d');
+  let performanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Math', 'Science', 'English'],
+      datasets: [{
+        label: 'Performance Score',
+        data: [65, 59, 80],
+        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {beginAtZero: true}
+      }
+    }
+  });
+
+  // Function to update chart with new data
+  function updateChart(newData) {
+    performanceChart.data.datasets[0].data = newData;
+    performanceChart.update();
+  }
+
+  // Three.js for 3D Visualization
+  let scene, camera, renderer, controls;
+  function init3D() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(500, 300);
+    document.getElementById('3dVisualization').appendChild(renderer.domElement);
+
+    // Controls for interaction
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // Example: Add some cubes as data points
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    for(let i = 0; i < 3; i++) {
+      let cube = new THREE.Mesh(geometry, material);
+      cube.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+      scene.add(cube);
+    }
+
+    camera.position.z = 5;
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  // Initialize components
+  loadQuiz();
+  init3D();
+</script>
+</body>
+</html>
