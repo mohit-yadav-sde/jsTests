@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Article Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls select,
+        .controls input[type="color"],
+        .controls input[type="number"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .widget {
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            flex: 1 1 45%;
+            min-width: 300px;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .widget:hover {
+            transform: scale(1.05);
+        }
+
+        .full-width-widget {
+            width: 100%;
+        }
+
+        #textAnalysis,
+        #visualization,
+        #imageContainer {
+            width: 100%;
+            height: 400px;
+        }
+
+        #details {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: 12px;
+        }
+
+        #annotatedText {
+            padding: 15px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            background-color: #ffeb3b;
+        }
+
+        #annotationForm {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        #customizationOptions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #customizationOptions label {
+            font-weight: 500;
+        }
+
+        #progressBarContainer {
+            margin-top: 20px;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #progressBarFill {
+            height: 100%;
+            width: 0;
+            background-color: #4caf50;
+            transition: width 0.4s;
+        }
+
+        #tooltip {
+            position: absolute;
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #welcomeModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #welcomeModal button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .step-checkbox {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>Interactive Article Visualization</h1>
+
+    <div id="welcomeModal">
+        <h2>Welcome to the Interactive Article Visualization Tool!</h2>
+        <p>Let's get started by exploring the main features of this tool.</p>
+        <button onclick="closeWelcomeModal()">Let's Go!</button>
+    </div>
+
+    <div class="controls">
+        <select id="chartType" onchange="switchChart()">
+            <option value="wordCloud">Word Cloud</option>
+            <option value="radialBarChart">Radial Bar Chart</option>
+            <option value="textFrequencyChart">Text Frequency Bar Chart</option>
+            <option value="circularPackingChart">Circular Packing Chart</option>
+        </select>
+        <div id="customizationOptions">
+            <label for="bgColor">Background Color:</label>
+            <input type="color" id="bgColor" value="#f4f4f4" onchange="customizeAppearance()">
+
+            <label for="fontSize">Font Size:</label>
+            <input type="number" id="fontSize" value="16" onchange="customizeAppearance()" min="12" max="24">
+        </div>
+    </div>
+
+    <div id="onboardingChecklist">
+        <h3>Onboarding Checklist:</h3>
+        <input type="checkbox" id="step1" class="step-checkbox" disabled> <label for="step1">Select a chart type</label><br>
+        <input type="checkbox" id="step2" class="step-checkbox" disabled> <label for="step2">Customize appearance</label><br>
+        <input type="checkbox" id="step3" class="step-checkbox" disabled> <label for="step3">Annotate text</label>
+        <button onclick="completeOnboarding()">Complete Onboarding</button>
+    </div>
+
+    <div id="progressBarContainer">
+        <div id="progressBarFill"></div>
+    </div>
+
+    <div class="dashboard">
+        <div id="textAnalysis" class="widget full-width-widget">
+            <h2>Article Text with Annotation</h2>
+            <div id="annotatedText" contenteditable="true">
+                This is a sample article text that users can annotate. Highlight any part of this text and add your
+                comments.
+            </div>
+            <div id="annotationForm">
+                <textarea id="annotationComment" rows="3" style="width:100%;" placeholder="Enter your comment"></textarea>
+                <button onclick="saveAnnotation()">Save Annotation</button>
+            </div>
+        </div>
+        <div id="imageContainer" class="widget">
+            <h2>Image Representation</h2>
+            <img src="https://via.placeholder.com/400x300" alt="Sample Image" />
+        </div>
+        <div id="visualization" class="widget">
+            <h2>Data Visualization</h2>
+        </div>
+    </div>
+
+    <div id="details" class="widget full-width-widget"></div>
+
+    <div id="tooltip"></div>
+</div>
+
+<script>
+  const width = document.getElementById('visualization').offsetWidth;
+  const height = 400;
+  const textData = [
+    { word: "D3.js", frequency: 20 },
+    { word: "Visualization", frequency: 15 },
+    { word: "Dashboard", frequency: 10 },
+    { word: "Data", frequency: 25 },
+    { word: "Chart", frequency: 30 },
+    { word: "Text", frequency: 12 },
+    { word: "Analysis", frequency: 18 },
+    { word: "Interactive", frequency: 22 },
+    { word: "Graph", frequency: 17 },
+    { word: "Modern", frequency: 19 }
+  ];
+
+  let selectedText = '';
+
+  function updateProgressBar() {
+    const steps = document.querySelectorAll('.step-checkbox').length;
+    const completedSteps = document.querySelectorAll('.step-checkbox:checked').length;
+    const progressPercentage = (completedSteps / steps) * 100;
+    document.getElementById('progressBarFill').style.width = `${progressPercentage}%`;
+  }
+
+  function clearVisualization() {
+    d3.select("#visualization").selectAll("*").remove();
+  }
+
+  function displayDetails(details) {
+    d3.select("#details").html(`
+                <p><strong>Word:</strong> ${details.word}</p>
+                <p><strong>Frequency:</strong> ${details.frequency}</p>
+            `);
+  }
+
+  function switchChart() {
+    const selectedChart = document.getElementById('chartType').value;
+
+    if (selectedChart === 'radialBarChart') {
+      displayRadialBarChart();
+    } else if (selectedChart === 'wordCloud') {
+      displayWordCloud();
+    } else if (selectedChart === 'textFrequencyChart') {
+      displayTextFrequencyChart();
+    } else if (selectedChart === 'circularPackingChart') {
+      displayCircularPackingChart();
+    }
+
+    document.getElementById('step1').checked = true;
+    updateProgressBar();
+  }
+
+  function displayWordCloud() {
+    clearVisualization();
+
+    const svg = d3.select("#visualization")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const sizeScale = d3.scaleLinear()
+      .domain([d3.min(textData, d => d.frequency), d3.max(textData, d => d.frequency)])
+      .range([20, 50]);
+
+    const words = textData.map(d => ({ text: d.word, size: sizeScale(d.frequency) }));
+
+    d3.layout.cloud()
+      .size([width, height])
+      .words(words)
+      .padding(5)
+      .rotate(() => ~~(Math.random() * 2) * 90)
+      .fontSize(d => d.size)
+      .on("end", draw)
+      .start();
+
+    function draw(words) {
+      svg.selectAll("text")
+        .data(words)
+        .enter().append("text")
+        .style("font-size", d => `${d.size}px`)
+        .style("fill", (d, i) => d3.schemeCategory10[i % 10])
+        .attr("text-anchor", "middle")
+        .attr("transform", d => `translate(${d.x}, ${d.y}) rotate(${d.rotate})`)
+        .text(d => d.text)
+        .on("click", function (event, d) {
+          const details = textData.find(td => td.word === d.text);
+          displayDetails(details);
+          showTooltip(event, `Word: ${d.text}<br>Frequency: ${details.frequency}`);
+        })
+        .on("mouseout", hideTooltip);
+    }
+  }
+
+  function displayRadialBarChart() {
+    clearVisualization();
+
+    const svg = d3.select("#visualization")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const radius = Math.min(width, height) / 2;
+
+    const arc = d3.arc()
+      .innerRadius(d => d.data.frequency * 5)
+      .outerRadius(d => d.data.frequency * 10)
+      .startAngle(d => d.startAngle)
+      .endAngle(d => d.endAngle);
+
+    const pie = d3.pie()
+      .sort(null)
+      .value(d => d.frequency);
+
+    svg.selectAll('path')
+      .data(pie(textData))
+      .enter().append('path')
+      .attr('d', arc)
+      .attr('fill', (d, i) => d3.schemeCategory10[i % 10])
+      .on("click", function (event, d) {
+        displayDetails(d.data);
+        showTooltip(event, `Word: ${d.data.word}<br>Frequency: ${d.data.frequency}`);
+      })
+      .on("mouseout", hideTooltip);
+
+    svg.selectAll('text')
+      .data(pie(textData))
+      .enter().append('text')
+      .attr('transform', d => `translate(${arc.centroid(d)})`)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', 'middle')
+      .style('fill', '#fff')
+      .style('font-size', '12px')
+      .text(d => d.data.word);
+  }
+
+  function displayTextFrequencyChart() {
+    clearVisualization();
+
+    const svg = d3.select("#visualization")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(0,0)`);
+
+    const x = d3.scaleBand()
+      .range([0, width])
+      .padding(0.1)
+      .domain(textData.map(d => d.word));
+
+    const y = d3.scaleLinear()
+      .range([height, 0])
+      .domain([0, d3.max(textData, d => d.frequency)]);
+
+    svg.selectAll(".bar")
+      .data(textData)
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", d => x(d.word))
+      .attr("width", x.bandwidth())
+      .attr("y", d => y(d.frequency))
+      .attr("height", d => height - y(d.frequency))
+      .attr("fill", (d, i) => d3.schemeCategory10[i % 10])
+      .on("click", function (event, d) {
+        displayDetails(d);
+        showTooltip(event, `Word: ${d.word}<br>Frequency: ${d.frequency}`);
+      })
+      .on("mouseout", hideTooltip);
+
+    svg.selectAll(".label")
+      .data(textData)
+      .enter().append("text")
+      .attr("class", "label")
+      .attr("x", d => x(d.word) + x.bandwidth() / 2)
+      .attr("y", d => y(d.frequency) - 5)
+      .attr("text-anchor", "middle")
+      .style("fill", "#333")
+      .text(d => d.frequency);
+  }
+
+  function displayCircularPackingChart() {
+    clearVisualization();
+
+    const svg = d3.select("#visualization")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const pack = d3.pack()
+      .size([width, height])
+      .padding(2);
+
+    const root = d3.hierarchy({ children: textData })
+      .sum(d => d.frequency);
+
+    const nodes = pack(root).leaves();
+
+    svg.selectAll("circle")
+      .data(nodes)
+      .enter().append("circle")
+      .attr("r", d => d.r)
+      .attr("cx", d => d.x - width / 2)
+      .attr("cy", d => d.y - height / 2)
+      .style("fill", (d, i) => d3.schemeCategory10[i % 10])
+      .on("click", function (event, d) {
+        displayDetails(d.data);
+        showTooltip(event, `Word: ${d.data.word}<br>Frequency: ${d.data.frequency}`);
+      })
+      .on("mouseout", hideTooltip);
+
+    svg.selectAll("text")
+      .data(nodes)
+      .enter().append("text")
+      .attr("x", d => d.x - width / 2)
+      .attr("y", d => d.y - height / 2)
+      .attr("text-anchor", "middle")
+      .style("fill", "#fff")
+      .style("font-size", "10px")
+      .text(d => d.data.word);
+  }
+
+  function annotateText() {
+    const selectedRange = window.getSelection().getRangeAt(0);
+    selectedText = selectedRange.toString();
+
+    if (selectedText) {
+      const span = document.createElement("span");
+      span.classList.add("highlight");
+      selectedRange.surroundContents(span);
+
+      document.getElementById('annotationForm').style.display = 'block';
+      document.getElementById('step3').checked = true;
+      updateProgressBar();
+    }
+  }
+
+  function saveAnnotation() {
+    const comment = document.getElementById('annotationComment').value;
+    const annotationData = {
+      text: selectedText,
+      comment: comment,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log("Annotation saved:", annotationData);
+
+    document.getElementById('annotationForm').style.display = 'none';
+    document.getElementById('annotationComment').value = '';
+  }
+
+  function customizeAppearance() {
+    const bgColor = document.getElementById('bgColor').value;
+    const fontSize = document.getElementById('fontSize').value;
+
+    document.body.style.backgroundColor = bgColor;
+    document.body.style.fontSize = `${fontSize}px`;
+
+    document.getElementById('step2').checked = true;
+    updateProgressBar();
+  }
+
+  function showTooltip(event, text) {
+    const tooltip = document.getElementById('tooltip');
+    tooltip.innerHTML = text;
+    tooltip.style.display = 'block';
+    tooltip.style.left = event.pageX + 'px';
+    tooltip.style.top = event.pageY + 'px';
+  }
+
+  function hideTooltip() {
+    const tooltip = document.getElementById('tooltip');
+    tooltip.style.display = 'none';
+  }
+
+  function closeWelcomeModal() {
+    document.getElementById('welcomeModal').style.display = 'none';
+  }
+
+  function completeOnboarding() {
+    alert("Onboarding complete!");
+  }
+
+  document.getElementById('annotatedText').addEventListener('mouseup', annotateText);
+
+  // Initialize with the first chart
+  switchChart();
+
+  // Show the welcome modal on page load
+  window.onload = function () {
+    document.getElementById('welcomeModal').style.display = 'block';
+  }
+</script>
+</body>
+
+</html>

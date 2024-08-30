@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Article Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
+    <!-- Adding Intro.js for guided tours -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.3.0/introjs.min.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.3.0/intro.min.js"></script>
+    <style>
+        /* Existing styles... */
+        .introjs-overlay {
+            opacity: 0.5 !important;
+        }
+        .introjs-helperLayer {
+            background-color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,.5);
+        }
+        .tooltip-text {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            width: 200px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Welcome Modal -->
+<div id="welcomeModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+    <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px;">
+        <h2>Welcome to Interactive Article Visualization</h2>
+        <p>Explore and visualize articles like never before. Here's a quick guide to get you started:</p>
+        <button onclick="startTour()">Start Tour</button>
+        <button onclick="document.getElementById('welcomeModal').style.display='none'">Skip</button>
+    </div>
+</div>
+
+<!-- Existing content... -->
+
+<script>
+  // Existing JavaScript code...
+
+  // Onboarding Functions
+  function showTooltip(targetElement, message) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip-text';
+    tooltip.innerHTML = message;
+    targetElement.appendChild(tooltip);
+    tooltip.style.display = 'block';
+    targetElement.addEventListener('mouseleave', function() {
+      tooltip.style.display = 'none';
+    });
+  }
+
+  function startTour() {
+    document.getElementById('welcomeModal').style.display = 'none';
+    introJs().setOptions({
+      steps: [
+        {
+          element: '#textAnalysis',
+          intro: "Here you can read and annotate the article text."
+        },
+        {
+          element: '#visualization',
+          intro: "This area will display dynamic visualizations based on the article's content."
+        },
+        {
+          element: '#imageContainer',
+          intro: "Images related to the article will show up here."
+        },
+        {
+          element: '#customizationOptions',
+          intro: "Customize your experience with these controls."
+        }
+      ],
+      showBullets: true,
+      showStepNumbers: false,
+      exitOnOverlayClick: true,
+      exitOnEsc: true,
+      nextLabel: 'Next',
+      prevLabel: 'Back',
+      skipLabel: 'Skip',
+      doneLabel: 'Done'
+    }).start();
+  }
+
+  // Show welcome modal on first visit
+  if (!localStorage.getItem('hasVisited')) {
+    document.getElementById('welcomeModal').style.display = 'block';
+    localStorage.setItem('hasVisited', 'true');
+  }
+
+  // Adding tooltips for first-time use
+  const elementsWithTooltips = [
+    {selector: '#chartType', message: 'Choose different types of visualizations here.'},
+    {selector: '#bgColor', message: 'Change the background color to your liking.'},
+    {selector: '#fontSize', message: 'Adjust the font size for better readability.'}
+  ];
+
+  elementsWithTooltips.forEach(elem => {
+    const el = document.querySelector(elem.selector);
+    el.addEventListener('mouseover', function() {
+      showTooltip(el, elem.message);
+    });
+  });
+
+</script>
+</body>
+</html>

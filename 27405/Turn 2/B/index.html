@@ -1,0 +1,21 @@
+<!-- Help Button -->
+<button id="helpButton" title="Get help or learn more">?</button>
+
+<!-- Help Section HTML -->
+<div id="helpSection" style="display: none;">
+    <h2>Help & Support</h2>
+    <p>Find answers to common questions or get in touch with us:</p>
+    <ul>
+        <li><a href="#">FAQs</a></li>
+        <li><a href="#">Tutorial Videos</a></li>
+        <li><a href="#">Contact Support</a></li>
+    </ul>
+</div>
+
+<!-- JavaScript to toggle help section -->
+<script>
+  document.getElementById('helpButton').addEventListener('click', function() {
+    var helpSection = document.getElementById('helpSection');
+    helpSection.style.display = helpSection.style.display === 'none' ? 'block' : 'none';
+  });
+</script>
