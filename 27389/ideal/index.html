@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Educational Dashboard</title>
+    <!-- Use popular CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.9.0.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,7 +14,7 @@
             padding: 20px;
             background-color: #f4f4f4;
         }
-        .container {
+        .dashboard {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
@@ -31,9 +34,15 @@
             display: block;
             margin: 0 auto;
         }
-        #threejsContainer {
+        #plotly-3d-container {
             width: 100%;
             height: 400px;
+        }
+        #quiz-container {
+            text-align: center;
+        }
+        .quiz-question {
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -41,90 +50,55 @@
 
 <h1>Student Dashboard</h1>
 
-<div class="container">
+<div class="dashboard">
     <div class="widget">
         <h2>Quiz Module</h2>
-        <button onclick="generateQuiz()">Start Quiz</button>
-        <div id="quizContainer"></div>
+        <div id="quiz-container">
+            <div id="question" class="quiz-question"></div>
+            <input type="text" id="answer" placeholder="Your answer here">
+            <button onclick="submitAnswer()">Submit</button>
+            <div id="feedback"></div>
+        </div>
     </div>
 
     <div class="widget">
         <h2>Performance Dashboard - Bar Chart</h2>
-        <canvas id="barChart" width="400" height="400"></canvas>
+        <canvas id="barChart"></canvas>
     </div>
 
     <div class="widget">
         <h2>Performance Dashboard - Line Chart</h2>
-        <canvas id="lineChart" width="400" height="400"></canvas>
+        <canvas id="lineChart"></canvas>
     </div>
 
     <div class="widget">
         <h2>Performance Dashboard - Pie Chart</h2>
-        <canvas id="pieChart" width="400" height="400"></canvas>
+        <canvas id="pieChart"></canvas>
     </div>
 </div>
 
 <div class="widget full-width-widget">
     <h2>3D Performance Visualization</h2>
-    <div id="threejsContainer"></div>
+    <div id="plotly-3d-container"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
-
 <script>
-  // Quiz Module
-  function generateQuiz() {
-    const quizContainer = document.getElementById('quizContainer');
-    quizContainer.innerHTML = '';
+  // Mock data for performance
+  const performanceData = {
+    subjects: ['Math', 'Science', 'History', 'Art', 'English'],
+    scores: [75, 85, 90, 65, 80],
+    studyHours: [5, 10, 15, 20, 25]
+  };
 
-    const questions = [
-      { question: "What is 2 + 2?", answers: ["3", "4", "5"], correct: 1 },
-      { question: "What is the capital of France?", answers: ["Berlin", "London", "Paris"], correct: 2 },
-    ];
-
-    questions.forEach((q, index) => {
-      const div = document.createElement('div');
-      div.innerHTML = `<p>${q.question}</p>`;
-      q.answers.forEach((answer, i) => {
-        div.innerHTML += `<input type="radio" name="q${index}" value="${i}"> ${answer}<br>`;
-      });
-      quizContainer.appendChild(div);
-    });
-
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = "Submit Quiz";
-    submitBtn.onclick = submitQuiz;
-    quizContainer.appendChild(submitBtn);
-  }
-
-  function submitQuiz() {
-    const questions = [
-      { question: "What is 2 + 2?", correct: 1 },
-      { question: "What is the capital of France?", correct: 2 },
-    ];
-
-    let score = 0;
-    questions.forEach((q, index) => {
-      const selected = document.querySelector(`input[name="q${index}"]:checked`);
-      if (selected && parseInt(selected.value) === q.correct) {
-        score++;
-      }
-    });
-
-    alert(`Your score is ${score} out of ${questions.length}`);
-  }
-
-  // Bar Chart
+  // Chart.js - Bar Chart
   const barCtx = document.getElementById('barChart').getContext('2d');
-  const barChart = new Chart(barCtx, {
+  new Chart(barCtx, {
     type: 'bar',
     data: {
-      labels: ['Math', 'Science', 'History', 'Art', 'English'],
+      labels: performanceData.subjects,
       datasets: [{
         label: 'Marks',
-        data: [75, 85, 90, 65, 80],
+        data: performanceData.scores,
         backgroundColor: [
           'rgba(255, 99, 132, 0.8)',
           'rgba(54, 162, 235, 0.8)',
@@ -144,43 +118,39 @@
     },
     options: {
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     }
   });
 
-  // Line Chart
+  // Chart.js - Line Chart
   const lineCtx = document.getElementById('lineChart').getContext('2d');
-  const lineChart = new Chart(lineCtx, {
+  new Chart(lineCtx, {
     type: 'line',
     data: {
       labels: ['January', 'February', 'March', 'April', 'May', 'June'],
       datasets: [{
         label: 'Study Hours',
-        data: [5, 10, 15, 20, 25, 30],
+        data: performanceData.studyHours,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 2,
-        fill: true,
+        fill: true
       }]
     },
     options: {
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     }
   });
 
-  // Pie Chart
+  // Chart.js - Pie Chart
   const pieCtx = document.getElementById('pieChart').getContext('2d');
-  const pieChart = new Chart(pieCtx, {
+  new Chart(pieCtx, {
     type: 'pie',
     data: {
-      labels: ['Math', 'Science', 'History', 'Art', 'English'],
+      labels: performanceData.subjects,
       datasets: [{
         label: 'Subject Distribution',
         data: [20, 25, 15, 10, 30],
@@ -203,34 +173,60 @@
     }
   });
 
-  // 3D Visualization using Three.js
-  const threejsContainer = document.getElementById('threejsContainer');
-  const width = threejsContainer.clientWidth;
-  const height = 400;
+  // Simple Quiz Module
+  const quizQuestions = [
+    { question: "What is 2 + 2?", answer: "4" },
+    { question: "What is the capital of France?", answer: "Paris" }
+  ];
+  let currentQuestion = 0;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(width, height);
-  threejsContainer.appendChild(renderer.domElement);
-
-  const geometry = new THREE.BoxGeometry();
-  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-  const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
-
-  camera.position.z = 5;
-
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-  function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    controls.update();
-    renderer.render(scene, camera);
+  function displayQuestion() {
+    const questionDiv = document.getElementById('question');
+    questionDiv.textContent = quizQuestions[currentQuestion].question;
   }
-  animate();
+
+  function submitAnswer() {
+    const userAnswer = document.getElementById('answer').value;
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = userAnswer === quizQuestions[currentQuestion].answer ? "Correct!" : "Incorrect!";
+    currentQuestion++;
+    if (currentQuestion < quizQuestions.length) {
+      document.getElementById('answer').value = '';
+      displayQuestion();
+    } else {
+      feedback.textContent = "Quiz completed!";
+      document.getElementById('answer').style.display = 'none';
+    }
+  }
+
+  displayQuestion();
+
+  // Plotly.js - 3D Performance Visualization
+  const trace1 = {
+    x: performanceData.subjects,
+    y: performanceData.scores,
+    z: performanceData.studyHours,
+    mode: 'markers',
+    marker: {
+      size: 12,
+      color: performanceData.scores,
+      colorscale: 'Viridis',
+      showscale: true
+    },
+    type: 'scatter3d'
+  };
+
+  const layout = {
+    title: '3D Performance Visualization',
+    scene: {
+      xaxis: { title: 'Subjects' },
+      yaxis: { title: 'Marks' },
+      zaxis: { title: 'Study Hours' }
+    }
+  };
+
+  const data = [trace1];
+  Plotly.newPlot('plotly-3d-container', data, layout);
 </script>
 </body>
 </html>
