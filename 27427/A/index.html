@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Interactive Word Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.1.0/dist/wordcloud2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nlpjs/nlpjs.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #wordCloud { width: 800px; height: 600px; border: 1px solid #ccc; }
+        .info-box { position: absolute; background: white; padding: 10px; border: 1px solid #ddd; display: none; }
+    </style>
+</head>
+<body>
+<div id="wordCloud"></div>
+<input id="frequencyFilter" max="100" min="1" type="range" value="10">
+<div class="info-box" id="infoBox"></div>
+
+<script>
+  const nlpManager = new Nlpjs.NlpManager({ languages: ['en'] });
+  const text = "Insert a large corpus of text here or fetch dynamically.";
+  const processedText = nlpManager.process(text);
+  const terms = {};
+
+  // Preprocess and count terms
+  processedText.cleanedTokens.forEach(token => {
+    if (token && !nlpManager.stopwords.includes(token.toLowerCase())) {
+      const lemma = nlpManager.stem(token);
+      terms[lemma] = (terms[lemma] || 0) + 1;
+    }
+  });
+
+  const list = Object.entries(terms).map(([word, weight]) => [word, weight]);
+  WordCloud(document.getElementById('wordCloud'), {
+    list: list,
+    weightFactor: 3,
+    hover: (item, dimension, event) => {
+      const infoBox = document.getElementById('infoBox');
+      infoBox.style.display = 'block';
+      infoBox.style.left = `${event.clientX + 10}px`;
+      infoBox.style.top = `${event.clientY + 10}px`;
+      infoBox.innerHTML = `Word: ${item[0]}<br>Frequency: ${item[1]}`;
+    },
+    click: (item) => {
+      alert(`More details about ${item[0]} would go here.`);
+    }
+  });
+
+  document.getElementById('frequencyFilter').addEventListener('input', (e) => {
+    const minFrequency = e.target.value;
+    const filteredList = list.filter(([word, frequency]) => frequency >= minFrequency);
+    WordCloud(document.getElementById('wordCloud'), { list: filteredList });
+  });
+
+</script>
+</body>
+</html>

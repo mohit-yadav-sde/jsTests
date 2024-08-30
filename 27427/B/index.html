@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Word Cloud</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        #wordCloud {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+        }
+        text {
+            font-family: sans-serif;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<textarea cols="50" id="corpusInput" rows="10">Enter your text here...</textarea>
+<button onclick="updateCloud()">Generate Word Cloud</button>
+<div id="wordCloud"></div>
+
+<script>
+  // Basic NLP functions
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at']); // Expand this set
+
+  function tokenize(text) {
+    return text.toLowerCase().match(/\b\w+\b/g) || [];
+  }
+
+  function removeStopWords(words) {
+    return words.filter(word => !stopWords.has(word));
+  }
+
+  function simpleLemmatize(word) {
+    // Very basic lemmatization; for production, integrate a library
+    if (word.endsWith('s')) return word.slice(0, -1);
+    if (word.endsWith('ed') || word.endsWith('ing')) return word.slice(0, -3) + 'e';
+    return word;
+  }
+
+  function processText(text) {
+    return removeStopWords(tokenize(text)).map(simpleLemmatize);
+  }
+
+  function updateCloud() {
+    const text = document.getElementById('corpusInput').value;
+    const words = processText(text);
+    const frequency = d3.rollup(words, v => v.length, d => d);
+
+    d3.layout.cloud().size([800, 600])
+      .words(Array.from(frequency, ([text, value]) => ({text, value})))
+      .padding(5)
+      .rotate(() => ~~(Math.random() * 2) * 90)
+      .font("Impact")
+      .fontSize(d => Math.sqrt(d.value) * 20)
+      .on("end", draw)
+      .start();
+  }
+
+  function draw(words) {
+    d3.select("#wordCloud").selectAll("text")
+      .data(words)
+      .join(
+        enter => enter.append("text")
+          .style("font-size", d => `${d.size}px`)
+          .style("fill", (d, i) => d3.schemeCategory10[i % 10])
+          .attr("text-anchor", "middle")
+          .attr("transform", d => `translate(${[d.x, d.y]}) rotate(${d.rotate})`)
+          .text(d => d.text)
+          .on("mouseover", function(event, d) {
+            d3.select(this).style("fill", "red");
+            // Here you would show more details about the word
+          })
+          .on("mouseout", function(event, d) {
+            d3.select(this).style("fill", d3.schemeCategory10[words.indexOf(d) % 10]);
+          })
+          .on("click", function(event, d) {
+            // Handle click event to show context or detailed usage
+            console.log('Clicked word:', d.text);
+          }),
+        update => update,
+        exit => exit.remove()
+      );
+  }
+
+</script>
+</body>
+</html>

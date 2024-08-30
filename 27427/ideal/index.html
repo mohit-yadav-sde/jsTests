@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Simple Word Cloud with D3.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+        }
+
+        #wordCloudContainer {
+            width: 800px;
+            height: 600px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            display: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <label for="frequencyRange">Min Frequency: </label>
+    <input id="frequencyRange" max="10" min="1" type="range" value="1">
+    <span id="frequencyValue">1</span>
+    <label for="searchKeyword">Filter by keyword: </label>
+    <input id="searchKeyword" placeholder="Enter keyword" type="text">
+    <button onclick="updateWordCloud()">Update</button>
+</div>
+
+<div id="wordCloudContainer">
+    <svg id="wordCloud"></svg>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Include D3.js -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<script>
+  const corpus = `
+       Wild animals are fascinating creatures that inhabit various ecosystems around the world.
+       They play crucial roles in maintaining the balance of nature and contribute to the biodiversity of our planet.
+        From the dense rainforests of the Amazon to the vast savannas of Africa, wild animals can be found in almost every corner of the globe.
+        In the African savannas, one can encounter majestic animals such as lions, elephants, and giraffes. Lions, often referred to as the "king of the jungle," are apex predators known for their strength and hunting prowess. Elephants, the largest land animals, are known for their intelligence, strong social bonds, and impressive memory. Giraffes, with their long necks, are the tallest animals on Earth and are known for their unique patterns and gentle nature.
+        The rainforests of South America are home to a diverse array of wildlife, including jaguars, sloths, and various species of monkeys. Jaguars are powerful predators with a distinctive spotted coat, known for their ability to swim and hunt in water. Sloths are slow-moving mammals that spend most of their lives hanging upside down in trees, feeding on leaves and fruits. Monkeys, with their agile movements and social behavior, are a common sight in these lush forests.
+        In the Arctic regions, polar bears, arctic foxes, and seals are some of the iconic animals adapted to the harsh, cold environment. Polar bears are the largest land carnivores and are excellent swimmers, relying on sea ice to hunt seals. Arctic foxes have thick fur that changes color with the seasons, providing camouflage in both snowy and tundra landscapes.
+        Seals, with their streamlined bodies and flippers, are well-adapted to life in the icy waters, where they hunt for fish and other marine organisms.
+    The oceans themselves are teeming with life, from the smallest plankton to the largest whales. Dolphins, known for their intelligence and playful behavior,
+     are often seen riding the waves and interacting with humans. Sharks, with their keen senses and powerful bodies, are apex predators that play a vital role in maintaining the health of marine ecosystems. Whales, the largest animals on the planet, undertake long migrations and are known for their complex vocalizations and social structures.
+In the forests of Asia, tigers, pandas, and orangutans are some of the most well-known wild animals.
+ Tigers, with their striking orange and black stripes, are solitary hunters that rely on stealth and strength to catch their prey. Pandas, with their distinctive black and white fur, are primarily bamboo eaters and are considered a symbol of conservation efforts. Orangutans, with their reddish-brown hair and long arms, are highly intelligent primates that spend most of their time in the treetops.
+Australia is home to unique wildlife such as kangaroos, koalas, and the platypus.
+ Kangaroos are marsupials known for their powerful hind legs and ability to cover large distances in a single bound. Koalas, often found in eucalyptus trees, are known for their sleepy demeanor and specialized diet of eucalyptus leaves. The platypus, with its duck-bill, webbed feet, and ability to lay eggs, is one of the most unusual mammals in the world.
+Wild animals are not only fascinating to observe but also play essential roles in their ecosystems.
+ They help control populations of other species, pollinate plants, disperse seeds, and contribute to nutrient cycling. Conservation efforts are crucial to protect these animals and their habitats, ensuring that future generations can continue to marvel at the incredible diversity of life on Earth.
+    `;
+
+  let wordFrequencies = {};
+
+  function preprocessText(text) {
+    const words = text.toLowerCase().match(/\b\w+\b/g);
+    wordFrequencies = words.reduce((acc, word) => {
+      acc[word] = (acc[word] || 0) + 1;
+      return acc;
+    }, {});
+  }
+
+  function generateWordCloud(frequencies) {
+    const width = 800;
+    const height = 600;
+    const svg = d3.select("#wordCloud")
+      .attr("width", width)
+      .attr("height", height);
+
+    const maxFrequency = d3.max(Object.values(frequencies));
+    const fontSizeScale = d3.scaleLinear().domain([1, maxFrequency]).range([10, 100]);
+
+    const words = Object.entries(frequencies).map(([word, freq]) => ({
+      text: word,
+      size: fontSizeScale(freq),
+    }));
+
+    const cloud = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const wordSelection = cloud.selectAll("text")
+      .data(words)
+      .enter()
+      .append("text")
+      .style("font-size", d => d.size + "px")
+      .style("fill", () => d3.schemeCategory10[Math.floor(Math.random() * 10)])
+      .attr("text-anchor", "middle")
+      .attr("transform", (d, i) => `translate(${[Math.cos(i) * 100, Math.sin(i) * 100]})`)
+      .text(d => d.text);
+
+    wordSelection.on("mouseover", function(event, d) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.innerHTML = `${d.text}: ${frequencies[d.text]} occurrences`;
+      tooltip.style.left = event.clientX + 10 + 'px';
+      tooltip.style.top = event.clientY + 10 + 'px';
+      tooltip.style.display = 'block';
+    });
+
+    wordSelection.on("mouseout", function() {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.style.display = 'none';
+    });
+
+    wordSelection.on("click", function(event, d) {
+      alert(`You clicked on "${d.text}" which appears ${frequencies[d.text]} times in the text.`);
+    });
+  }
+
+  function updateWordCloud() {
+    const minFrequency = document.getElementById('frequencyRange').value;
+    const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+    const filteredFrequencies = Object.fromEntries(
+      Object.entries(wordFrequencies)
+        .filter(([word, freq]) => freq >= minFrequency && (!keyword || word.includes(keyword)))
+    );
+    d3.select("#wordCloud").selectAll("*").remove(); // Clear the previous cloud
+    generateWordCloud(filteredFrequencies);
+  }
+
+  document.getElementById('frequencyRange').oninput = function () {
+    document.getElementById('frequencyValue').textContent = this.value;
+  };
+
+  preprocessText(corpus);
+  generateWordCloud(wordFrequencies);
+</script>
+
+</body>
+</html>
