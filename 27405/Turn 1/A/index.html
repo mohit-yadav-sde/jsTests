@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Text Visualizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --text-color: #333;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        #visualization {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .customize-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <textarea id="articleInput" placeholder="Enter your article here..."></textarea>
+    <button onclick="processText()">Visualize</button>
+    <div id="visualization"></div>
+    <button class="customize-btn" onclick="toggleCustomization()">Customize Theme</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+  function processText() {
+    // Placeholder for text processing and visualization logic
+    const text = document.getElementById('articleInput').value;
+    // Here you would call your backend to process the text or process it client-side
+    // Then use D3 or another library to visualize the data
+    visualizeData({/* data from processed text */});
+  }
+
+  function visualizeData(data) {
+    const visualization = d3.select('#visualization');
+    visualization.selectAll('*').remove(); // Clear previous visualizations
+
+    // Example: Word frequency visualization
+    const wordFreq = data.wordFrequency;
+    const barChart = visualization.append('svg')
+      .attr('width', 500).attr('height', 300);
+
+    // Simple bar chart
+    barChart.selectAll('rect')
+      .data(wordFreq.slice(0, 10))
+      .enter().append('rect')
+      .attr('x', (d, i) => i * 50)
+      .attr('y', d => 300 - d.value * 10)
+      .attr('width', 45)
+      .attr('height', d => d.value * 10)
+      .attr('fill', 'steelblue');
+  }
+
+  function toggleCustomization() {
+    // Implement theme customization
+    document.documentElement.style.setProperty('--primary-color',
+      '#' + Math.floor(Math.random()*16777215).toString(16));
+  }
+</script>
+</body>
+</html>

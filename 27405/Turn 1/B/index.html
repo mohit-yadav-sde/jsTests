@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Article Visualizer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #visualization { width: 100%; height: 500px; border: 1px solid lightgray; }
+        .annotation { background: yellow; cursor: pointer; }
+        .theme-dark { background: #333; color: #fff; }
+    </style>
+</head>
+<body>
+<div id="input-container">
+    <textarea id="article-input" placeholder="Enter your article here..."></textarea>
+    <button onclick="visualizeText()">Visualize</button>
+</div>
+<div id="visualization"></div>
+<div id="settings">
+    <button onclick="toggleTheme()">Toggle Theme</button>
+</div>
+
+<script>
+  let currentTheme = 'light';
+  const visualizationDiv = document.getElementById('visualization');
+  const settingsDiv = document.getElementById('settings');
+
+  function visualizeText() {
+    const text = document.getElementById('article-input').value;
+    const wordFrequency = countWords(text);
+    renderVisualization(wordFrequency);
+  }
+
+  function countWords(text) {
+    const words = text.split(/\s+/);
+    const freqMap = {};
+    words.forEach(word => {
+      if (!freqMap[word]) {
+        freqMap[word] = 0;
+      }
+      freqMap[word]++;
+    });
+    return freqMap;
+  }
+
+  function renderVisualization(freqMap) {
+    visualizationDiv.innerHTML = '';
+    const sortedWords = Object.entries(freqMap).sort((a, b) => b[1] - a[1]);
+    sortedWords.forEach(([word, count], index) => {
+      const bar = document.createElement('div');
+      bar.style.width = `${count * 10}px`;
+      bar.style.height = '20px';
+      bar.style.background = 'steelblue';
+      bar.style.marginBottom = '5px';
+      bar.textContent = `${word}: ${count}`;
+      bar.onclick = () => annotate(bar);
+      visualizationDiv.appendChild(bar);
+    });
+  }
+
+  function annotate(element) {
+    const annotationText = prompt("Add your annotation:");
+    if (annotationText) {
+      const annotation = document.createElement('span');
+      annotation.className = 'annotation';
+      annotation.textContent = ` (${annotationText})`;
+      element.appendChild(annotation);
+    }
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle('theme-dark');
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+  }
+</script>
+</body>
+</html>
