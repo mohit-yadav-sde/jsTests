@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Product Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --sidebar-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar {
+            background-color: var(--sidebar-bg);
+        }
+
+        .dark-theme {
+            --bg-color: #333;
+            --text-color: #ddd;
+            --sidebar-bg: #222;
+        }
+
+        .product-item {
+            cursor: pointer;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .list-view .product-item {
+            width: 100%;
+        }
+
+        .grid-view .product-item {
+            width: calc(33.333% - 10px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" id="sidebar">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-1 text-muted">
+                    Filters
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <!-- Options would be dynamically added -->
+                        </select>
+                    </li>
+                </ul>
+                <button class="btn btn-secondary mt-3" id="themeToggle">Toggle Theme</button>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Products</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="gridView">Grid</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="listView">List</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="productList"></div>
+            <div class="mt-4" id="productDetails" style="display: none;">
+                <h3>Product Details</h3>
+                <img alt="Product Image" class="img-fluid mb-3" id="productImage" src="">
+                <p><strong>Category:</strong> <span id="productCategory"></span></p>
+                <p><strong>Status:</strong> <span id="productStatus"></span></p>
+                <p><strong>Sales:</strong> <span id="productSales"></span></p>
+                <p><strong>Stock:</strong> <span id="productStock"></span></p>
+                <p><strong>Price:</strong> $<span id="productPrice"></span></p>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  const products = [
+    {name: "Product A", category: "Electronics", status: "In Stock", sales: 120, stock: 50, price: 199.99, image: "path/to/imageA.jpg"},
+    // Add more products here...
+  ];
+
+  function renderProducts(view = 'grid') {
+    $('#productList').html('').removeClass('grid-view list-view').addClass(`${view}-view`);
+    products.forEach(product => {
+      const productDiv = $(`<div class="product-item ${view}-item"></div>`).html(`
+                <h5>${product.name}</h5>
+                <p>Price: $${product.price}</p>
+            `).click(() => showDetails(product));
+      $('#productList').append(productDiv);
+    });
+  }
+
+  function showDetails(product) {
+    $('#productImage').attr('src', product.image);
+    $('#productCategory').text(product.category);
+    $('#productStatus').text(product.status);
+    $('#productSales').text(product.sales);
+    $('#productStock').text(product.stock);
+    $('#productPrice').text(product.price);
+    $('#productDetails').show();
+  }
+
+  $(document).ready(function() {
+    renderProducts();
+    $('#gridView').click(() => renderProducts('grid'));
+    $('#listView').click(() => renderProducts('list'));
+    $('#themeToggle').click(function() {
+      $('body').toggleClass('dark-theme');
+    });
+    // Here you would also populate your filter dropdown and implement filtering logic
+  });
+</script>
+
+</body>
+</html>
