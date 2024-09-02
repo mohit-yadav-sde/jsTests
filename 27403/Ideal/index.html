@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Hospital Dashboard</title>
+    <style>
+        /* CSS */
+
+        /* Variables */
+        :root {
+            --font-stack: 'Open Sans', Helvetica, sans-serif;
+            --media-phone: 600px;
+            --spacing-xxxl: 3rem;
+            --spacing-xxl: 2.5rem;
+            --spacing-xl: 2rem;
+            --spacing-l: 1.5rem;
+            --spacing: 1rem;
+            --spacing-xs: 0.75rem;
+            --spacing-xxs: 0.5rem;
+            --spacing-xxxs: 0.3rem;
+            --spacing-xxxxs: 0.1rem;
+            --font-xxxl: 2.5rem;
+            --font-xxl: 2rem;
+            --font-xl: 1.5rem;
+            --font-l: 1.25rem;
+            --font: 1rem;
+            --font-s: 0.9rem;
+            --font-xs: 0.8rem;
+            --font-xxs: 0.75rem;
+            --font-xxxs: 0.7rem;
+            --bg: #f5f7fa;
+            --bg-100: #f0f4fb;
+            --bg-200: #fff;
+            --primary: #4e73df;
+            --primary-light: #6b8ae0;
+            --primary-dark: #375ad8;
+            --text: #343a40;
+            --text-light: #6c757d;
+            --text-muted: #adb5bd;
+            --text-1: #fff;
+            --success: #1cc88a;
+            --danger: #e74a3b;
+            --warning: #f6c23e;
+            --info: #36b9cc;
+            --gray: #d1d3e2;
+            --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 0.5rem;
+            --modal-bg: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Global Styles */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 14px;
+        }
+
+        body {
+            height: 100%;
+            overflow-x: hidden;
+            margin: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            font-family: var(--font-stack);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus,
+        button:focus {
+            outline: none;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--text-light);
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+        }
+
+        .wrapper {
+            display: grid;
+            height: 100vh;
+            grid-template-rows: 7rem 1fr;
+            grid-template-columns: 7rem 1fr;
+            grid-template-areas: "aside header" "aside main";
+            flex-wrap: wrap;
+        }
+
+        .header {
+            grid-area: header;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing) var(--spacing-xxxl);
+            background-color: var(--primary);
+            color: var(--text-1);
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn-appointment {
+            padding: var(--spacing-xs) var(--spacing-l);
+            border-radius: var(--border-radius);
+            background: linear-gradient(90deg, var(--primary-light), var(--primary-dark));
+            font-weight: 600;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-appointment:hover {
+            background: var(--primary-dark);
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+            cursor: pointer;
+        }
+
+        .profile .image {
+            position: relative;
+        }
+
+        .profile .image img {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            border: 2px solid var(--text-1);
+        }
+
+        .profile .notification {
+            width: 1.25rem;
+            height: 1.25rem;
+            position: absolute;
+            top: -0.75rem;
+            right: 0;
+            background-color: var(--danger);
+            border-radius: 50%;
+            box-shadow: 0px 0px 10px 0px rgba(255, 125, 125, 1);
+        }
+
+        .profile select {
+            height: fit-content;
+            border: none;
+            background: none;
+            font-size: var(--font);
+            font-weight: 600;
+            font-family: var(--font-stack);
+            color: var(--text-1);
+        }
+
+        .aside {
+            grid-area: aside;
+            display: grid;
+            gap: var(--spacing-l);
+            padding: var(--spacing);
+            justify-content: center;
+            font-size: var(--font-xl);
+            color: var(--gray);
+            background-color: var(--bg-200);
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+        }
+
+        .aside ul {
+            display: grid;
+            grid-template-rows: repeat(8, min-content);
+            gap: 3rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .aside ul li {
+            display: grid;
+            place-items: center;
+            padding: var(--spacing-xxs) var(--spacing-xs);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        .aside ul li:hover {
+            background-color: var(--primary-light);
+        }
+
+        .aside ul li.active {
+            background-color: var(--primary-dark);
+            box-shadow: 0px 0px 33px -10px rgba(126, 127, 232, .5);
+        }
+
+        .aside ul li.active a {
+            color: var(--text-1);
+        }
+
+        .main {
+            padding: var(--spacing-xxxl);
+            grid-area: main;
+            background-color: var(--bg);
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: var(--spacing-xl);
+        }
+
+        .top {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+        }
+
+        .bottom {
+            display: grid;
+            gap: var(--spacing-xl);
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .card {
+            background-color: var(--bg-200);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xl);
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-l);
+            border-bottom: 1px solid var(--gray);
+            padding-bottom: var(--spacing-xs);
+        }
+
+        .card-header .right {
+            color: var(--gray);
+        }
+
+        .card-header h1 {
+            display: inline-block;
+            margin: 0;
+            font-size: var(--font-l);
+            color: var(--text);
+        }
+
+        .card-header select {
+            height: fit-content;
+            border: none;
+            background: none;
+            font-size: var(--font);
+            font-weight: 600;
+            font-family: var(--font-stack);
+            color: var(--text);
+        }
+
+        .card-body {
+            display: grid;
+            gap: var(--spacing-l);
+        }
+
+        .appointment {
+            display: grid;
+            grid-template-columns: min-content max-content 1fr min-content min-content;
+            grid-template-rows: repeat(3, min-content);
+            gap: var(--spacing-l);
+        }
+
+        .appointment .image {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            box-shadow: 5px 5px 22px 0px rgba(116, 204, 214, .5);
+        }
+
+        .appointment .name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .appointment .title {
+            font-size: var(--font-xs);
+            color: var(--text-light);
+        }
+
+        .appointment .date,
+        .appointment .time {
+            font-size: var(--font-xs);
+            color: var(--text-muted);
+        }
+
+        .appointment .date i,
+        .appointment .time i {
+            color: var(--info);
+        }
+
+        .check,
+        .times {
+            font-size: var(--font-xxl);
+            align-self: center;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .check {
+            color: var(--success);
+        }
+
+        .check:hover {
+            color: var(--success);
+        }
+
+        .times {
+            color: var(--danger);
+        }
+
+        .times:hover {
+            color: var(--danger);
+        }
+
+        .chart-container {
+            height: 17rem;
+            margin-bottom: var(--spacing-l);
+        }
+
+        .result-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-l);
+        }
+
+        .result-summary .result-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .result-summary .result-item h2 {
+            margin: 0;
+            font-size: var(--font-l);
+            color: var(--text);
+        }
+
+        .result-summary .result-item p {
+            margin: 0;
+            font-size: var(--font-xs);
+            color: var(--text-light);
+        }
+
+        .progress-bar {
+            height: 1rem;
+            border-radius: var(--border-radius);
+            background-color: var(--gray);
+            margin-top: var(--spacing-xs);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+
+        .progress-bar .progress {
+            height: 100%;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            width: 60%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-1);
+            font-size: var(--font-xs);
+            font-weight: 700;
+        }
+
+        .news-list .news {
+            display: grid;
+            grid-template-columns: 1fr min-content;
+            gap: var(--spacing-xxs);
+        }
+
+        .news-list .title {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .news-list .subtitle {
+            color: var(--text-light);
+        }
+
+        .news-list hr {
+            width: 100%;
+            border: none;
+            background-color: var(--gray);
+            height: 1px;
+        }
+
+        .more {
+            text-align: center;
+        }
+
+        .more a {
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+
+        .card.alert {
+            background: linear-gradient(90deg, var(--warning), var(--warning));
+            color: var(--text-1);
+        }
+
+        .current-prescription-container {
+            display: grid;
+            grid-template-rows: 1fr max-content;
+            gap: var(--spacing-xl);
+        }
+
+        .prescription-item {
+            display: grid;
+            grid-template-columns: min-content 1fr;
+            column-gap: var(--spacing-l);
+        }
+
+        .prescription-item .dot {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            align-self: center;
+        }
+
+        .prescription-item .dot.gray {
+            background-color: #bccbf5;
+            box-shadow: 2px 2px 10px 0px #bccbf5;
+        }
+
+        .prescription-item .dot.violet {
+            background-color: var(--primary);
+            box-shadow: 2px 2px 10px 0px var(--primary);
+        }
+
+        .prescription-item .title {
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .notifications ul {
+            display: grid;
+            gap: var(--spacing-l);
+        }
+
+        .notification {
+            display: grid;
+            grid-template-columns: min-content 1fr max-content;
+            align-items: center;
+            gap: var(--spacing);
+        }
+
+        .notification .dot {
+            width: var(--spacing-xs);
+            height: var(--spacing-xs);
+            border-radius: var(--spacing-xs);
+        }
+
+        .notification .dot.green {
+            background-color: var(--success);
+        }
+
+        .notification .dot.red {
+            background-color: var(--danger);
+        }
+
+        .notification .dot.blue {
+            background-color: var(--primary);
+        }
+
+        .notification .title {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .notification .date {
+            grid-area: date;
+            color: var(--text-muted);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-200);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-l);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: var(--font-xl);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: var(--font-xl);
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-body {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .modal-footer button {
+            width: 100%;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--spacing-xs);
+            margin-bottom: var(--spacing-l);
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+        }
+
+        /* Media Queries */
+        @media screen and (max-width: var(--media-phone)) {
+            .wrapper {
+                grid-template-columns: initial;
+                grid-template-rows: initial;
+            }
+
+            .header {
+                gap: var(--spacing-xs);
+                padding: var(--spacing-xs);
+            }
+
+            .profile .image img {
+                width: 3rem;
+                height: 3rem;
+            }
+
+            .profile .notification {
+                width: 0.9rem;
+                height: 0.9rem;
+                margin-top: -1.5rem;
+                margin-left: 2.3rem;
+            }
+
+            .aside {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                border-top: 1px solid #f1f1f1;
+                justify-content: initial;
+            }
+
+            .aside ul {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: none;
+                margin-top: 0;
+            }
+
+            .aside ul li.hide {
+                display: none;
+            }
+
+            .main {
+                padding: var(--spacing) 0 6rem 0;
+                gap: var(--spacing);
+            }
+
+            .top {
+                grid-template-columns: initial;
+            }
+
+            .bottom {
+                grid-template-columns: initial;
+            }
+
+            .card-header h1 {
+                font-size: var(--font-s);
+            }
+
+            .chart-container {
+                height: 10rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrapper">
+    <header class="header">
+        <button class="btn-appointment" onclick="openModal('appointmentModal')">Make an appointment</button>
+        <div class="profile" onclick="openModal('profileModal')">
+            <div class="image">
+                <img src="https://i.pravatar.cc/150?img=26" />
+                <div class="notification"></div>
+            </div>
+            <select>
+                <option value="Maria waters">Maria Waters</option>
+            </select>
+        </div>
+    </header>
+    <aside class="aside">
+        <ul>
+            <li class="logo hide">
+                <a href="#"><img alt="logo" src="https://ozcanzaferayan.github.io/healthcare-dashboard/img/logo.png" width="25"></a>
+            </li>
+            <li class="active"><a href="#"><i class="fas fa-columns"></i></a></li>
+            <li><a href="#"><i aria-hidden="true" class="fa fa-folder"></i></a></li>
+            <li><a href="#"><i class="fas fa-chart-area"></i></a></li>
+            <li><a href="#"><i class="fas fa-pills"></i></a></li>
+            <li class="hide"><a href="#"><i class="fas fa-calendar-check"></i></a></li>
+            <li class="hide"><a href="#"><i class="fas fa-file-invoice-dollar"></i></a></li>
+            <li class="hide"><a href="#"><i aria-hidden="true" class="fa fa-envelope"></i></a></li>
+        </ul>
+    </aside>
+    <main class="main">
+        <div class="top">
+            <div class="upcoming-appointments card">
+                <div class="card-header">
+                    <h1>Upcoming Appointments</h1>
+                    <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                </div>
+                <div class="card-body">
+                    <div class="appointment">
+                        <img class="image" src="https://i.pravatar.cc/150?img=45" />
+                        <span class="name">Dr. Anthony Wagner</span>
+                        <span class="title">Dermatologist</span>
+                        <span class="date"><i aria-hidden="true" class="fa fa-calendar"></i> 22/07/2024</span>
+                        <span class="time"><i class="fas fa-clock"></i> 2:30 PM</span>
+                        <a class="check" href="#" onclick="confirmAppointment(this)"><i aria-hidden="true" class="far fa-check-circle"></i></a>
+                        <a class="times" href="#" onclick="cancelAppointment(this)"><i aria-hidden="true" class="far fa-times-circle"></i></a>
+                    </div>
+                    <div class="appointment">
+                        <img class="image gray" src="https://i.pravatar.cc/150?img=1" />
+                        <span class="name">Dr. Caroline Fields</span>
+                        <span class="title">Psychologist</span>
+                        <span class="date"><i aria-hidden="true" class="fa fa-calendar"></i> 23/07/2024</span>
+                        <span class="time"><i class="fas fa-clock"></i> 3:30 PM</span>
+                        <a class="check" href="#" onclick="confirmAppointment(this)"><i aria-hidden="true" class="fas fa-check-circle"></i></a>
+                        <a class="times" href="#" onclick="cancelAppointment(this)"><i aria-hidden="true" class="far fa-times-circle"></i></a>
+                    </div>
+                    <div class="appointment">
+                        <img class="image red" src="https://i.pravatar.cc/150?img=30" />
+                        <span class="name">Dr. Natalie Smith</span>
+                        <span class="title">Dentist</span>
+                        <span class="date"><i aria-hidden="true" class="fa fa-calendar"></i> 24/07/2024</span>
+                        <span class="time"><i class="fas fa-clock"></i> 4:00 PM</span>
+                        <a class="check" href="#" onclick="confirmAppointment(this)"><i aria-hidden="true" class="far fa-check-circle"></i></a>
+                        <a class="times" href="#" onclick="cancelAppointment(this)"><i aria-hidden="true" class="far fa-times-circle"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="recent-results card">
+                <div class="card-header">
+                    <div class="header-container">
+                        <h1>Recent Results</h1>
+                        <span>Glucose Levels</span>
+                    </div>
+                    <select>
+                        <option value="July 2024">July 2024</option>
+                    </select>
+                    <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                </div>
+
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="recentResultsChart"></canvas>
+                    </div>
+                    <div class="result-summary">
+                        <div class="result-item">
+                            <h2>120 mg/dL</h2>
+                            <p>Fasting Glucose</p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 60%;">60%</div>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <h2>140 mg/dL</h2>
+                            <p>Postprandial Glucose</p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 80%;">80%</div>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <h2>5.7%</h2>
+                            <p>HbA1c</p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 90%;">90%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-appointment" onclick="openModal('reportModal')" style="width: 100%;">View Full Report</button>
+                </div>
+            </div>
+        </div>
+        <div class="bottom">
+            <div class="news card">
+                <div class="card-header">
+                    <h1>Latest News</h1>
+                    <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                </div>
+                <div class="card-body">
+                    <ul class="news-list">
+                        <li>
+                            <a class="news" href="#">
+                                <span class="title">10% Off Dermatology Consultation</span>
+                                <span class="subtitle">Save money on your first visit</span>
+                                <i class="fas fa-caret-right"></i>
+                                <hr>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="news" href="#">
+                                <span class="title">Free Cardiology Check-up (May 2-6)</span>
+                                <span class="subtitle">Prioritize your health with a medical examination</span>
+                                <i class="fas fa-caret-right"></i>
+                                <hr>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="news" href="#">
+                                <span class="title">50% Off Allergy Tests</span>
+                                <span class="subtitle">Spring is here, manage your allergies</span>
+                                <i class="fas fa-caret-right"></i>
+                                <hr>
+                            </a>
+                        </li>
+                        <li class="more"><a href="#">More...</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="current-prescription-container">
+                <div class="current-prescription card">
+                    <div class="card-header">
+                        <h1>Current Prescription</h1>
+                        <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                    </div>
+                    <ul>
+                        <li>
+                            <a class="prescription-item" href="#">
+                                <div class="dot gray"></div>
+                                <span class="title">Vitamin D</span>
+                                <span class="description">5mg - 2x per day</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="prescription-item" href="#">
+                                <div class="dot violet"></div>
+                                <span class="title">Cetirizine</span>
+                                <span class="description">10mg - once daily in the morning</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card alert">
+                    <div class="card-header">
+                        <h1>Air Quality Alert</h1>
+                        <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                    </div>
+                    <span>Air pollution: <b>230%</b> of the norm</span>
+                </div>
+            </div>
+            <div class="notifications card">
+                <div class="card-header">
+                    <h1>Notifications</h1>
+                    <a href="#"><i aria-hidden="true" class="fa fa-ellipsis-h right"></i></a>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>
+                            <a class="notification" href="#">
+                                <div class="dot green"></div>
+                                <span class="title">Appointment with Dermatologist Confirmed</span>
+                                <span class="date">2 days ago</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="notification" href="#">
+                                <div class="dot green"></div>
+                                <span class="title">Your Test Results Are Ready</span>
+                                <span class="date">3 days ago</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="notification" href="#">
+                                <div class="dot red"></div>
+                                <span class="title">Appointment with Dr. John Smith Canceled</span>
+                                <span class="date">3 days ago</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="notification" href="#">
+                                <div class="dot blue"></div>
+                                <span class="title">Dr. Ann Doe Rescheduled Your Visit</span>
+                                <span class="date">4 days ago</span>
+                            </a>
+                        </li>
+                        <li class="more"><a href="#">More...</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>User Profile</h2>
+            <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p><strong>Name:</strong> Maria Waters</p>
+            <p><strong>Email:</strong> maria.waters@example.com</p>
+            <p><strong>Phone:</strong> (123) 456-7890</p>
+            <p><strong>Address:</strong> 123 Main St, Springfield</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-appointment" onclick="closeModal('profileModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Detailed Report</h2>
+            <button class="modal-close" onclick="closeModal('reportModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p><strong>Fasting Glucose:</strong> 120 mg/dL</p>
+            <p><strong>Postprandial Glucose:</strong> 140 mg/dL</p>
+            <p><strong>HbA1c:</strong> 5.7%</p>
+            <p><strong>Cholesterol:</strong> 180 mg/dL</p>
+            <p><strong>Blood Pressure:</strong> 120/80 mmHg</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-appointment" onclick="closeModal('reportModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Modal -->
+<div class="modal-overlay" id="appointmentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Make an Appointment</h2>
+            <button class="modal-close" onclick="closeModal('appointmentModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input class="modal-input" placeholder="Name" required type="text">
+            <input class="modal-input" placeholder="Email" required type="email">
+            <input class="modal-input" required type="date">
+            <input class="modal-input" required type="time">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-appointment" onclick="submitAppointment()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Initialize Chart
+  var ctx = document.getElementById('recentResultsChart').getContext('2d');
+  var gradientFill = ctx.createLinearGradient(0, 0, 0, 200);
+  gradientFill.addColorStop(0.1, "rgba(109,110,227, .3)");
+  gradientFill.addColorStop(1, "rgba(255,255,255, .3)");
+
+  var data = {
+    labels: ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", ""],
+    datasets: [{
+      backgroundColor: "rgba(0,0,0,0)",
+      borderColor: "#6d6ee3",
+      borderWidth: 2,
+      fill: true,
+      backgroundColor: gradientFill,
+      data: [3, 5, 4, 10, 8, 9, 3, 15, 14, 17],
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointColor: "#FFFFFF",
+      fillColor: "#FFFFFF",
+      strokeColor: "#FF0000",
+    }]
+  };
+
+  var options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    legend: {
+      display: false
+    },
+    tooltips: {
+      mode: 'index',
+      intersect: true,
+      yPadding: 10,
+      xPadding: 10,
+      caretSize: 8,
+      backgroundColor: '#fff',
+      titleFontColor: "#6d6ee3",
+      bodyFontStyle: 'bold',
+      bodyFontColor: "#737295",
+      displayColors: false,
+      callbacks: {
+        label: function (tooltipItems, data) {
+          return "10.5";
+        }
+      },
+      bevelWidth: 3,
+      bevelHighlightColor: 'rgba(255, 255, 255, 0.75)',
+      bevelShadowColor: 'rgba(0, 0, 0, 0.5)'
+    },
+    showAllTooltips: true,
+    scales: {
+      yAxes: [{
+        display: true,
+        ticks: {
+          maxTicksLimit: 5,
+          min: 0,
+        },
+        gridLines: {
+          display: true
+        }
+      }],
+      xAxes: [{
+        display: true,
+        ticks: {
+          fontSize: 12,
+          fontColor: '#c3c6de'
+        },
+        gridLines: {
+          display: false
+        }
+      }]
+    },
+    elements: {
+      point: {
+        radius: 0
+      }
+    }
+  };
+
+  Chart.pluginService.register({
+    beforeRender: function (chart) {
+      if (chart.config.options.showAllTooltips) {
+        chart.pluginTooltips = [];
+        chart.config.data.datasets.forEach(function (dataset, i) {
+          chart.getDatasetMeta(i).data.forEach(function (sector, j) {
+            chart.pluginTooltips.push(new Chart.Tooltip({
+              _chart: chart.chart,
+              _chartInstance: chart,
+              _data: chart.data,
+              _options: chart.options.tooltips,
+              _active: [sector]
+            }, chart));
+          });
+        });
+        chart.options.tooltips.enabled = false;
+      }
+    },
+    afterDraw: function (chart, easing) {
+      if (chart.config.options.showAllTooltips) {
+        if (!chart.allTooltipsOnce) {
+          if (easing !== 1)
+            return;
+          chart.allTooltipsOnce = true;
+        }
+
+        chart.options.tooltips.enabled = true;
+        Chart.helpers.each(chart.pluginTooltips, function (tooltip, i) {
+          if (i !== 3) return;
+          tooltip.initialize();
+          tooltip.update();
+          tooltip.pivot();
+          tooltip.transition(easing).draw();
+        });
+        chart.options.tooltips.enabled = false;
+      }
+    }
+  });
+
+  var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: options
+  });
+
+  // JavaScript for Modals
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  function confirmAppointment(element) {
+    element.closest('.appointment').style.opacity = "0.5";
+    alert("Appointment confirmed.");
+  }
+
+  function cancelAppointment(element) {
+    if (confirm("Are you sure you want to cancel this appointment?")) {
+      element.closest('.appointment').style.display = "none";
+      alert("Appointment canceled.");
+    }
+  }
+
+  function submitAppointment() {
+    alert("Appointment submitted!");
+    closeModal('appointmentModal');
+  }
+</script>
+</body>
+
+</html>
