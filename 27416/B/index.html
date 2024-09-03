@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Project Management Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode {
+            --bg-color: #333;
+            --text-color: #e4e4e4;
+            --box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .project-box {
+            background: var(--bg-color);
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin: 10px;
+            animation: fadeInLeft 1s ease-out;
+        }
+
+        .view-toggle button, .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {background-color: #f1f1f1}
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .project-box {
+                width: 100%;
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <input id="search" placeholder="Search projects..." type="search">
+        <button class="view-toggle" onclick="toggleView()">Toggle View</button>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙/☀️</button>
+        <i class="fas fa-comments" onclick="toggleMessages()"></i>
+    </header>
+
+    <div class="grid-view" id="projects-container">
+        <!-- Project boxes will be dynamically added here -->
+    </div>
+
+    <div id="messages-section" style="display:none;">
+        <!-- Messages will be listed here -->
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    const projectsContainer = document.getElementById('projects-container');
+    const themeToggle = document.querySelector('.theme-toggle');
+    const body = document.body;
+    const messagesSection = document.getElementById('messages-section');
+
+    function toggleTheme() {
+      body.classList.toggle('dark-mode');
+      const isDarkMode = body.classList.contains('dark-mode');
+      themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+    }
+
+    function toggleView() {
+      projectsContainer.classList.toggle('grid-view');
+      projectsContainer.classList.toggle('list-view');
+    }
+
+    function toggleMessages() {
+      messagesSection.style.display = messagesSection.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function createProjectBox(project) {
+      const box = document.createElement('div');
+      box.className = 'project-box';
+      box.innerHTML = `
+      <h3>${project.name}</h3>
+      <p>${project.subheader}</p>
+      <progress value="${project.progress}" max="100"></progress>
+      <div>${project.participants.map(p => `<img src="${p.avatar}" alt="${p.name}" width="30">`).join('')}</div>
+      <p>Days Left: ${project.daysLeft}</p>
+      <div class="dropdown">
+        <button class="project-btn-more">⋯</button>
+        <div class="dropdown-content">
+          <a href="#">Edit</a>
+          <a href="#">Delete</a>
+          <a href="#">View Details</a>
+        </div>
+      </div>
+    `;
+      // Add animation
+      box.style.animationName = ['fadeInLeft', 'fadeInRight', 'fadeInUp', 'fadeInDown'][Math.floor(Math.random() * 4)];
+      projectsContainer.appendChild(box);
+    }
+
+    function filterProjects() {
+      const searchValue = document.getElementById('search').value.toLowerCase();
+      Array.from(projectsContainer.children).forEach(project => {
+        const projectName = project.querySelector('h3').textContent.toLowerCase();
+        project.style.display = projectName.includes(searchValue) ? '' : 'none';
+      });
+    }
+
+    document.getElementById('search').addEventListener('input', filterProjects);
+
+    // Example projects
+    const projects = [
+      {name: "Launch Website", subheader: "Marketing", progress: 75, participants: [{avatar: "avatar1.jpg", name: "John"}], daysLeft: 10},
+      // Add more projects here
+    ];
+
+    projects.forEach(createProjectBox);
+
+    // Close dropdown if clicked outside
+    window.onclick = function(event) {
+      if (!event.target.matches('.project-btn-more')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+          var openDropdown = dropdowns[i];
+          if (openDropdown.style.display === 'block') {
+            openDropdown.style.display = 'none';
+          }
+        }
+      }
+    };
+  });
+</script>
+</body>
+</html>

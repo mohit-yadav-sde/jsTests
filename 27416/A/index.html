@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Project Management Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --box-bg: #f9f9f9;
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Arial', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-mode {
+            --bg-color: #2c3e50;
+            --text-color: #ecf0f1;
+            --box-bg: #34495e;
+            --shadow-color: rgba(0,0,0,0.5);
+        }
+
+        .dashboard {
+            padding: 20px;
+        }
+
+        .project-box {
+            background: var(--box-bg);
+            margin: 10px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        .dropdown:hover .dropdown-content { display: block; }
+
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <button id="themeToggle">Toggle Theme</button>
+    <input id="searchBar" placeholder="Search projects..." type="text">
+    <div id="viewToggle">
+        <button onclick="toggleView('grid')">Grid</button>
+        <button onclick="toggleView('list')">List</button>
+    </div>
+    <!-- Project boxes would be dynamically added here -->
+    <div class="grid-view" id="projectsContainer">
+        <!-- Example Project Box -->
+        <div class="project-box" style="animation-name: fadeInLeft;">
+            <h3>Project Name</h3>
+            <div class="dropdown">
+                <button class="project-btn-more">...</button>
+                <div class="dropdown-content">
+                    <a href="#">Edit</a>
+                    <a href="#">Delete</a>
+                    <a href="#">View Details</a>
+                </div>
+            </div>
+            <!-- Project details -->
+        </div>
+    </div>
+    <div class="collapsible" id="messagesSection">
+        <!-- Messages would be listed here -->
+    </div>
+    <div id="chatBox" style="display:none;">
+        <button onclick="closeChat()">Close</button>
+        <!-- Chat content -->
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('#themeToggle').on('click', function() {
+      $('body').toggleClass('dark-mode');
+    });
+
+    // Dropdown functionality
+    $('.project-btn-more').on('click', function(e) {
+      e.stopPropagation();
+      $(this).next('.dropdown-content').toggle();
+    });
+
+    $(document).on('click', function() {
+      $('.dropdown-content').hide();
+    });
+
+    // Search functionality
+    $('#searchBar').on('keyup', function() {
+      const value = $(this).val().toLowerCase();
+      $('.project-box').filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+    });
+
+    // View toggle
+    window.toggleView = function(view) {
+      $('#projectsContainer').removeClass('grid-view list-view').addClass(view + '-view');
+    };
+
+    // Messages and Chat Box (pseudo code for dynamic content)
+    $('#messagesSection').on('click', '.message', function() {
+      // Logic to show chat box with message content
+      $('#chatBox').show().html($(this).html());
+    });
+
+    window.closeChat = function() {
+      $('#chatBox').hide();
+    };
+  });
+</script>
+</body>
+</html>
