@@ -3,68 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Simple Word Cloud with D3.js</title>
+    <title>Interactive Data Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        #sidebar .logo {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 30px;
+            color: #10b981;
+        }
+
+        #sidebar .menu {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 30px;
+        }
+
+        #sidebar .menu a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        #sidebar .menu a:hover {
+            background-color: #374151;
+        }
+
+        #sidebar .menu a.active {
+            background-color: #10b981;
+        }
+
+        #sidebar footer {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 30px;
+            color: #d1d5db;
+        }
+
+        /* Main Content */
+        #main {
+            flex: 1;
             padding: 20px;
             display: flex;
-            justify-content: center;
-            align-items: center;
             flex-direction: column;
         }
 
-        #controls {
+        #header {
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        #wordCloudContainer {
-            width: 800px;
-            height: 600px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        #header h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #111827;
+        }
+
+        #controls {
+            background-color: white;
             padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
             display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        #controls input,
+        #controls button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #controls button {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #controls button:hover {
+            background-color: #059669;
+        }
+
+        #wordCloudContainer, #barChartContainer, #pieChartContainer {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: none; /* Hide all containers by default */
             justify-content: center;
             align-items: center;
-            position: relative;
         }
 
-        svg {
+        /* Initially show the word cloud */
+        #wordCloudContainer.active {
+            display: flex; /* Only active chart container is displayed */
+        }
+
+        #barChartContainer.active,
+        #pieChartContainer.active {
+            display: flex; /* Show when respective chart is selected */
+        }
+
+        #wordCloudContainer svg, #barChartContainer svg, #pieChartContainer svg {
             width: 100%;
             height: 100%;
         }
 
         .tooltip {
             position: absolute;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px;
             border-radius: 5px;
             display: none;
             pointer-events: none;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                display: none;
+            }
+
+            #main {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div id="controls">
-    <label for="frequencyRange">Min Frequency: </label>
-    <input id="frequencyRange" max="10" min="1" type="range" value="1">
-    <span id="frequencyValue">1</span>
-    <label for="searchKeyword">Filter by keyword: </label>
-    <input id="searchKeyword" placeholder="Enter keyword" type="text">
-    <button onclick="updateWordCloud()">Update</button>
+<div id="sidebar">
+    <div>
+        <div class="logo">Data Dashboard</div>
+        <div class="menu">
+            <a class="active" href="#" onclick="showChart('wordCloud')">Word Cloud</a>
+            <a href="#" onclick="showChart('barChart')">Bar Chart</a>
+            <a href="#" onclick="showChart('pieChart')">Pie Chart</a>
+        </div>
+    </div>
+    <footer>
+        &copy; 2024 Data Insights App
+    </footer>
 </div>
 
-<div id="wordCloudContainer">
-    <svg id="wordCloud"></svg>
-</div>
+<div id="main">
+    <div id="header">
+        <h1>Interactive Data Visualizations</h1>
+        <div>
+            <input placeholder="Search..." type="search">
+            <button>Go</button>
+        </div>
+    </div>
 
-<div class="tooltip" id="tooltip"></div>
+    <div id="controls">
+        <div>
+            <label for="frequencyRange">Min Frequency: </label>
+            <input id="frequencyRange" max="10" min="1" type="range" value="1">
+            <span id="frequencyValue">1</span>
+        </div>
+        <div>
+            <label for="searchKeyword">Filter by keyword: </label>
+            <input id="searchKeyword" placeholder="Enter keyword" type="text">
+        </div>
+        <div>
+            <button onclick="updateWordCloud()">Update</button>
+        </div>
+    </div>
+
+    <!-- Word Cloud Container -->
+    <div class="active chart" id="wordCloudContainer">
+        <svg id="wordCloud"></svg>
+    </div>
+
+    <!-- Bar Chart Container -->
+    <div class="chart" id="barChartContainer">
+        <svg id="barChart"></svg>
+    </div>
+
+    <!-- Pie Chart Container -->
+    <div class="chart" id="pieChartContainer">
+        <svg id="pieChart"></svg>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+</div>
 
 <!-- Include D3.js -->
 <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -72,20 +231,7 @@
 <script>
   const corpus = `
        Wild animals are fascinating creatures that inhabit various ecosystems around the world.
-       They play crucial roles in maintaining the balance of nature and contribute to the biodiversity of our planet.
-        From the dense rainforests of the Amazon to the vast savannas of Africa, wild animals can be found in almost every corner of the globe.
-        In the African savannas, one can encounter majestic animals such as lions, elephants, and giraffes. Lions, often referred to as the "king of the jungle," are apex predators known for their strength and hunting prowess. Elephants, the largest land animals, are known for their intelligence, strong social bonds, and impressive memory. Giraffes, with their long necks, are the tallest animals on Earth and are known for their unique patterns and gentle nature.
-        The rainforests of South America are home to a diverse array of wildlife, including jaguars, sloths, and various species of monkeys. Jaguars are powerful predators with a distinctive spotted coat, known for their ability to swim and hunt in water. Sloths are slow-moving mammals that spend most of their lives hanging upside down in trees, feeding on leaves and fruits. Monkeys, with their agile movements and social behavior, are a common sight in these lush forests.
-        In the Arctic regions, polar bears, arctic foxes, and seals are some of the iconic animals adapted to the harsh, cold environment. Polar bears are the largest land carnivores and are excellent swimmers, relying on sea ice to hunt seals. Arctic foxes have thick fur that changes color with the seasons, providing camouflage in both snowy and tundra landscapes.
-        Seals, with their streamlined bodies and flippers, are well-adapted to life in the icy waters, where they hunt for fish and other marine organisms.
-    The oceans themselves are teeming with life, from the smallest plankton to the largest whales. Dolphins, known for their intelligence and playful behavior,
-     are often seen riding the waves and interacting with humans. Sharks, with their keen senses and powerful bodies, are apex predators that play a vital role in maintaining the health of marine ecosystems. Whales, the largest animals on the planet, undertake long migrations and are known for their complex vocalizations and social structures.
-In the forests of Asia, tigers, pandas, and orangutans are some of the most well-known wild animals.
- Tigers, with their striking orange and black stripes, are solitary hunters that rely on stealth and strength to catch their prey. Pandas, with their distinctive black and white fur, are primarily bamboo eaters and are considered a symbol of conservation efforts. Orangutans, with their reddish-brown hair and long arms, are highly intelligent primates that spend most of their time in the treetops.
-Australia is home to unique wildlife such as kangaroos, koalas, and the platypus.
- Kangaroos are marsupials known for their powerful hind legs and ability to cover large distances in a single bound. Koalas, often found in eucalyptus trees, are known for their sleepy demeanor and specialized diet of eucalyptus leaves. The platypus, with its duck-bill, webbed feet, and ability to lay eggs, is one of the most unusual mammals in the world.
-Wild animals are not only fascinating to observe but also play essential roles in their ecosystems.
- They help control populations of other species, pollinate plants, disperse seeds, and contribute to nutrient cycling. Conservation efforts are crucial to protect these animals and their habitats, ensuring that future generations can continue to marvel at the incredible diversity of life on Earth.
+       They play crucial roles in maintaining the balance of nature and contribute to the biodiversity of our planet...
     `;
 
   let wordFrequencies = {};
@@ -123,8 +269,12 @@ Wild animals are not only fascinating to observe but also play essential roles i
       .style("font-size", d => d.size + "px")
       .style("fill", () => d3.schemeCategory10[Math.floor(Math.random() * 10)])
       .attr("text-anchor", "middle")
-      .attr("transform", (d, i) => `translate(${[Math.cos(i) * 100, Math.sin(i) * 100]})`)
-      .text(d => d.text);
+      .attr("transform", (d, i) => `translate(${[Math.cos(i) * 100, Math.sin(i) * 100]}) rotate(${Math.random() * 45})`)
+      .text(d => d.text)
+      .style("opacity", 0)
+      .transition()
+      .duration(1000)
+      .style("opacity", 1);
 
     wordSelection.on("mouseover", function(event, d) {
       const tooltip = document.getElementById('tooltip');
@@ -132,16 +282,92 @@ Wild animals are not only fascinating to observe but also play essential roles i
       tooltip.style.left = event.clientX + 10 + 'px';
       tooltip.style.top = event.clientY + 10 + 'px';
       tooltip.style.display = 'block';
+
+      d3.select(this)
+        .transition()
+        .duration(300)
+        .style("fill", "#ff6666")
+        .style("font-size", d.size + 10 + "px");
     });
 
     wordSelection.on("mouseout", function() {
       const tooltip = document.getElementById('tooltip');
       tooltip.style.display = 'none';
-    });
 
-    wordSelection.on("click", function(event, d) {
-      alert(`You clicked on "${d.text}" which appears ${frequencies[d.text]} times in the text.`);
+      d3.select(this)
+        .transition()
+        .duration(300)
+        .style("fill", d3.schemeCategory10[Math.floor(Math.random() * 10)])
+        .style("font-size", d => d.size + "px");
     });
+  }
+
+  function generateBarChart(frequencies) {
+    const width = 800;
+    const height = 600;
+    const svg = d3.select("#barChart")
+      .attr("width", width)
+      .attr("height", height);
+
+    const data = Object.entries(frequencies).map(([word, freq]) => ({ word, freq }));
+
+    const x = d3.scaleBand()
+      .domain(data.map(d => d.word))
+      .range([0, width])
+      .padding(0.1);
+
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.freq)])
+      .nice()
+      .range([height, 0]);
+
+    svg.selectAll("rect")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("x", d => x(d.word))
+      .attr("y", d => y(d.freq))
+      .attr("width", x.bandwidth())
+      .attr("height", d => height - y(d.freq))
+      .attr("fill", "#10b981");
+
+    svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x).tickSize(0))
+      .selectAll("text")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
+
+    svg.append("g")
+      .call(d3.axisLeft(y));
+  }
+
+  function generatePieChart(frequencies) {
+    const width = 800;
+    const height = 600;
+    const radius = Math.min(width, height) / 2;
+
+    const svg = d3.select("#pieChart")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+    const pie = d3.pie().value(d => d[1]);
+    const data_ready = pie(Object.entries(frequencies));
+
+    const arc = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    svg.selectAll("path")
+      .data(data_ready)
+      .enter()
+      .append("path")
+      .attr("d", arc)
+      .attr("fill", (d, i) => d3.schemeCategory10[i])
+      .attr("stroke", "white")
+      .style("stroke-width", "2px");
   }
 
   function updateWordCloud() {
@@ -155,12 +381,36 @@ Wild animals are not only fascinating to observe but also play essential roles i
     generateWordCloud(filteredFrequencies);
   }
 
+  function showChart(chartType) {
+    // Remove 'active' class from all chart containers
+    document.querySelectorAll('.chart').forEach(chart => chart.classList.remove('active'));
+
+    // Clear previous charts
+    d3.selectAll('svg').selectAll("*").remove();
+
+    // Add 'active' class to the selected chart container and render the chart
+    if (chartType === 'wordCloud') {
+      document.getElementById('wordCloudContainer').classList.add('active');
+      generateWordCloud(wordFrequencies);
+    } else if (chartType === 'barChart') {
+      document.getElementById('barChartContainer').classList.add('active');
+      generateBarChart(wordFrequencies);
+    } else if (chartType === 'pieChart') {
+      document.getElementById('pieChartContainer').classList.add('active');
+      generatePieChart(wordFrequencies);
+    }
+
+    // Update sidebar active state
+    document.querySelectorAll('#sidebar .menu a').forEach(link => link.classList.remove('active'));
+    document.querySelector(`[onclick="showChart('${chartType}')"]`).classList.add('active');
+  }
+
   document.getElementById('frequencyRange').oninput = function () {
     document.getElementById('frequencyValue').textContent = this.value;
   };
 
   preprocessText(corpus);
-  generateWordCloud(wordFrequencies);
+  generateWordCloud(wordFrequencies); // Generate word cloud by default
 </script>
 
 </body>
