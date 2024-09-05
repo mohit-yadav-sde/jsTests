@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Travel Agency Landing Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+        .navbar { background: #1e1e1e; }
+        .nav-link, .navbar-brand { color: #fff !important; }
+        .nav-link:hover { color: #ddd !important; }
+        .hero {
+            position: relative;
+            overflow: hidden;
+        }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        .card {
+            background: #2c2c2c;
+            transition: transform .2s;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        @media (max-width: 768px) {
+            .card { margin-bottom: 20px; }
+        }
+        .btn {
+            background-color: #007bff;
+            border: none;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <!-- Navbar content here -->
+</nav>
+
+<div class="container-fluid hero">
+    <div id="particles-js"></div>
+    <div class="hero-content text-center p-5">
+        <h1 class="display-4">Discover the World with Us</h1>
+        <p>Embark on an adventure to breathtaking destinations.</p>
+        <button class="btn" data-target="#exploreModal" data-toggle="modal">Explore Tours</button>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h2>Top Destinations</h2>
+    <div class="row">
+        <!-- Destination Cards -->
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="exploreModal" role="dialog" tabindex="-1">
+    <!-- Modal content -->
+</div>
+
+<div class="modal fade" id="destinationModal" role="dialog" tabindex="-1">
+    <!-- Modal content -->
+</div>
+
+<footer class="mt-5 p-4">
+    <!-- Footer content -->
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  particlesJS.load('particles-js', 'particles.json', function() {
+    console.log('particles.js loaded');
+  });
+
+  // JavaScript for handling modal content dynamically
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function() {
+      const title = this.querySelector('h5').textContent;
+      const description = this.querySelector('p.card-text').textContent;
+      const modal = document.getElementById('destinationModal');
+      modal.querySelector('.modal-title').textContent = title;
+      modal.querySelector('.modal-body').textContent = description;
+      $('#destinationModal').modal('show');
+    });
+  });
+</script>
+</body>
+</html>

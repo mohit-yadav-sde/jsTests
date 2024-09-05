@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Travel Agency Landing Page</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center;
+        }
+        .nav-links li { margin: 0 15px; }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .dropdown-content a:hover { color: #4CAF50; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown:hover .dropdown-content { display: block; }
+        .book-now-btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .hero {
+            text-align: center;
+            padding: 50px 20px;
+            position: relative;
+        }
+        .destination-cards {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        .card {
+            background: #1e1e1e;
+            margin: 10px;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+        .card:hover { transform: translateY(-10px); }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #2c2c2c;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover, .close:focus { color: black; }
+        .newsletter, .about, .quick-links {
+            padding: 20px;
+            text-align: center;
+        }
+        .newsletter input[type="email"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 250px;
+        }
+        @media (max-width: 768px) {
+            .nav-links { flex-direction: column; }
+            .navbar { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+<div id="particles-js"></div>
+<nav class="navbar">
+    <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li class="dropdown">
+            <a href="#destinations">Destinations ▼</a>
+            <div class="dropdown-content">
+                <a href="#">Europe</a>
+                <a href="#">Asia</a>
+                <a href="#">America</a>
+            </div>
+        </li>
+        <li><a href="#tours">Tours</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="book-now-btn">Book Now</button>
+</nav>
+
+<section class="hero" id="home">
+    <h1>Discover the World with Us</h1>
+    <p>Embark on an adventure to breathtaking destinations.</p>
+    <button onclick="openModal('Explore Tours')">Explore Tours</button>
+</section>
+
+<section class="destination-cards">
+    <div class="card" onclick="openModal('Destination 1')">
+        <img alt="Europe" src="europe.jpg" style="width:100%; border-radius: 8px;">
+        <h3>Europe</h3>
+        <p>Explore historic cities and scenic landscapes.</p>
+        <p><strong>$1500</strong></p>
+    </div>
+    <div class="card" onclick="openModal('Destination 2')">
+        <img alt="Asia" src="asia.jpg" style="width:100%; border-radius: 8px;">
+        <h3>Asia</h3>
+        <p>Discover the diverse cultures of the East.</p>
+        <p><strong>$1200</strong></p>
+    </div>
+    <div class="card" onclick="openModal('Destination 3')">
+        <img alt="America" src="america.jpg" style="width:100%; border-radius: 8px;">
+        <h3>America</h3>
+        <p>From the Rockies to the Amazon.</p>
+        <p><strong>$2000</strong></p>
+    </div>
+</section>
+
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title"></h2>
+        <p id="modal-description"></p>
+    </div>
+</div>
+
+<section class="about" id="about">
+    <h2>About Us</h2>
+    <p>We are passionate about creating unforgettable travel experiences.</p>
+</section>
+
+<section class="quick-links">
+    <h2>Quick Links</h2>
+    <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+</section>
+
+<section class="newsletter">
+    <h2>Subscribe to Our Newsletter</h2>
+    <input placeholder="Enter your email" required type="email">
+    <button>Subscribe</button>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+  particlesJS.load('particles-js', 'particles.json', function() {
+    console.log('particles.js loaded - callback');
+  });
+
+  function openModal(title) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-description').innerText = `Details about ${title} would go here.`;
+    document.getElementById('modal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    if (event.target == document.getElementById('modal')) {
+      closeModal();
+    }
+  }
+</script>
+</body>
+</html>
