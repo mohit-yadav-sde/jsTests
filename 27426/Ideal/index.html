@@ -496,6 +496,23 @@
     });
   }
 
+  // Search functionality
+  const searchBar = document.querySelector('.search-bar');
+  searchBar.addEventListener('input', function () {
+    const searchTerm = searchBar.value.toLowerCase();
+
+    productCards.forEach(card => {
+      const title = card.querySelector('h3').textContent.toLowerCase();
+      const category = card.querySelector('p').textContent.toLowerCase();
+
+      if (title.includes(searchTerm) || category.includes(searchTerm)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+
   // Initialize charts using Chart.js
   const salesCtx = document.getElementById('salesChart').getContext('2d');
   const categoryCtx = document.getElementById('categoryChart').getContext('2d');

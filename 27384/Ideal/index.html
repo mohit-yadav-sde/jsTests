@@ -946,13 +946,36 @@
                         <h2>Top Active Jobs</h2>
                         <span>Last 30 days</span>
                     </div>
-                    <div class="line-chart">
-                        <canvas id="chart"></canvas>
+                    <div class="acquisitions-bar">
+                        <span class="bar-progress rejected" style="width:2%;"></span>
+                        <span class="bar-progress on-hold" style="width:10%;"></span>
+                        <span class="bar-progress shortlisted" style="width:18%;"></span>
+                        <span class="bar-progress applications" style="width:64%;"></span>
                     </div>
+                <div class="chart-container">
                     <div class="chart-data-details">
-                        <div class="chart-details-header"></div>
+                        <h3>Job Metrics</h3>
+                        <div class="applicant-line">
+                            <strong>Product Designer</strong>
+                            <p>Applicants: 500 | Hires: 5 | Avg. Time to Hire: 25 days</p>
+                        </div>
+                        <div class="applicant-line">
+                            <strong>UI/UX Developer</strong>
+                            <p>Applicants: 350 | Hires: 3 | Avg. Time to Hire: 30 days</p>
+                        </div>
+                        <div class="applicant-line">
+                            <strong>Backend Engineer</strong>
+                            <p>Applicants: 450 | Hires: 8 | Avg. Time to Hire: 20 days</p>
+                        </div>
+                        <div class="applicant-line">
+                            <strong>Marketing Specialist</strong>
+                            <p>Applicants: 200 | Hires: 2 | Avg. Time to Hire: 40 days</p>
+                        </div>
                     </div>
                 </div>
+                </div>
+
+
             </div>
             <div class="chart-container-wrapper small">
                 <div class="chart-container">
@@ -1017,7 +1040,6 @@
                         </div>
                     </div>
                     <div class="applicant-line">
-                        <img alt="profile" src="https://images.unsplash.com/photo-1543965170-4c01a586684e?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=2232&q=80">
                         <div class="applicant-info">
                             <span>John Pellegrini</span>
                             <p>Applied for <strong>Back-End Developer</strong></p>
@@ -1125,7 +1147,7 @@
 </div>
 
 <script>
-  var chart    = document.getElementById('chart').getContext('2d'),
+  const chart = document.getElementById('chart').getContext('2d'),
     gradient = chart.createLinearGradient(0, 0, 0, 450);
 
   gradient.addColorStop(0, 'rgba(0, 199, 214, 0.32)');
@@ -1133,19 +1155,19 @@
   gradient.addColorStop(1, 'rgba(0, 199, 214, 0)');
 
 
-  var data  = {
-    labels: [ 'January', 'February', 'March', 'April', 'May', 'June', 'July','August','September','October', 'November','December' ],
+  const data = {
+    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     datasets: [{
       label: 'Applications',
       backgroundColor: gradient,
       pointBackgroundColor: '#00c7d6',
       borderWidth: 1,
       borderColor: '#0e1a2f',
-      data: [60, 45, 80, 30, 35, 55,25,80,40,50,80,50]
+      data: [60, 45, 80, 30, 35, 55, 25, 80, 40, 50, 80, 50]
     }]
   };
 
-  var options = {
+  const options = {
     responsive: true,
     maintainAspectRatio: true,
     animation: {
@@ -1162,7 +1184,7 @@
           lineWidth: 1
         }
       }],
-      xAxes:[{
+      xAxes: [{
         ticks: {
           fontColor: '#5e6a81'
         }
@@ -1190,7 +1212,7 @@
     }
   };
 
-  var chartInstance = new Chart(chart, {
+  const chartInstance = new Chart(chart, {
     type: 'line',
     data: data,
     options: options
@@ -1211,6 +1233,7 @@
   document.querySelector('.close-menu').addEventListener('click', function () {
     document.querySelector('.app-left').classList.remove('show');
   });
+
 </script>
 </body>
 </html>
