@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meditation Trainer</title>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css?family=Concert+One|Fredoka+One|Pacifico|Passion+One|Nova+Mono" rel="stylesheet">
+
+</head>
+<body>
+<style>
+    body {
+        background: linear-gradient(90deg, #000046, #1CB5E0); /* Dark to blue night gradient */
+        font-family: "Nova Mono", monospace;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        color: #f5f5f5;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    #stars, #stars2, #stars3 {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: -10; /* Ensure stars are behind everything */
+        background: transparent;
+        top: 0;
+        left: 0;
+    }
+
+    @keyframes move-stars {
+        from { transform: translateY(0px); }
+        to { transform: translateY(-1000px); }
+    }
+
+    @keyframes move-stars2 {
+        from { transform: translateY(0px); }
+        to { transform: translateY(-500px); }
+    }
+
+    #stars {
+        background: transparent url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
+        opacity: 0.5;
+        animation: move-stars 50s linear infinite;
+    }
+
+    #stars2 {
+        background: transparent url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
+        opacity: 0.2;
+        animation: move-stars2 100s linear infinite;
+    }
+
+    #stars3 {
+        background: transparent url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
+        opacity: 0.7;
+        animation: move-stars 150s linear infinite;
+    }
+
+    #streakContainer {
+        z-index: 1; /* Bring UI above stars */
+        width: 500px;
+        margin: 100px auto 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 3fr 1fr;
+        grid-template-rows: auto 40px auto;
+    }
+
+    .circles {
+        border-radius: 50%;
+    }
+
+    #currentStreak {
+        font-size: 100px;
+        font-family: "Nova Mono", monospace;
+        font-weight: 700;
+        color: #f5f5f5;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        background: none;
+        border: none;
+        visibility: visible;
+    }
+    #currentStreak:focus {
+        outline: 0;
+    }
+    #currentStreak:hover {
+        cursor: pointer;
+    }
+
+    #failCircle {
+        background-color: #ffaaa5;
+        background: linear-gradient(10deg, #a8e6cf, #ffaaa5);
+        border: 5px solid #ffaaa5;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        height: 100px;
+        width: 100px;
+        justify-self: end;
+        align-self: center;
+        visibility: hidden;
+        margin-right: 10px;
+    }
+
+    #successCircle {
+        background-color: #a8e6cf;
+        background: linear-gradient(10deg, #a8e6cf, #ffaaa5);
+        border: 5px solid #a8e6cf;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        height: 100px;
+        width: 100px;
+        justify-self: start;
+        align-self: center;
+        visibility: hidden;
+        margin-left: 10px;
+    }
+
+    #period {
+        text-align: center;
+        margin-top: -20px;
+        visibility: hidden;
+    }
+
+    #sessionContainer {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        grid-column-gap: 10px;
+    }
+
+    .adjustSessionLengthBtns {
+        font-size: 20px;
+        border-radius: 50%;
+        padding: 5px;
+    }
+
+    #sessionClockContainer {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 7px;
+        width: 150px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        border: 2px solid #f5f5f5;
+        justify-self: center;
+    }
+
+    #sessionTimer {
+        text-align: center;
+        font-size: 40px;
+        color: #f5f5f5;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+    #session {
+        text-align: center;
+        font-size: 20px;
+        color: white;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+    #infoContainer {
+        text-align: left;
+        background-color: rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        margin: 20px auto;
+        width: 600px;
+        padding: 5px 10px;
+        opacity: 1;
+        border: 2px solid #f5f5f5;
+    }
+
+</style>
+
+
+<div id="stars"></div>
+<div id="stars2"></div>
+<div id="stars3"></div>
+
+<div id="streakContainer">
+    <button class="circles" id="failCircle">
+        <i class="fa fa-times" id="fail"></i>
+    </button>
+    <div id="centerSquare">
+        <h1>Lets Meditate</h1>
+        <button id="currentStreak">BEGIN</button>
+    </div>
+    <button class="circles" id="successCircle">
+        <i class="fa fa-check" id="success"></i>
+    </button>
+
+    <div></div>
+    <h1 id="period">period</h1>
+    <div></div>
+
+    <div></div>
+    <div id="sessionContainer">
+        <i class="adjustSessionLengthBtns fa fa-minus" id="subtractSessionLengthBtn"></i>
+        <div id="sessionClockContainer">
+            <div id="sessionTimer">20:00</div>
+            <div id="session">session</div>
+        </div>
+        <i class="adjustSessionLengthBtns fa fa-plus" id="addSessionLengthBtn"></i>
+    </div>
+    <div></div>
+
+</div>
+
+
+<i class="fa fa-info-circle" id="infoIcon"></i>
+
+<div id="infoContainer">
+    <ol>
+        <li>Press "BEGIN" and close your eyes to start your meditation session.</li>
+        <li>Try to pay attention to the sensations of breathing until the bell sounds. The bell indicates the end of the current period.</li>
+        <li>When the bell sounds at the end of the period, open your eyes and press the button on the right if you were able to maintain your attention on your breath for the duration of that period, or press the button on the left to indicate that your mind wandered. If you have indicated a successful period, the next period will be 5 seconds longer. If you were unsuccessful, the next period will be 1 second shorter.</li>
+        <li>Close your eyes and resume attempting to maintain your focus on your breath until the bell sounds.</li>
+        <li>Repeat this cycle until the end of the session.</li>
+        <li>It feels better with the music.</li>
+    </ol>
+    <iframe allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen="" eight="352" frameBorder="0"
+            h loading="lazy" src="https://open.spotify.com/embed/playlist/37i9dQZF1DWZqd5JICZI0u?utm_source=generator" style="border-radius:12px" width="100%"></iframe>
+</div>
+
+<script>
+  $('#page-index').append('<audio autoplay><source src="https://drive.google.com/file/d/1DYC9hp8TLr5Ntbr7xoV_MTSAzo3CIaPx/view?usp=sharing" type="audio/mp3"></audio>');
+</script>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+
+
+
+<script>
+
+  var currentSteakTimer = document.getElementById("currentStreak");
+  var sessionTimer = document.getElementById("sessionTimer");
+  var seconds = 0;
+  var minutes = 0;
+  var currentMax = 5;
+  var startStreakTimer;
+  var sessionStarted = false;
+  var seconds2 = 0;
+  var minutes2 = 20;
+  var bell = new Audio("http://bells.s3.amazonaws.com/bell_10.wav");
+
+  function addTime() {
+    if (seconds < currentMax) {
+      seconds++;
+      if (seconds >= 60) {
+        seconds = 0;
+        minutes++;
+      }
+      currentSteakTimer.textContent =
+        (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") +
+        ":" +
+        (seconds > 9 ? seconds : "0" + seconds);
+    } else if ((second = currentMax)) {
+      bell.play();
+      $("#successCircle").css({ opacity: 0, visibility: "visible" }).animate({ opacity: 1.0 }, 500);
+      $("#failCircle").css({ opacity: 0, visibility: "visible" }).animate({ opacity: 1.0 }, 500);
+      clearInterval(startStreakTimer);
+    }
+  }
+
+  function subtractTime() {
+    if (minutes2 > -1) {
+      seconds2--;
+      if (seconds2 <= 0) {
+        seconds2 = 59;
+        minutes2--;
+      }
+      sessionTimer.textContent =
+        (minutes2 ? (minutes2 > 9 ? minutes2 : "0" + minutes2) : "00") +
+        ":" +
+        (seconds2 > 9 ? seconds2 : "0" + seconds2);
+    }
+  }
+
+  function playStreakTimer() {
+    if ($("#successCircle").css("visibility") === "visible") {
+      $("#successCircle").css({ opacity: 1.0, visibility: "visible" }).animate({ opacity: 0 }, 500);
+      $("#failCircle").css({ opacity: 1.0, visibility: "visible" }).animate({ opacity: 0 }, 500);
+    }
+    startStreakTimer = setInterval(addTime, 1000);
+    (seconds = 0), (minutes = 0);
+    $("#currentStreak").text("00:00");
+
+    setTimeout(function() {
+      var time = currentMax;
+      var initialOffset = '440';
+      var i = 1;
+      $('.circle_animation').css('stroke-dashoffset', initialOffset - (1 * (initialOffset / time)));
+      var interval = setInterval(function() {
+        if (i == time) {
+          clearInterval(interval);
+          return;
+        }
+        $('.circle_animation').css('stroke-dashoffset', initialOffset - ((i + 1) * (initialOffset / time)));
+        i++;
+      }, 1000);
+    }, 0)
+  }
+
+  function playSessionTimer() {
+    startStreakTimer = setInterval(subtractTime, 1000);
+    seconds = 0, minutes = 0;
+    $("#sessionTimer").text(minutes2 + ":00");
+  }
+
+  $(document).ready(function() {
+    $("#currentStreak").css({ opacity: 0, visibility: "visible" }).animate({ opacity: 1.0 }, 2000);
+
+    $("#currentStreak").click(function() {
+      if (sessionStarted === false) {
+        playSessionTimer();
+        sessionStarted = true;
+        $("#infoContainer").animate({ opacity: 0 }, 2000);
+      }
+      $("#currentStreak").css({ opacity: 0, visibility: "visible" }).animate({ opacity: 1.0 }, 2000);
+      $("#period").css({ opacity: 0, visibility: "visible" }).animate({ opacity: 1.0 }, 2000);
+      playStreakTimer();
+      document.getElementById("currentStreak").disabled = true;
+      document.getElementById("currentStreak").style.cursor = "default";
+    });
+
+    $("#success").click(function() {
+      currentMax = currentMax + 5;
+      playStreakTimer();
+    });
+
+    $("#fail").click(function() {
+      if (currentMax > 5) {
+        currentMax--;
+      }
+      playStreakTimer();
+    });
+
+    $("#addSessionLengthBtn").click(function() {
+      minutes2++;
+      $("#sessionTimer").text(minutes2 + ":00");
+    });
+
+    $("#subtractSessionLengthBtn").click(function() {
+      minutes2--;
+      $("#sessionTimer").text(minutes2 + ":00");
+    });
+
+    $("#infoIcon").click(function() {
+      if ($("#infoContainer").css("opacity") === "1") {
+        $("#infoContainer").animate({ opacity: 0 }, 500);
+      } else if ($("#infoContainer").css("opacity") === "0") {
+        $("#infoContainer").animate({ opacity: 1 }, 500);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

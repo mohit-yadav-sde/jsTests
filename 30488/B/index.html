@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Meditation Trainer</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #000033, #000066);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #sky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        #timer {
+            font-size: 3em;
+            margin: 20px 0;
+        }
+        button {
+            background: none;
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: white;
+            color: #000033;
+        }
+        #instructions {
+            max-width: 300px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sky"></div>
+<div class="container">
+    <h1>Meditation Trainer</h1>
+    <div id="instructions">
+        <p>Close your eyes, breathe deeply, and focus on your breath. Let go of thoughts as they arise.</p>
+    </div>
+    <div id="timer">5:00</div>
+    <button onclick="adjustTime(-1)">-</button>
+    <button onclick="startTimer()">Start</button>
+    <button onclick="adjustTime(1)">+</button>
+    <button onclick="toggleMusic()">Music: Off</button>
+    <div>
+        <button onclick="sessionFeedback(true)">Success</button>
+        <button onclick="sessionFeedback(false)">Fail</button>
+    </div>
+</div>
+
+<audio id="ding" preload="auto" src="path/to/ding.mp3"></audio>
+<audio id="music" loop src="path/to/background_music.mp3"></audio>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  let timeLeft = 300; // 5 minutes in seconds
+  let timerInterval;
+  let isMusicPlaying = false;
+
+  function createStars() {
+    for(let i = 0; i < 100; i++) {
+      let star = $('<div class="star"></div>');
+      star.css({
+        top: Math.random() * 100 + '%',
+        left: Math.random() * 100 + '%',
+        animationDelay: Math.random() * 5 + 's'
+      });
+      $('#sky').append(star);
+    }
+  }
+
+  function startTimer() {
+    if (!timerInterval) {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          document.getElementById('ding').play();
+        }
+      }, 1000);
+    }
+  }
+
+  function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  function adjustTime(minutes) {
+    timeLeft += minutes * 60;
+    if (timeLeft < 0) timeLeft = 0;
+    updateTimerDisplay();
+  }
+
+  function toggleMusic() {
+    const music = document.getElementById('music');
+    if (isMusicPlaying) {
+      music.pause();
+      document.querySelector('button[onclick="toggleMusic()"]').textContent = 'Music: Off';
+    } else {
+      music.play();
+      document.querySelector('button[onclick="toggleMusic()"]').textContent = 'Music: On';
+    }
+    isMusicPlaying = !isMusicPlaying;
+  }
+
+  function sessionFeedback(success) {
+    alert(success ? "Great session!" : "Keep practicing!");
+  }
+
+  createStars();
+</script>
+
+</body>
+</html>
