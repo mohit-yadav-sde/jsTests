@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Habit Tracker - Don't Break the Streak</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and basic styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #2C3E50;
+            font-family: 'Poppins', sans-serif;
+            color: #FFF;
+            scroll-behavior: smooth;
+        }
+
+        nav {
+            background-color: #1A252F;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: #F39C12;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li a {
+            color: #FFF;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        nav ul li a:hover {
+            color: #F39C12;
+        }
+
+        /* Habit Tracker Table */
+        #habit-tracker {
+            padding: 40px 20px;
+            width: 100%;
+            background-color: #34495E;
+            min-height: 100vh;
+        }
+
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        table th, table td {
+            text-align: center;
+            border: 1px solid #444;
+            padding: 10px;
+            background-color: #2C3E50;
+            transition: background 0.3s;
+        }
+
+        table th {
+            font-size: 18px;
+            font-weight: 600;
+            background-color: #1A252F;
+            color: #F39C12;
+        }
+
+        table td:hover {
+            background-color: #16A085;
+        }
+
+        table td.clicked {
+            background-color: #E74C3C;
+        }
+
+        /* Section styling */
+        section {
+            padding: 100px 20px;
+            text-align: center;
+            min-height: 60vh;
+        }
+
+        #about, #contact {
+            background: #1A252F;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #F39C12;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #EEE;
+        }
+
+        footer {
+            background-color: #1A252F;
+            padding: 20px 0;
+            text-align: center;
+            color: #EEE;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer a {
+            color: #F39C12;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Media query for responsiveness */
+        @media (max-width: 768px) {
+            table th, table td {
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            nav .logo {
+                font-size: 20px;
+            }
+
+            nav ul {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav>
+    <div class="logo">Habit Tracker</div>
+    <ul>
+        <li><a href="#habit-tracker">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+</nav>
+
+<!-- Habit Tracker (Default view) -->
+<div id="habit-tracker">
+    <h2>Don't Break the Streak!</h2>
+    <p>Track your habits daily and don't let your streak break. Click on a date to mark it as completed.</p>
+    <table id="habitTable"></table>
+</div>
+
+<!-- About Section -->
+<section id="about">
+    <h2>About</h2>
+    <p>This app helps you build and maintain good habits by tracking your daily progress. Stay consistent and improve your life.</p>
+</section>
+
+<!-- Contact Section -->
+<section id="contact">
+    <h2>Contact</h2>
+    <p>Feel free to reach out via email at habittracker@example.com.</p>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2024 Habit Tracker. Developed by <a href="#">Your Name</a></p>
+</footer>
+
+<script>
+  const habits = ['Exercise', 'Reading', 'Meditation', 'Coding'];
+  const days = 31;
+
+  const table = document.getElementById('habitTable');
+
+  // Create the header row for the table
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = `<th colspan="2"></th>` + Array.from({ length: days }, (_, i) => `<th>${i + 1}</th>`).join('');
+  table.appendChild(headerRow);
+
+  // Create the rows for each habit
+  habits.forEach(habit => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td colspan="2">${habit}</td>` + Array.from({ length: days }, () => `<td></td>`).join('');
+    table.appendChild(row);
+  });
+
+  // Add click event listeners to all table cells except the habit name cells
+  table.addEventListener('click', (event) => {
+    const cell = event.target;
+    if (cell.tagName === 'TD' && !cell.hasAttribute('colspan')) {
+      cell.classList.toggle('clicked');
+    }
+  });
+</script>
+
+</body>
+</html>

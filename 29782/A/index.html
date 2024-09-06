@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Habit Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .navbar {
+            position: sticky;
+            top: 0;
+            background-color: #333;
+            padding: 10px 0;
+            z-index: 100;
+        }
+        .navbar ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: space-around;
+        }
+        .navbar ul li a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .navbar ul li a:hover {
+            color: #ddd;
+        }
+        section {
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: 60px;
+        }
+        .habit-tracker {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td {
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .navbar ul {
+                flex-direction: column;
+                text-align: center;
+            }
+            .navbar ul li {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="#habit-tracker">Habit Tracker</a></li>
+    </ul>
+</nav>
+
+<section id="home">
+    <h1>Welcome to Your Habit Tracker</h1>
+    <p>Start building your habits today!</p>
+</section>
+
+<section id="about">
+    <h1>About</h1>
+    <p>This is a simple tool to help you track your daily habits. Consistency is key!</p>
+</section>
+
+<section id="contact">
+    <h1>Contact</h1>
+    <p>Get in touch with us for feedback or suggestions.</p>
+</section>
+
+<section id="habit-tracker">
+    <div class="habit-tracker">
+        <h2>My Habits</h2>
+        <table id="habitTable">
+            <thead>
+            <tr>
+                <th>Habit</th>
+                <th colspan="31">Days</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Exercise</td>
+                <!-- Days will be filled by JavaScript -->
+            </tr>
+            <tr>
+                <td>Reading</td>
+            </tr>
+            <tr>
+                <td>Meditation</td>
+            </tr>
+            <tr>
+                <td>Coding</td>
+            </tr>
+            </tbody>
+        </table>
+        <a class="btn" href="#" onclick="resetHabits()">Reset Habits</a>
+    </div>
+</section>
+
+<script>
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelector(this.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth'
+      });
+    });
+  });
+
+  const habits = ['Exercise', 'Reading', 'Meditation', 'Coding'];
+  const table = document.getElementById('habitTable');
+
+  // Generate days
+  for (let i = 1; i <= 31; i++) {
+    const th = document.createElement('th');
+    th.textContent = i;
+    table.rows[0].appendChild(th);
+  }
+
+  // Fill in habit rows
+  habits.forEach((habit, index) => {
+    for (let j = 0; j < 31; j++) {
+      const cell = table.rows[index + 1].insertCell();
+      cell.onclick = function() {
+        this.classList.toggle('completed');
+        saveHabits();
+      };
+    }
+  });
+
+  function saveHabits() {
+    const data = [];
+    for (let i = 1; i < table.rows.length; i++) {
+      let rowData = [];
+      for (let j = 1; j < table.rows[i].cells.length; j++) {
+        rowData.push(table.rows[i].cells[j].classList.contains('completed'));
+      }
+      data.push(rowData);
+    }
+    localStorage.setItem('habitData', JSON.stringify(data));
+  }
+
+  function loadHabits() {
+    const savedData = JSON.parse(localStorage.getItem('habitData'));
+    if (savedData) {
+      savedData.forEach((row, i) => {
+        row.forEach((completed, j) => {
+          if (completed) {
+            table.rows[i + 1].cells[j + 1].classList.add('completed');
+          }
+        });
+      });
+    }
+  }
+
+  function resetHabits() {
+    if (confirm('Are you sure you want to reset all habits?')) {
+      for (let i = 1; i < table.rows.length; i++) {
+        for (let j = 1; j < table.rows[i].cells.length; j++) {
+          table.rows[i].cells[j].classList.remove('completed');
+        }
+      }
+      localStorage.removeItem('habitData');
+    }
+  }
+
+  // Load habits when the page loads
+  document.addEventListener('DOMContentLoaded', loadHabits);
+</script>
+
+</body>
+</html>
