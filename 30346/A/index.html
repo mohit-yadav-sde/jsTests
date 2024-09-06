@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Taylor Swift Albums</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Cormorant', serif;
+            color: #fff;
+        }
+        .hero {
+            background: linear-gradient(45deg, #020024, #090979);
+            background-size: cover;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.5s ease;
+        }
+        .album-cover {
+            max-width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .lyrics-emblem {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+        }
+        .left { left: 20px; }
+        .right { right: 20px; }
+        .album-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero" id="hero-section">
+    <div class="nav-arrow left" onclick="changeAlbum(-1)">&#10094;</div>
+    <img alt="Album Cover" class="album-cover" id="albumCover" src="https://i.scdn.co/image/ab67616d0000b27390fd9741e1838115cd90b3b6">
+    <div class="lyrics-emblem" id="lyricsEmblem"></div>
+    <h2 class="album-title" id="albumTitle">Midnights</h2>
+    <div class="nav-arrow right" onclick="changeAlbum(1)">&#10095;</div>
+    <iframe allow="encrypted-media" allowtransparency="true" frameborder="0" height="80" id="spotifyPlayer" src="https://open.spotify.com/embed/album/3lS1y25WAhcqJDATJK70Mq?utm_source=generator" style="border-radius:12px" width="300"></iframe>
+</div>
+
+<script>
+  const albums = [
+    {
+      id: '3lS1y25WAhcqJDATJK70Mq',
+      title: 'Midnights',
+      cover: 'https://i.scdn.co/image/ab67616d0000b27390fd9741e1838115cd90b3b6',
+      gradient: ['#020024', '#090979'],
+      lyrics: 'Meet me at midnight...'
+    },
+    {
+      id: '2Xoteh7uEpea4TohMxjtaq',
+      title: 'Evermore',
+      cover: 'https://i.scdn.co/image/ab67616d0000b273fc554926ff56a43913a32b4e',
+      gradient: ['#56604d', '#997950'],
+      lyrics: 'Gray November, I\'ve been down since July...'
+    },
+    {
+      id: '1NAmidJlEaVgA3MpcPFYGq',
+      title: 'Lover',
+      cover: 'https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647',
+      gradient: ['#f7d9d9', '#f2a3b1'],
+      lyrics: 'Can I go where you go? Can we always be this close?'
+    }
+  ];
+
+  let currentAlbumIndex = 0;
+  const heroSection = document.getElementById('hero-section');
+  const albumCover = document.getElementById('albumCover');
+  const albumTitle = document.getElementById('albumTitle');
+  const spotifyPlayer = document.getElementById('spotifyPlayer');
+  const lyricsEmblem = document.getElementById('lyricsEmblem');
+
+  function changeAlbum(direction) {
+    currentAlbumIndex = (currentAlbumIndex + direction + albums.length) % albums.length;
+    updateAlbumDisplay();
+  }
+
+  function updateAlbumDisplay() {
+    const album = albums[currentAlbumIndex];
+    heroSection.style.background = `linear-gradient(45deg, ${album.gradient[0]}, ${album.gradient[1]})`;
+    albumCover.src = album.cover;
+    albumTitle.textContent = album.title;
+    spotifyPlayer.src = `https://open.spotify.com/embed/album/${album.id}?utm_source=generator`;
+    lyricsEmblem.textContent = album.lyrics;
+  }
+
+  // Rotate lyrics
+  setInterval(() => {
+    lyricsEmblem.style.transform = `rotate(${Math.random() * 360}deg)`;
+  }, 5000);
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') changeAlbum(-1);
+    else if (e.key === 'ArrowRight') changeAlbum(1);
+  });
+
+  // Initial setup
+  updateAlbumDisplay();
+</script>
+
+</body>
+</html>

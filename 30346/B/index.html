@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Taylor Swift Albums</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Cormorant', serif;
+            overflow: hidden;
+        }
+
+        .hero {
+            width: 100%;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 1s;
+        }
+
+        .album-info {
+            text-align: center;
+            z-index: 10;
+            color: white;
+            text-shadow: 2px 2px 4px #000000;
+        }
+
+        .album-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 4em;
+            margin: 0;
+        }
+
+        .lyrics {
+            font-style: italic;
+            font-size: 1.2em;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            font-size: 2em;
+            color: white;
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+        }
+
+        #prev { left: 20px; }
+        #next { right: 20px; }
+
+        iframe {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="album-info">
+        <h1 class="album-title">Midnights</h1>
+        <p class="lyrics">Lyrics will appear here...</p>
+    </div>
+    <span class="nav-arrow" id="prev">←</span>
+    <span class="nav-arrow" id="next">→</span>
+    <iframe allow="encrypted-media" allowtransparency="true" frameborder="0" height="80" id="spotifyPlayer" src="https://open.spotify.com/embed/album/3lS1y25WAhcqJDATJK70Mq?utm_source=generator" width="300"></iframe>
+</div>
+
+<script>
+  const albums = [
+    {
+      title: "Midnights",
+      cover: "https://i.scdn.co/image/ab67616d0000b27390fd9741e1838115cd90b3b6",
+      spotify: "3lS1y25WAhcqJDATJK70Mq",
+      colors: ["#1a1a2e", "#16213e"],
+      lyrics: ["And I lost you, the one I was dancin' with", "In New York, no shoes"]
+    },
+    {
+      title: "Evermore",
+      cover: "url_to_evermore_cover",
+      spotify: "your_evermore_spotify_id",
+      colors: ["#8d6e63", "#bcaaa4"],
+      lyrics: ["I'm like the water when your ship rolled in that night", "Rough on the surface but you cut through like a knife"]
+    },
+    {
+      title: "Lover",
+      cover: "url_to_lover_cover",
+      spotify: "your_lover_spotify_id",
+      colors: ["#ff80ab", "#ff4081"],
+      lyrics: ["Can I go where you go?", "Can we always be this close?"]
+    }
+  ];
+
+  let currentAlbum = 0;
+  const hero = document.querySelector('.hero');
+  const albumTitle = document.querySelector('.album-title');
+  const lyricsDisplay = document.querySelector('.lyrics');
+  const spotifyPlayer = document.getElementById('spotifyPlayer');
+  const arrows = document.querySelectorAll('.nav-arrow');
+
+  function updateAlbum(direction) {
+    currentAlbum = (currentAlbum + direction + albums.length) % albums.length;
+    const album = albums[currentAlbum];
+
+    hero.style.backgroundImage = `linear-gradient(to right, ${album.colors[0]}, ${album.colors[1]}), url(${album.cover})`;
+    albumTitle.textContent = album.title;
+    spotifyPlayer.src = `https://open.spotify.com/embed/album/${album.spotify}?utm_source=generator`;
+    rotateLyrics(album.lyrics);
+  }
+
+  function rotateLyrics(lyricsArray) {
+    let index = 0;
+    function changeLyric() {
+      lyricsDisplay.style.opacity = '0';
+      setTimeout(() => {
+        lyricsDisplay.textContent = lyricsArray[index];
+        lyricsDisplay.style.opacity = '1';
+        index = (index + 1) % lyricsArray.length;
+      }, 500);
+    }
+    changeLyric(); // Initial change
+    setInterval(changeLyric, 5000);
+  }
+
+  arrows.forEach(arrow => {
+    arrow.addEventListener('click', () => updateAlbum(arrow.id === 'next' ? 1 : -1));
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') updateAlbum(1);
+    else if (e.key === 'ArrowLeft') updateAlbum(-1);
+  });
+
+  // Initial setup
+  updateAlbum(0);
+</script>
+
+</body>
+</html>
