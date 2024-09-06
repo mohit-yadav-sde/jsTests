@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Enhanced Weather App</title>
+    <link href='https://fonts.googleapis.com/css?family=Poppins:400,600&display=swap' rel='stylesheet'>
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet"/>
+    <style>
+        body {
+            background: #2C3E50;
+            font-family: 'Poppins', sans-serif;
+            color: #FFF;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        input {
+            font-size: 1.2rem;
+            padding: 10px;
+            width: 60%;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 1.2rem;
+            background-color: #f39c12;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-left: 10px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+
+        .cities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-gap: 20px;
+        }
+
+        .city {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease, background-color 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .city:hover {
+            transform: scale(1.05);
+        }
+
+        .city h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .city-temp {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 15px;
+        }
+
+        .weather-details {
+            margin-top: 10px;
+            padding: 15px;
+            text-align: left;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .weather-details p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content .city-name {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        .map-container {
+            height: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1> Weather App</h1>
+    <form>
+        <input id="city-input" placeholder="Enter city name..." type="text">
+        <button type="submit">Submit</button>
+    </form>
+    <ul class="cities"></ul>
+</div>
+
+<!-- Modal for weather details -->
+<div class="modal" id="weather-modal">
+    <div class="modal-content">
+        <span class="close-modal" id="close-modal">&times;</span>
+        <div class="city-name" id="modal-city-name"></div>
+        <div class="map-container" id="map"></div>
+        <div class="weather-details" id="modal-weather-details"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+  const apiKey = '4d8fb5b93d4af21d66a2948710284366';
+  const form = document.querySelector('form');
+  const input = document.querySelector('#city-input');
+  const list = document.querySelector('.cities');
+  const modal = document.querySelector('#weather-modal');
+  const closeModalBtn = document.querySelector('#close-modal');
+  let map;
+
+  // Get weather for closest city using geolocation
+  window.onload = async function() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        const weatherData = await getWeatherDataByCoords(latitude, longitude);
+        if (weatherData) {
+          renderWeatherCard(weatherData);
+        }
+      }, async () => {
+        // Fallback to London if geolocation fails
+        const londonWeather = await getWeatherData('London');
+        if (londonWeather) {
+          renderWeatherCard(londonWeather);
+        }
+      });
+    } else {
+      // Fallback to London if geolocation is not supported
+      const londonWeather = await getWeatherData('London');
+      if (londonWeather) {
+        renderWeatherCard(londonWeather);
+      }
+    }
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const city = input.value;
+    if (city) {
+      const weatherData = await getWeatherData(city);
+      if (weatherData) {
+        renderWeatherCard(weatherData);
+        input.value = '';
+      }
+    }
+  });
+
+  closeModalBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  async function getWeatherData(city) {
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching weather data', error);
+      return null;
+    }
+  }
+
+  async function getWeatherDataByCoords(lat, lon) {
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching weather data by coordinates', error);
+      return null;
+    }
+  }
+
+  function renderWeatherCard(data) {
+    const { name, sys, main, weather, wind, coord } = data;
+    const cityElement = document.createElement('div');
+    cityElement.classList.add('city');
+
+    const temp = Math.round(main.temp);
+    const bgColor = temp > 25 ? '#e67e22' : temp < 10 ? '#3498db' : '#2ecc71';
+    cityElement.style.backgroundColor = bgColor;
+
+    cityElement.innerHTML = `
+            <h2>${name}, ${sys.country}</h2><small> Click to see map</small>
+            <div class="city-temp">${temp}°C</div>
+            <img class="weather-icon" src="https://openweathermap.org/img/wn/${weather[0].icon}@2x.png" alt="${weather[0].description}">
+            <p class="weather-description">${weather[0].description}</p>
+            <div class="weather-details">
+                <p><strong>Humidity:</strong> ${main.humidity}%</p>
+                <p><strong>Wind Speed:</strong> ${wind.speed} m/s</p>
+                <p><strong>Pressure:</strong> ${main.pressure} hPa</p>
+                <p><strong>Feels Like:</strong> ${Math.round(main.feels_like)}°C</p>
+                <p><strong>Sunrise:</strong> ${formatTime(sys.sunrise)}</p>
+                <p><strong>Sunset:</strong> ${formatTime(sys.sunset)}</p>
+            </div>
+        `;
+
+    cityElement.addEventListener('click', () => {
+      showModal(data);
+    });
+
+    list.appendChild(cityElement);
+  }
+
+  function showModal(data) {
+    const { name, coord } = data;
+    document.querySelector('#modal-city-name').textContent = name;
+    modal.style.display = 'flex';
+
+    if (!map) {
+      map = L.map('map').setView([coord.lat, coord.lon], 10);
+    } else {
+      map.setView([coord.lat, coord.lon], 10);
+    }
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  }
+
+  function formatTime(unixTimestamp) {
+    const date = new Date(unixTimestamp * 1000);
+    const hours = date.getHours();
+    const minutes = '0' + date.getMinutes();
+    return `${hours}:${minutes.substr(-2)}`;
+  }
+</script>
+
+</body>
+</html>

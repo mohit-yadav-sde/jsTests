@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Weather App</title>
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .weather-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        #map {
+            height: 300px;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 70%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Weather Forecast</h1>
+    <input id="cityInput" placeholder="Enter city name" type="text">
+    <button onclick="getWeather(document.getElementById('cityInput').value)">Search</button>
+    <div class="weather-card" id="weatherInfo"></div>
+</div>
+
+<div class="modal" id="weatherModal">
+    <div class="modal-content">
+        <span class="close" onclick="document.getElementById('weatherModal').style.display='none'">&times;</span>
+        <div id="detailedInfo"></div>
+        <div id="map"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+  const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your API key
+  let map;
+
+  function initMap(lat, lon) {
+    if (map) map.remove();
+    map = L.map('map').setView([lat, lon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([lat, lon]).addTo(map);
+  }
+
+  function getWeather(city = 'auto:ip') {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
+      .then(response => response.json())
+      .then(data => {
+        if(data.cod === 200) {
+          document.getElementById('weatherInfo').innerHTML = `
+                    <h2>${data.name}</h2>
+                    <p>Temperature: ${data.main.temp}°C</p>
+                    <p>Humidity: ${data.main.humidity}%</p>
+                    <p>Wind: ${data.wind.speed} m/s</p>
+                `;
+          document.getElementById('weatherInfo').onclick = () => showDetailedInfo(data);
+        } else {
+          alert('City not found or API error');
+        }
+      });
+  }
+
+  function showDetailedInfo(data) {
+    document.getElementById('detailedInfo').innerHTML = `
+            <p>Feels like: ${data.main.feels_like}°C</p>
+            <p>Pressure: ${data.main.pressure}hPa</p>
+            <p>Visibility: ${data.visibility}m</p>
+        `;
+    initMap(data.coord.lat, data.coord.lon);
+    document.getElementById('weatherModal').style.display = 'block';
+  }
+
+  // Initial load with user's location or default
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      getWeather(`${position.coords.latitude},${position.coords.longitude}`);
+    }, () => getWeather()); // Fallback to default if geolocation fails
+  } else {
+    getWeather();
+  }
+</script>
+
+</body>
+</html>
