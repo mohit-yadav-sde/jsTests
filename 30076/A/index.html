@@ -4,29 +4,35 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Weather App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: #f4f4f8;
+            background: #f4f4f4;
             margin: 0;
             padding: 20px;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            box-sizing: border-box;
         }
-        .weather-card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            background: white;
             margin: 10px;
             padding: 20px;
             width: 200px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
             cursor: pointer;
             transition: transform 0.3s;
         }
-        .weather-card:hover {
-            transform: scale(1.05);
+        .card:hover {
+            transform: translateY(-5px);
         }
         .modal {
             display: none;
@@ -36,6 +42,7 @@
             top: 0;
             width: 100%;
             height: 100%;
+            overflow: auto;
             background-color: rgba(0,0,0,0.4);
         }
         .modal-content {
@@ -48,74 +55,62 @@
         }
         #map {
             height: 300px;
-            margin-top: 10px;
+            margin-top: 20px;
         }
-        form {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
+        input, button {
+            font-family: 'Poppins', sans-serif;
             padding: 10px;
-            width: 200px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
 
-<form id="cityForm">
-    <input id="cityInput" placeholder="Enter city name" type="text" value="">
-    <button type="submit">Search</button>
-</form>
-
-<div id="weatherContainer"></div>
+<div class="container">
+    <input id="cityInput" placeholder="Enter city name" type="text">
+    <button onclick="searchCity()">Search</button>
+    <div id="weatherContainer"></div>
+</div>
 
 <div class="modal" id="weatherModal">
     <div class="modal-content">
         <span class="close">&times;</span>
-        <p id="modalCityName"></p>
+        <div id="modalWeatherDetails"></div>
         <div id="map"></div>
-        <p id="modalWeatherDetails"></p>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
-  const API_KEY = '4d8fb5b93d4af21d66a2948710284366'; // Replace with your API key
+  const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY';
   const weatherContainer = document.getElementById('weatherContainer');
   const modal = document.getElementById('weatherModal');
-  const cityForm = document.getElementById('cityForm');
-  const cityInput = document.getElementById('cityInput');
   const closeBtn = document.getElementsByClassName('close')[0];
+  const modalWeatherDetails = document.getElementById('modalWeatherDetails');
+  let map;
 
-  function getWeather(city) {
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
-      .then(response => response.json())
-      .then(data => {
-        const card = document.createElement('div');
-        card.className = 'weather-card';
-        card.innerHTML = `
-                <h2>${data.name}</h2>
-                <p>Temperature: ${data.main.temp}°C</p>
-                <p>Humidity: ${data.main.humidity}%</p>
-                <p>Wind: ${data.wind.speed} m/s</p>
-            `;
-        card.onclick = () => openModal(data);
-        weatherContainer.appendChild(card);
-      })
-      .catch(() => alert('City not found!'));
+  function initMap(lat, lon) {
+    if (!map) {
+      map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    } else {
+      map.setView([lat, lon], 13);
+    }
+    L.marker([lat, lon]).addTo(map);
   }
 
-  function openModal(data) {
-    document.getElementById('modalCityName').innerText = data.name;
-    document.getElementById('modalWeatherDetails').innerText = `Description: ${data.weather[0].description}\nPressure: ${data.main.pressure}hPa`;
+  function showModal(data, lat, lon) {
+    modalWeatherDetails.innerHTML = `
+            <h2>${data.name}</h2>
+            <p>Temperature: ${data.main.temp}°C</p>
+            <p>Humidity: ${data.main.humidity}%</p>
+            <p>Wind Speed: ${data.wind.speed} m/s</p>
+            <p>Weather: ${data.weather[0].description}</p>
+        `;
+    initMap(lat, lon);
     modal.style.display = "block";
-
-    const map = L.map('map').setView([data.coord.lat, data.coord.lon], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    L.marker([data.coord.lat, data.coord.lon]).addTo(map);
   }
 
   closeBtn.onclick = function() {
@@ -128,26 +123,52 @@
     }
   }
 
-  function getLocation() {
+  function createWeatherCard(data, lat, lon) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+            <h2>${data.name}</h2>
+            <p>Temp: ${data.main.temp}°C</p>
+            <p>Humidity: ${data.main.humidity}%</p>
+        `;
+    card.onclick = () => showModal(data, lat, lon);
+    weatherContainer.appendChild(card);
+  }
+
+  function fetchWeather(city) {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.cod === 200) {
+          createWeatherCard(data, data.coord.lat, data.coord.lon);
+        } else {
+          alert('City not found!');
+        }
+      });
+  }
+
+  function searchCity() {
+    const city = document.getElementById('cityInput').value;
+    weatherContainer.innerHTML = '';
+    fetchWeather(city);
+  }
+
+  function getCurrentLocation() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(position => {
-        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=${API_KEY}&units=metric`)
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&units=metric&appid=${API_KEY}`)
           .then(response => response.json())
-          .then(data => getWeather(data.name));
+          .then(data => {
+            createWeatherCard(data, data.coord.lat, data.coord.lon);
+          });
       });
     } else {
       alert("Geolocation is not supported by this browser.");
     }
   }
 
-  cityForm.onsubmit = function(e) {
-    e.preventDefault();
-    weatherContainer.innerHTML = '';
-    getWeather(cityInput.value || 'London'); // Default to London if empty
-  }
-
-  // Initial load with user's location or default city
-  getLocation();
+  // Initial load with current location
+  getCurrentLocation();
 </script>
 
 </body>
