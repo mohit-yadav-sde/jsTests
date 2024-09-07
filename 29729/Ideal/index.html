@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Meditation Sounds Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            font-family: Arial, sans-serif;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            background-color: #6c63ff;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .start-button, .stop-button, .restart-button, .mute-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            transition: background-color 0.3s;
+            background-color: #1a1a1a;
+            margin-top: 10px;
+        }
+
+        .start-button:hover, .stop-button:hover, .restart-button:hover, .mute-button:hover {
+            background-color: #5753d1;
+        }
+
+        .meditation-page {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .timer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            color: white;
+        }
+
+        .stop-button {
+            margin-top: 20px;
+            background-color: #ff6347;
+        }
+
+        .restart-button {
+            margin-top: 10px;
+        }
+
+        /* Circular Progress Bar */
+        .progress-circle {
+            margin-top: 30px;
+            width: 200px;
+            height: 200px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-circle circle {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        .progress-background {
+            stroke: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-foreground {
+            stroke: #00FFAA;
+            stroke-dasharray: 628; /* Circumference of the circle (2 * Math.PI * 100) */
+            stroke-dashoffset: 628;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        /* Full-Screen Particles */
+        ul {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            list-style: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        li {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: move-random 30s infinite ease-in-out;
+        }
+
+        /* Advanced Animations for Full-Screen Particles */
+        @keyframes move-random {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(50px, -100px) scale(1.2);
+            }
+            50% {
+                transform: translate(-100px, 50px) scale(0.8);
+            }
+            75% {
+                transform: translate(100px, 100px) scale(1.1);
+            }
+            100% {
+                transform: translate(-50px, -50px) scale(1);
+            }
+        }
+
+        @keyframes wave-motion {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(50px) scale(1.2);
+            }
+        }
+
+        @keyframes ripple-effect {
+            0% {
+                transform: scale(0.5);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes star-twinkle {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Star shapes */
+        .star {
+            background-color: transparent;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid white;
+            position: absolute;
+            animation: star-twinkle 2s infinite;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Background floating particles -->
+<ul id="particle-container"></ul>
+
+<div class="container">
+    <div class="mood-selection">
+        <h1>Select Your Mood and Set Time</h1>
+        <select id="mood-select">
+            <option value="happy">Happy</option>
+            <option value="calm">Calm</option>
+            <option value="anxious">Anxious</option>
+            <option value="sad">Sad</option>
+            <option value="relaxed">Relaxed</option>
+        </select>
+
+        <input id="time-input" max="60" min="1" style="width: 60px; padding: 10px; font-size: 16px; border-radius: 5px; border: none;" type="number" value="5">
+        <span style="color: white;">minutes</span>
+
+        <button class="start-button">Start Meditation</button>
+    </div>
+
+    <div class="meditation-page">
+        <h1>Meditation Time</h1>
+
+        <!-- Progress Circle -->
+        <div class="progress-circle">
+            <svg>
+                <circle class="progress-background" cx="100" cy="100" r="100"></circle>
+                <circle class="progress-foreground" cx="100" cy="100" r="100"></circle>
+            </svg>
+            <div class="timer"><span id="time-left">5:00</span></div>
+        </div>
+
+        <button class="stop-button">Stop Meditation</button>
+        <button class="restart-button">Restart Meditation</button>
+        <button class="mute-button">Mute Sound</button>
+    </div>
+</div>
+
+<audio id="meditation-audio" loop></audio>
+
+<script>
+  const startButton = document.querySelector('.start-button');
+  const stopButton = document.querySelector('.stop-button');
+  const restartButton = document.querySelector('.restart-button');
+  const muteButton = document.querySelector('.mute-button');
+  const moodSelect = document.getElementById('mood-select');
+  const timeInput = document.getElementById('time-input');
+  const meditationPage = document.querySelector('.meditation-page');
+  const moodSelectionPage = document.querySelector('.mood-selection');
+  const audioElement = document.getElementById('meditation-audio');
+  const timerDisplay = document.getElementById('time-left');
+  const progressCircle = document.querySelector('.progress-foreground');
+  const particleContainer = document.getElementById('particle-container');
+
+  let isMuted = false;
+  const soundLibrary = [
+    'https://cdn.pixabay.com/audio/2021/08/08/audio_88447e769f.mp3',
+    'https://cdn.pixabay.com/audio/2022/11/04/audio_8ca48100a1.mp3',
+    'https://cdn.pixabay.com/audio/2022/10/14/audio_9939f792cb.mp3',
+    'https://cdn.pixabay.com/audio/2024/09/03/audio_0368e10ce2.mp3',
+    'https://cdn.pixabay.com/audio/2022/08/23/audio_8ed2c96397.mp3'
+  ];
+
+  let meditationTimer;
+  let timeLeft;
+  let totalTime;
+
+  const animationStyles = ['move-random', 'wave-motion', 'ripple-effect', 'star-twinkle'];
+
+  startButton.addEventListener('click', startMeditation);
+  stopButton.addEventListener('click', stopMeditation);
+  restartButton.addEventListener('click', restartMeditation);
+  muteButton.addEventListener('click', toggleMute);
+
+  function startMeditation() {
+    const selectedMood = moodSelect.value;
+    const selectedTime = parseInt(timeInput.value) || 5;
+
+    console.log(`Starting meditation for mood: ${selectedMood} for ${selectedTime} minutes`);
+
+    // Randomly select one of the sounds from the library
+    const randomSound = soundLibrary[Math.floor(Math.random() * soundLibrary.length)];
+    audioElement.src = randomSound;
+    audioElement.play();
+
+    // Switch to meditation page
+    moodSelectionPage.style.display = 'none';
+    meditationPage.style.display = 'flex';
+
+    // Start the timer
+    timeLeft = selectedTime * 60; // Convert minutes to seconds
+    totalTime = timeLeft; // Store total time for progress circle
+    updateTimerDisplay();
+    updateProgressCircle();
+    meditationTimer = setInterval(countdown, 1000);
+
+    // Start background animation
+    changeBackgroundAnimation();
+  }
+
+  function countdown() {
+    timeLeft--;
+    updateTimerDisplay();
+    updateProgressCircle();
+
+    if (timeLeft <= 0) {
+      stopMeditation();
+    }
+  }
+
+  function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  function updateProgressCircle() {
+    const progress = (timeLeft / totalTime) * 628; // Calculate the percentage for the stroke
+    progressCircle.style.strokeDashoffset = progress;
+  }
+
+  function stopMeditation() {
+    console.log('Meditation stopped');
+    clearInterval(meditationTimer);
+    audioElement.pause();
+    audioElement.currentTime = 0;
+
+    // Reset progress circle
+    progressCircle.style.strokeDashoffset = 628;
+
+    // Switch back to mood selection page
+    meditationPage.style.display = 'none';
+    moodSelectionPage.style.display = 'block';
+  }
+
+  function restartMeditation() {
+    clearInterval(meditationTimer);
+    audioElement.currentTime = 0;
+    startMeditation();
+  }
+
+  function toggleMute() {
+    if (isMuted) {
+      audioElement.muted = false;
+      muteButton.textContent = 'Mute Sound';
+    } else {
+      audioElement.muted = true;
+      muteButton.textContent = 'Unmute Sound';
+    }
+    isMuted = !isMuted;
+  }
+
+  // Dynamically generate particle list items
+  function generateParticles(number) {
+    particleContainer.innerHTML = ''; // Clear previous particles
+    const ul = document.getElementById('particle-container');
+    for (let i = 0; i < number; i++) {
+      const li = document.createElement('li');
+
+      const size = Math.random() * 10 + 5; // Random size between 5px and 15px
+      li.style.width = `${size}px`;
+      li.style.height = `${size}px`;
+
+      const positionX = Math.random() * window.innerWidth; // Random position across the screen
+      const positionY = Math.random() * window.innerHeight; // Random position across the screen
+      const delay = Math.random() * 5; // Random delay for each particle
+
+      li.style.left = `${positionX}px`;
+      li.style.top = `${positionY}px`;
+      li.style.animationDelay = `${delay}s`;
+
+      // Randomly assign animation class
+      const randomAnimation = animationStyles[Math.floor(Math.random() * animationStyles.length)];
+      li.style.animationName = randomAnimation;
+      li.style.animationDuration = `${Math.random() * 10 + 10}s`;
+      li.style.animationIterationCount = 'infinite';
+
+      // Some particles can be stars
+      if (Math.random() > 0.7) {
+        li.classList.add('star');
+      }
+
+      ul.appendChild(li);
+    }
+  }
+
+  // Function to change background animation randomly
+  function changeBackgroundAnimation() {
+    generateParticles(200);
+    // Change the animation every 20 seconds
+    setTimeout(changeBackgroundAnimation, 20000);
+  }
+
+  // Generate 200 particles dynamically at the start
+  generateParticles(200);
+
+</script>
+
+</body>
+</html>
