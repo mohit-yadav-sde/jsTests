@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Real-Time Bus Tracking</title>
+
+    <!-- External Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turf/5.1.6/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.4/underscore-min.js"></script>
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+
+
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+
+    <!-- Mapbox -->
+    <script src='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
+
+    <style>
+        /* Ratchet Style Dropdown */
+        div.combo {
+            width: 16vw;
+            margin-left: auto;
+            margin-right: auto;
+            min-width: 140px;
+            height: 100%;
+        }
+
+        div.combo .icon { float:right; }
+
+        select.title {
+            text-align: center;
+            height: inherit;
+            width: inherit;
+            background: none;
+            border:none;
+            display: inline-block;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            cursor:pointer;
+            line-height: 2vw;
+            min-width: 140px;
+        }
+
+        select.title:focus { outline-style: none; }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .instructions {
+            position: absolute;
+            font-size: 3em;
+            z-index: 100;
+            text-align: center;
+            width: 100%;
+            bottom: 10%;
+        }
+    </style>
+</head>
+<body>
+
+<header class="bar bar-nav">
+    <div class="combo">
+        <select class="title" id="city">
+            <option value="boston">Boston</option>
+            <option selected="selected" value="chicago">Chicago</option>
+            <option value="new-york">New York</option>
+            <option value="san-francisco">San Francisco</option>
+        </select>
+        <div class="icon icon-caret"></div>
+    </div>
+</header>
+
+<div class="content">
+    <div class='instructions'>
+        Select a Neighborhood to View Live Buses
+    </div>
+    <div id="map"></div>
+</div>
+
+<script>
+  var current_layer = null;
+  var transit_layer = null;
+  var markers = [];
+  var hoods = null;
+  var routes = null;
+  var route_ids = null;
+  var timer;
+  var vehicles_query = {};
+
+
+  // Initialize Firebase (use your Firebase configuration)
+  const firebaseConfig = {
+    apiKey: "your-api-key",
+    authDomain: "your-app.firebaseapp.com",
+    databaseURL: "https://publicdata-transit.firebaseio.com",
+    projectId: "your-project-id",
+    storageBucket: "your-app.appspot.com",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  // Setup Firebase reference for real-time data
+  const transitFirebaseRef = firebase.database().ref();
+
+  // Setup MapBox
+  var map;
+  initMapbox();
+
+  // Show City
+  showCity();
+  $("#city").change(showCity);
+
+  function showCity() {
+    if (current_layer !== null) { map.removeLayer(current_layer); }
+    clearMap();
+    clearInterval(timer);
+    vehicles_query = {};
+
+    var city = $("#city").val();
+    $.getJSON('https://s3-us-west-2.amazonaws.com/s.cdpn.io/230399/' + city + ".json", showCityLayer);
+    $.getJSON('https://s3-us-west-2.amazonaws.com/s.cdpn.io/230399/' + city + "-routes.json", function(data){
+      routes = data;
+    });
+    $.getJSON('https://s3-us-west-2.amazonaws.com/s.cdpn.io/230399/' + city + '-route-info.json', function(data){
+      route_ids = data;
+    });
+  }
+
+  function showCityLayer(data) {
+    hoods = data;
+    current_layer = L.geoJson(data, {
+      style: {
+        cursor: "pointer", fillColor: '#00BAF4', fillOpacity: 0.05, weight: 1, opacity: 0.6, color: '#00BAF4'
+      },
+      onEachFeature: function(feature, layer) {
+        layer.on({
+          click: function(e) {
+            var place = { X: e.latlng.lng, Y: e.latlng.lat };
+            showNeighborhood(place);
+          }
+        });
+      }
+    });
+    current_layer.addTo(map);
+    map.fitBounds(current_layer.getBounds());
+  }
+
+  function showNeighborhood(place) {
+    $('.instructions').hide();
+    var point = turf.point([place.X, place.Y]);
+    var selected = null;
+    var selected_routes = [];
+
+    _.each(hoods.features, function(feature) {
+      var isInside = turf.booleanPointInPolygon(point, feature);
+      if (isInside) { selected = feature; }
+    });
+
+    if (current_layer !== null) { map.removeLayer(current_layer); }
+    if (selected !== null) {
+      current_layer = L.geoJson(selected, { fillColor: '#00BAF4', fillOpacity: 0.05, weight: 4, opacity: 0.4, color: '#00BAF4' });
+      current_layer.addTo(map);
+      map.fitBounds(current_layer.getBounds());
+      showBuses(selected);
+
+      if (routes !== null) {
+        _.each(routes.features, function(route) {
+          var intersection = turf.intersect(route, selected);
+          if (intersection) {
+            var id = route.properties.LINEABBR.replace(/^0+/, '');
+            var match = _.findWhere(route_ids, { id: id });
+            if (match) { showTransit(route, match, selected); }
+          }
+        });
+      }
+    }
+  }
+
+  function showBuses(hood) {
+    timer = setInterval(function(){
+      transitFirebaseRef.child("vehicles").once("value", function(snapshot) {
+        snapshot.forEach(function(b) {
+          var vehicle = b.val();
+          var vehicleId = b.key;
+          var point = turf.point([vehicle.lon, vehicle.lat]);
+          var inside = turf.booleanPointInPolygon(point, hood);
+          var existing_vehicle = vehicles_query[vehicleId];
+
+          if (existing_vehicle && inside) {
+            existing_vehicle.marker.setLatLng([vehicle.lat, vehicle.lon]);
+          } else if (inside) {
+            vehicles_query[vehicleId] = vehicle;
+            vehicle.marker = addBusMarker(vehicle);
+            vehicle.marker.addTo(map);
+          } else if (existing_vehicle) {
+            map.removeLayer(existing_vehicle.marker);
+            delete vehicles_query[vehicleId];
+          }
+        });
+      });
+    }, 1000);
+  }
+
+  function addBusMarker(bus) {
+    var match = _.findWhere(route_ids, { id: bus.routeTag });
+    var color = match ? match.color : "#2B66A1";
+    return L.marker([bus.lat, bus.lon], {
+      icon: L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background-color:${color};width:20px;height:20px;border-radius:50%;"></div>`
+      })
+    });
+  }
+
+  function showTransit(route, details, hood) {
+    if (transit_layer !== null) { map.removeLayer(transit_layer); }
+    var color_line = L.geoJson(route, { weight: 3, opacity: 0.6, color: details.color });
+    color_line.addTo(map);
+    markers.push(color_line);
+  }
+
+  function clearMap() {
+    markers.forEach(marker => map.removeLayer(marker));
+    _.each(vehicles_query, function(item) {
+      map.removeLayer(item.marker);
+    });
+  }
+
+  function initMapbox() {
+    // Use a valid Mapbox style (streets-v11 in this case)
+    map = L.map('map').setView([37.77072000222513, -122.4359575], 12);
+
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib3NhZXoiLCJhIjoiOExKN0RWQSJ9.Hgewe_0r7gXoLCJHuupRfg', {
+      maxZoom: 20,
+      attribution: '© Mapbox © OpenStreetMap',
+      tileSize: 512,
+      zoomOffset: -1,
+    }).addTo(map);
+  }
+
+</script>
+
+</body>
+</html>

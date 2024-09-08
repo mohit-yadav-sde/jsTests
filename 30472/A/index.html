@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Bus Tracking System</title>
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+    <style>
+        #map { height: 100vh; width: 100%; }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="path/to/your/neighborhoods.geojson"></script>
+<script>
+  let map = L.map('map').setView([latitude, longitude], zoomLevel); // Set initial coordinates and zoom level
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let info = L.control();
+
+  info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info');
+    this.update();
+    return this._div;
+  };
+
+  info.update = function (props) {
+    this._div.innerHTML = '<h4>Neighborhood Info</h4>' +  (props ?
+      '<b>' + props.name + '</b><br />' : 'Hover over or click a neighborhood');
+  };
+
+  info.addTo(map);
+
+  let highlightFeature, resetHighlight;
+
+  function onEachFeature(feature, layer) {
+    layer.on({
+      mouseover: function(e) {
+        highlightFeature(e);
+      },
+      mouseout: function(e) {
+        resetHighlight(e);
+      },
+      click: function(e) {
+        map.fitBounds(e.target.getBounds());
+        info.update(e.target.feature.properties);
+      }
+    });
+  }
+
+  let geojson;
+
+  highlightFeature = function(e) {
+    let layer = e.target;
+    layer.setStyle({
+      weight: 5,
+      color: '#666',
+      dashArray: '',
+      fillOpacity: 0.7
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+      layer.bringToFront();
+    }
+    info.update(layer.feature.properties);
+  };
+
+  resetHighlight = function(e) {
+    geojson.resetStyle(e.target);
+    info.update();
+  };
+
+  geojson = L.geoJson(neighborhoodsData, {
+    style: {
+      fillColor: '#3388ff',
+      weight: 2,
+      opacity: 1,
+      color: 'white',
+      dashArray: '3',
+      fillOpacity: 0.2
+    },
+    onEachFeature: onEachFeature
+  }).addTo(map);
+
+  map.attributionControl.addAttribution('Neighborhood data &copy; YourDataSource');
+</script>
+</body>
+</html>

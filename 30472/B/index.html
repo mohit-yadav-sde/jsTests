@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Bus Tracking System</title>
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+    <style>
+        #map { height: 100vh; }
+        #neighborhoodList {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border: 1px solid #999;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="neighborhoodList">
+    <select id="neighborhoodSelect">
+        <option value="">Select Neighborhood</option>
+        <!-- Options will be dynamically added -->
+    </select>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+  // Initialize the map
+  var map = L.map('map').setView([0, 0], 13); // Centered at 0,0 with zoom level 13
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Sample neighborhoods data (coordinates would typically be more accurate)
+  var neighborhoods = {
+    'Downtown': [[51.505, -0.09], [51.507, -0.10]],
+    'Uptown': [[51.515, -0.09], [51.517, -0.10]]
+  };
+
+  var neighborhoodPolygons = {};
+
+  // Function to draw neighborhood
+  function drawNeighborhood(name, coords) {
+    if (neighborhoodPolygons[name]) {
+      map.removeLayer(neighborhoodPolygons[name]);
+    }
+    neighborhoodPolygons[name] = L.polygon(coords).addTo(map);
+    map.fitBounds(neighborhoodPolygons[name].getBounds());
+  }
+
+  // Populate neighborhood list
+  var select = document.getElementById('neighborhoodSelect');
+  for (var name in neighborhoods) {
+    var opt = document.createElement('option');
+    opt.value = opt.text = name;
+    select.appendChild(opt);
+  }
+
+  // Event listener for neighborhood selection
+  select.addEventListener('change', function(e) {
+    var selected = e.target.value;
+    if (selected in neighborhoods) {
+      drawNeighborhood(selected, neighborhoods[selected]);
+    }
+  });
+</script>
+
+</body>
+</html>
