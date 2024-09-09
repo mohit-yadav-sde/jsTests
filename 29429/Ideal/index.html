@@ -113,6 +113,20 @@
             border-bottom-right-radius: 20px;
             background: rgb(73, 57, 113);
         }
+        .update-calories-btn{
+            display: block;
+            padding: 2px 6px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            outline: none;
+            text-decoration: none;
+            color: #484b57;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+        }
 
         .nav-item b:nth-child(2) {
             position: absolute;
@@ -554,6 +568,7 @@
                 display: block;
                 width: 30px;
                 margin: 20px auto;
+                border-radius:50%
             }
 
             .nav-text {
@@ -681,13 +696,152 @@
         .participants img {
             animation: lovingBorder 2s infinite alternate ease-in-out;
         }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .modal-body {
+            margin-top: 15px;
+        }
+        .close-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            background-color: #0056b3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 40%;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn:hover, .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn {
+            display: block;
+            padding: 8px 24px;
+            margin: 10px auto;
+            font-size: 1.1rem;
+            font-weight: 500;
+            outline: none;
+            text-decoration: none;
+            color: #484b57;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .input-field {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 8px;
+        }
+
+        .modal2 {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal3 {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content3 {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .close-btn3 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn3:hover, .close-btn:focus {
+            color: black;
+            cursor: pointer;
+
+
     </style>
 </head>
 <body>
 <main>
     <nav class="main-menu">
         <h1>Fitness App</h1>
-        <img alt="logo" class="logo" src="sample" />
+        <img alt="logo" class="logo" src="https://i.pinimg.com/736x/d1/d8/84/d1d884324447a33e57ae765b05ecff61.jpg" />
         <ul>
             <li class="nav-item active">
                 <b></b>
@@ -732,6 +886,13 @@
         </ul>
     </nav>
 
+    <!-- Modal -->
+    <div class="modal3" id="modal3">
+        <div class="modal-content3">
+            <h2 id="modal-title"></h2>
+            <p id="modal-body"></p>
+        </div>
+    </div>
     <section class="content">
         <div class="left-content">
             <div class="activities">
@@ -872,11 +1033,8 @@
         <div class="right-content">
             <div class="user-info">
                 <div class="icon-container">
-                    <i class="fa fa-bell nav-icon"></i>
-                    <i class="fa fa-message nav-icon"></i>
                 </div>
-                <h4>Ananda Bernard</h4>
-                <img alt="User" src="https://i.pinimg.com/564x/f8/06/3f/f8063f5eaa670e1c3f4d6eb590256ae5.jpg" />
+                <h4>Jane Doe</h4>
             </div>
 
             <div class="active-calories">
@@ -888,11 +1046,14 @@
                         </div>
                     </div>
                     <div class="calories-content">
-                        <p><span>Today:</span> 1200</p>
-                        <p><span>This Week:</span> 2000</p>
-                        <p><span>This Month:</span> 30000</p>
+                        <p id = "calories-today"><span>Today:</span> 1200</p>
+                        <p id = "calories-week"><span>This Week:</span> 2000</p>
+                        <p id = "calories-month"><span>This Month:</span> 30000</p>
                     </div>
                 </div>
+                <button class="update-calories-btn" id="update-calories-btn">Update Calories</button> <!-- Added
+                button -->
+
             </div>
 
             <div class="friends-activity">
@@ -901,7 +1062,7 @@
                     <div class="card">
                         <div class="card-user-info">
                             <img alt="Jane" src="https://i.pinimg.com/564x/f8/06/3f/f8063f5eaa670e1c3f4d6eb590256ae5.jpg" />
-                            <h2>Ann</h2>
+                            <h2>John</h2>
                         </div>
                         <img alt="Activity" class="card-img" src="https://i.pinimg.com/564x/9a/9a/cb/9a9acb0c9146093e9075ed04304a5116.jpg" />
                         <p>We completed the 60-Day Running Streak Challenge!🏃‍♀️🎉</p>
@@ -911,7 +1072,7 @@
                         <div class="card-user-info">
                             <img alt="Mike"
                                  src="https://i.pinimg.com/564x/f8/06/3f/f8063f5eaa670e1c3f4d6eb590256ae5.jpg" />
-                            <h2>Joanne</h2>
+                            <h2>Doe</h2>
                         </div>
                         <img alt="Activity" class="card-img" src="https://i.pinimg.com/564x/5b/ec/28/5bec28cb5eb51b0cd5bb18fd535d6618.jpg" />
                         <p>I just set a new record in cycling: 70 miles!💪</p>
@@ -919,21 +1080,175 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal -->
+        <div class="modal" id="updateModal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2>Update Active Calories</h2>
+                <form id="caloriesForm">
+                    <label for="todayCalories">Today's Calories</label>
+                    <input class="input-field" id="todayCalories" placeholder="Enter today's calories" required type="number" />
+
+                    <label for="weekCalories">This Week's Calories</label>
+                    <input class="input-field" id="weekCalories" placeholder="Enter week's calories" required type="number" />
+
+                    <label for="monthCalories">This Month's Calories</label>
+                    <input class="input-field" id="monthCalories" placeholder="Enter month's calories" required type="number" />
+
+                    <button class="btn" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal2" id="activityModal">
+            <div class="modal-content">
+                <h2 id="activityTitle"></h2>
+                <p id="activityDescription"></p>
+            </div>
+        </div>
     </section>
 </main>
 
 <script>
+  // Save and load active navigation tab
   const navItems = document.querySelectorAll(".nav-item");
 
-  navItems.forEach((navItem) => {
+  navItems.forEach((navItem, index) => {
     navItem.addEventListener("click", () => {
       navItems.forEach((item) => {
         item.classList.remove("active");
       });
       navItem.classList.add("active");
+
+      // Save the active tab index to local storage
+      localStorage.setItem('activeTab', index);
     });
   });
 
+  const buttons = document.querySelectorAll('.btn');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      const btn = e.target;
+      // Toggle between "Join" and "Joined"
+      if (btn.textContent === "Join") {
+        btn.textContent = "Joined";
+      } else {
+        btn.textContent = "Join";
+      }
+    });
+  });
+
+  const modal = document.getElementById("updateModal");
+  const updateBtn = document.getElementById("update-calories-btn");
+  const closeBtn = document.querySelector(".close-btn");
+  const form = document.getElementById("caloriesForm");
+
+  // Open modal on button click
+  updateBtn.addEventListener("click", () => {
+    modal.style.display = "block";
+  });
+
+  // Close modal on close button click
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  // Close modal if clicked outside of the modal
+  window.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+
+  // Handle form submission
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    // Get input values
+    const todayCalories = document.getElementById("todayCalories").value;
+    const weekCalories = document.getElementById("weekCalories").value;
+    const monthCalories = document.getElementById("monthCalories").value;
+
+    // Update the UI with new values
+    document.getElementById("calories-today").textContent ='Today: ' + todayCalories;
+    document.getElementById("calories-week").textContent = 'This Week: ' + weekCalories;
+    document.getElementById("calories-month").textContent = 'This Month ' + monthCalories;
+
+    // Close the modal
+    modal.style.display = "none";
+  });
+
+
+  // Get modal elements
+  const modal2 = document.getElementById("activityModal");
+  const closeModal = document.querySelector(".close-btn");
+  const activityTitle = document.getElementById("activityTitle");
+  const activityDescription = document.getElementById("activityDescription");
+
+  // Add click event to each card
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function() {
+      const activityText = card.querySelector('p').textContent;
+      const userName = card.querySelector('h2').textContent;
+
+      // Set the modal content
+      activityTitle.textContent = `${userName}'s Activity`;
+      activityDescription.textContent = activityText;
+
+      // Open the modal
+      modal2.style.display = "block";
+    });
+  });
+
+  // Close the modal when the close button is clicked
+  closeModal.addEventListener("click", () => {
+    modal2.style.display = "none";
+  });
+
+  // Close the modal if clicked outside the modal content
+  window.addEventListener("click", (event) => {
+    if (event.target === modal2) {
+      modal2.style.display = "none";
+    }
+  });
+
+  // Get modal elements
+  const modal3 = document.getElementById("modal3");
+  const closeModal3 = document.querySelector(".close-btn");
+  const modalTitle = document.getElementById("modal-title");
+  const modalBody = document.getElementById("modal-body");
+
+  // Add click event to each nav item
+  document.querySelectorAll('.nav-item a').forEach(item => {
+    item.addEventListener('click', function(event) {
+      event.preventDefault();
+
+      // Set modal content
+      modalTitle.textContent = `Blank Page`;
+      modalBody.textContent = `This is not implemented yet. Please check back later.`;
+
+      // Open the modal
+      modal3.style.display = "flex";
+    });
+  });
+
+  // Close the modal when the close button is clicked
+  closeModal3.addEventListener("click", () => {
+    modal3.style.display = "none";
+  });
+
+  // Close the modal if clicked outside the modal content
+  window.addEventListener("click", (event) => {
+    if (event.target === modal3) {
+      modal3.style.display = "none";
+    }
+  });
+
 </script>
+
+
+
 </body>
 </html>

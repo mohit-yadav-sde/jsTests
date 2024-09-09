@@ -3,134 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Muscle - Your Fitness Companion</title>
+    <title>Muscle - Fitness App</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            background: #f4f4f4;
-        }
-        .container {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            height: 100vh;
-        }
+        /* CSS Reset and General Styling */
+        body, html { height: 100%; margin: 0; font-family: Arial, sans-serif; }
+        * { box-sizing: border-box; }
+
+        /* Sidebar Styling */
         .sidebar {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
+            height: 100%; width: 250px; position: fixed; z-index: 1; top: 0; left: 0;
+            background-color: #111; overflow-x: hidden; padding-top: 20px;
         }
-        .nav-item {
-            padding: 10px;
-            margin: 5px 0;
-            cursor: pointer;
-            transition: background 0.3s;
+
+        .sidebar a {
+            padding: 15px 25px; text-decoration: none; font-size: 20px;
+            color: #818181; display: block; transition: 0.3s;
         }
-        .nav-item:hover, .nav-item.active {
-            background: #34495e;
+
+        .sidebar a:hover, .sidebar a.active {
+            color: #f1f1f1; background-color: #4CAF50;
         }
-        .content {
-            padding: 20px;
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px; padding: 20px;
         }
+
+        /* Responsive Design */
+        @media screen and (max-width: 700px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .sidebar a { float: left; }
+            .main-content { margin-left: 0; }
+        }
+
+        /* Activity Cards */
         .activity-card {
-            position: relative;
-            overflow: hidden;
-            width: 200px;
-            height: 200px;
-            margin: 10px;
-            display: inline-block;
+            position: relative; width: 200px; margin: 10px; display: inline-block;
         }
-        .activity-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+
+        .activity-card img { width: 100%; height: auto; }
+
+        .overlay {
+            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+            height: 100%; width: 100%; opacity: 1; transition: .5s ease;
+            background-color: rgba(0,0,0,0.7);
         }
-        .activity-overlay {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-            transition: opacity 0.3s;
+
+        .activity-card:hover .overlay { opacity: 0; }
+
+        .activity-name {
+            color: white; font-size: 20px; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center;
         }
-        .activity-card:hover .activity-overlay {
-            opacity: 0;
+
+        /* Weekly Calendar */
+        .calendar-item {
+            background: #f9f9f9; border-left: 10px solid #4CAF50; padding: 15px; margin-top: 10px;
         }
-        .gelatine-button {
-            padding: 10px 20px;
-            border: none;
-            background: #3498db;
-            color: white;
-            cursor: pointer;
-            transition: transform 0.1s;
+
+        /* Gelatine Effect */
+        .gelatine {
+            transition: all .2s ease-in-out;
         }
-        .gelatine-button:active {
-            transform: scale(0.95);
-        }
+
+        .gelatine:hover { transform: scale(1.1); }
+
+        /* Spinning Avatars */
         .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #3498db;
-            animation: spinBorder 5s linear infinite;
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid transparent; animation: spin 10s linear infinite;
         }
-        @keyframes spinBorder {
-            0% { border-color: #3498db; box-shadow: 0 0 5px #3498db; }
-            50% { border-color: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
-            100% { border-color: #3498db; box-shadow: 0 0 5px #3498db; }
-        }
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                display: none; /* Or implement a mobile menu */
-            }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <nav class="sidebar">
-        <ul>
-            <li class="nav-item active" data-section="home"><i class="fas fa-home"></i> Home</li>
-            <li class="nav-item" data-section="profile"><i class="fas fa-user"></i> Profile</li>
-            <li class="nav-item" data-section="schedule"><i class="fas fa-calendar-alt"></i> Schedule</li>
-            <li class="nav-item" data-section="activities"><i class="fas fa-running"></i> Activities</li>
-            <li class="nav-item" data-section="settings"><i class="fas fa-cog"></i> Settings</li>
-        </ul>
-    </nav>
-    <main class="content">
-        <h1>Welcome to Muscle</h1>
-        <section id="activities">
-            <h2>Activities</h2>
-            <div class="activity-card">
-                <img alt="Tennis" src="https://i.pinimg.com/564x/61/4c/c4/614cc42a8f76e1063a9176a1657e9f1a.jpg">
-                <div class="activity-overlay">Tennis</div>
-            </div>
-            <!-- Repeat for other activities -->
-        </section>
-        <section id="calendar">
-            <h2>Weekly Schedule</h2>
-            <!-- Implement calendar here -->
-            <button class="gelatine-button">Join</button>
-        </section>
-    </main>
+
+<div class="sidebar">
+    <a class="active" href="#home"><i class="fas fa-home"></i> Home</a>
+    <a href="#profile"><i class="fas fa-user"></i> Profile</a>
+    <a href="#schedule"><i class="fas fa-calendar-alt"></i> Schedule</a>
+    <a href="#activities"><i class="fas fa-running"></i> Activities</a>
+    <a href="#settings"><i class="fas fa-cog"></i> Settings</a>
 </div>
+
+<div class="main-content">
+    <h1>Welcome to Muscle</h1>
+
+    <!-- Activity Cards -->
+    <div class="activity-container">
+        <div class="activity-card">
+            <img alt="Tennis" src="path/to/tennis.jpg">
+            <div class="overlay">
+                <div class="activity-name">Tennis</div>
+            </div>
+        </div>
+        <!-- More activity cards here -->
+    </div>
+
+    <!-- Weekly Calendar -->
+    <div class="weekly-calendar">
+        <div class="calendar-item">
+            <h3>Tennis</h3>
+            <p>Date: 2023-05-10 | Participants: <img class="avatar" src="path/to/avatar1.jpg"> <img class="avatar" src="path/to/avatar2.jpg"></p>
+            <button class="gelatine">Join</button>
+        </div>
+        <!-- More calendar items here -->
+    </div>
+</div>
+
 <script>
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', function() {
-      document.querySelector('.nav-item.active').classList.remove('active');
+  document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      document.querySelector('.sidebar a.active').classList.remove('active');
       this.classList.add('active');
     });
   });
 </script>
+
 </body>
 </html>

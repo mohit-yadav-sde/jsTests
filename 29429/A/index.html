@@ -4,151 +4,140 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Muscle - Fitness App</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: 250px 1fr;
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
             height: 100vh;
+            margin: 0;
+            background: #f4f4f4;
         }
-
         .sidebar {
+            width: 250px;
             background: #333;
-            color: white;
-            padding: 1rem;
+            color: #fff;
+            padding-top: 20px;
         }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .sidebar li {
-            padding: 10px;
-            margin-bottom: 5px;
+        .nav-item {
+            padding: 10px 20px;
             cursor: pointer;
             transition: background 0.3s;
         }
-
-        .sidebar li.active, .sidebar li:hover {
-            background: #555;
+        .nav-item:hover, .nav-item.active {
+            background: #575757;
         }
-
         .main-content {
+            flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
         }
-
         .activity-card {
             position: relative;
-            display: inline-block;
+            width: 200px;
             margin: 10px;
             overflow: hidden;
             border-radius: 8px;
         }
-
         .activity-card img {
-            width: 200px;
-            height: 200px;
+            width: 100%;
             display: block;
-            transition: opacity 0.3s;
         }
-
         .overlay {
             position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            top: 0; bottom: 0; left: 0; right: 0;
             background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            opacity: 1;
             transition: opacity 0.3s;
+            opacity: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
         }
-
         .activity-card:hover .overlay {
             opacity: 0;
         }
-
-        .gelatin-button {
-            padding: 10px 20px;
-            background: #007BFF;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            transition: transform 0.1s;
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
         }
-
-        .gelatin-button:hover {
+        .day {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .gelatine {
+            transition: all 0.2s;
+        }
+        .gelatine:hover {
             transform: scale(1.05);
         }
-
         .avatar {
-            width: 40px;
-            height: 40px;
             border-radius: 50%;
-            border: 2px solid #007BFF;
+            border: 3px solid transparent;
             animation: spinBorder 5s linear infinite;
         }
-
         @keyframes spinBorder {
-            0% { border-color: #007BFF; box-shadow: 0 0 5px #007BFF; }
-            50% { border-color: #FF4500; box-shadow: 0 0 15px #FF4500; }
-            100% { border-color: #007BFF; box-shadow: 0 0 5px #007BFF; }
+            to { border-color: #3498db; }
         }
-
         @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                height: auto;
-            }
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; }
         }
     </style>
 </head>
 <body>
-<div class="grid-container">
-    <nav class="sidebar">
-        <ul>
-            <li class="active"><i class="fas fa-home"></i> Home</li>
-            <li><i class="fas fa-user"></i> Profile</li>
-            <li><i class="fas fa-calendar-alt"></i> Schedule</li>
-            <li><i class="fas fa-dumbbell"></i> Activities</li>
-            <li><i class="fas fa-cog"></i> Settings</li>
-        </ul>
-    </nav>
-    <main class="main-content">
-        <h1>Welcome to Muscle</h1>
-        <!-- Activity Cards -->
-        <div class="activities">
-            <div class="activity-card">
-                <img alt="Tennis" src="https://i.pinimg.com/564x/61/4c/c4/614cc42a8f76e1063a9176a1657e9f1a.jpg">
-                <div class="overlay">Tennis</div>
-            </div>
-            <!-- Add other activities similarly -->
-        </div>
-        <!-- Weekly Calendar and other content would go here -->
-    </main>
+
+<div class="sidebar">
+    <div class="nav-item active" data-nav="home">Home</div>
+    <div class="nav-item" data-nav="profile">Profile</div>
+    <div class="nav-item" data-nav="schedule">Schedule</div>
+    <div class="nav-item" data-nav="activities">Activities</div>
+    <div class="nav-item" data-nav="settings">Settings</div>
 </div>
 
+<div class="main-content" id="contentArea">
+    <!-- Content will be dynamically loaded here -->
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  document.querySelectorAll('.sidebar li').forEach(item => {
-    item.addEventListener('click', function() {
-      document.querySelector('.sidebar li.active').classList.remove('active');
-      this.classList.add('active');
+  $(document).ready(function() {
+    // Highlight active nav item
+    $('.nav-item').click(function() {
+      $('.nav-item').removeClass('active');
+      $(this).addClass('active');
+      // Here you would typically load content dynamically
+      // For simplicity, this example does not include content loading
     });
+
+    // Gelatine effect
+    $('.gelatine').on('mouseenter mouseleave', function(e) {
+      $(this).toggleClass('active');
+      if(e.type === 'mouseenter') {
+        $(this).css('transform', 'scale(1.05)');
+      } else {
+        $(this).css('transform', 'scale(1)');
+      }
+    });
+
+    // Placeholder for dynamic content
+    $('#contentArea').html(`
+        <h1>Welcome to Muscle</h1>
+        <div class="activities">
+            <div class="activity-card">
+                <img src="path_to_tennis_image.jpg" alt="Tennis">
+                <div class="overlay">Tennis</div>
+            </div>
+            <!-- More activity cards -->
+        </div>
+        <div class="calendar">
+            <!-- Calendar days with activities -->
+        </div>
+    `);
   });
 </script>
+
 </body>
 </html>
