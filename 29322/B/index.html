@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Wikipedia Crawler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+        }
+        #searchBar {
+            width: calc(100% - 40px);
+        }
+        .voice-icon {
+            cursor: pointer;
+            color: #007bff;
+        }
+        #history {
+            background: white;
+            border-radius: 8px;
+            margin-top: 20px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .result-item {
+            background: white;
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Wikipedia Crawler</h1>
+    <div class="input-group mb-3">
+        <input class="form-control" id="searchBar" placeholder="Search Wikipedia..." type="text">
+        <span class="input-group-text voice-icon" onclick="startVoiceSearch()">🎤</span>
+    </div>
+    <button class="btn btn-primary w-100 mb-3" onclick="searchWiki()">Search</button>
+
+    <div class="mb-3" id="history">
+        <h5>Search History</h5>
+        <ul id="historyList"></ul>
+    </div>
+
+    <div id="results"></div>
+</div>
+
+<script>
+  // Web Speech API for voice recognition
+  function startVoiceSearch() {
+    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('searchBar').value = transcript;
+        searchWiki();
+      };
+      recognition.start();
+    } else {
+      alert('Speech Recognition not supported');
+    }
+  }
+
+  function searchWiki() {
+    const term = document.getElementById('searchBar').value;
+    if (!term) return;
+
+    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*`)
+      .then(response => response.json())
+      .then(data => {
+        displayResults(data.query.search);
+        updateHistory(term);
+      });
+  }
+
+  function displayResults(results) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+    results.forEach(result => {
+      const div = document.createElement('div');
+      div.className = 'result-item';
+      div.innerHTML = `<h4><a href="https://en.wikipedia.org/?curid=${result.pageid}" target="_blank">${result.title}</a></h4>
+                             <p>${result.snippet}</p>`;
+      resultsDiv.appendChild(div);
+    });
+  }
+
+  function updateHistory(term) {
+    let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    if (history.includes(term)) history = history.filter(t => t !== term);
+    history.unshift(term);
+    if (history.length > 5) history.pop();
+    localStorage.setItem('searchHistory', JSON.stringify(history));
+    displayHistory();
+  }
+
+  function displayHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    history.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      list.appendChild(li);
+    });
+  }
+
+  // Initial history display
+  displayHistory();
+</script>
+</body>
+</html>

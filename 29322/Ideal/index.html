@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Advanced Wikipedia Search</title>
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="app.js" type="text/javascript"></script>
+</head>
+
+<body>
+<style>
+    /* General body styling */
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: white;
+        color: black;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Main container for flex layout */
+    .main-container {
+        display: flex;
+        width: 80%;
+        margin-top: 20px;
+    }
+
+    .sidebar {
+        width: 25%;
+        background-color: #f4f4f4;
+        padding: 20px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        height: 100vh;
+
+    }
+
+    .sidebar h2 {
+        margin-bottom: 15px;
+    }
+
+    .history-list {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+
+    .history-item {
+        padding: 10px;
+        background-color: #f0f0f0;
+        margin: 5px 0;
+        cursor: pointer;
+    }
+
+    .history-item:hover {
+        background-color: #ccc;
+    }
+
+    /* Content area styling */
+    .content {
+        width: 75%;
+        padding: 20px;
+    }
+
+    .search-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    #search {
+        width: 80%;
+        height: 45px;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 18px;
+        border: 1px solid #ccc;
+        transition: width 0.3s ease;
+    }
+
+    #search:focus {
+        width: 90%;
+    }
+
+    .voice-button {
+        height: 45px;
+        margin-left: 10px;
+        padding: 0 20px;
+        border-radius: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+    }
+
+    .voice-button:hover {
+        background-color: #0056b3;
+    }
+
+    #suggestions {
+        margin-top: 10px;
+        text-align: left;
+    }
+
+    .suggestion {
+        background-color: #eee;
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .suggestion:hover {
+        background-color: #ccc;
+    }
+
+    /* Search results card layout */
+    .searchResult {
+        background-color: #fff;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    .searchResult img {
+        width: 50px;
+        height: 50px;
+        margin-right: 15px;
+        border-radius: 5px;
+    }
+
+    .searchResult:hover {
+        background-color: #f9f9f9;
+    }
+
+    .load-more-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .load-more-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Loader styling */
+    #loader {
+        font-size: 20px;
+        margin-top: 20px;
+    }
+
+    /* Dark mode styling */
+    .dark-mode {
+        background-color: #333;
+        color: #000000;
+    }
+
+    .dark-mode .searchResult {
+        background-color: #fff;
+    }
+
+    .dark-mode .suggestion {
+        background-color: #fff;
+    }
+    .toggle-button {
+        background-color: #007bff;
+        margin-top: 20px;
+        padding: 4px 8px;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    #filter{
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+</style>
+<div class="main-container">
+    <aside class="sidebar">
+        <h2>Search History</h2>
+        <div class="history-list" id="history"></div>
+
+        <h2>Filters</h2>
+        <div>
+            <label for="filter">Filter by: </label>
+            <select id="filter">
+                <option value="title">Title</option>
+                <option value="text">Text</option>
+            </select>
+        </div>
+
+        <button class ="toggle-button" id="darkModeToggle">Toggle Dark Mode</button>
+    </aside>
+
+    <main class="content">
+        <div class="search-container">
+            <input autocomplete="off" id="search" placeholder="Search Wikipedia" type="text" />
+            <button class="voice-button" id="voiceSearch">🎤  Search</button>
+
+        </div>
+        <div id="suggestions"></div>
+        <div id="loader" style="display: none;">Loading...</div>
+
+        <div id="results"></div>
+
+        <button class="load-more-button" id="loadMore" style="display:none;">Load More</button>
+    </main>
+</div>
+<script>
+
+  $(document).ready(function () {
+    let page = 1;
+    const resultsPerPage = 10;
+
+    function debounce(func, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    function showLoader() {
+      $("#loader").show();
+    }
+
+    function hideLoader() {
+      $("#loader").hide();
+    }
+
+    function performSearch(isLoadMore = false) {
+      const query = $("#search").val().trim();
+      const filter = $("#filter").val();
+
+      if (!query) {
+        alert("Please enter a search term.");
+        return;
+      }
+
+      $("#suggestions").empty();
+
+
+      if (!isLoadMore) {
+        page = 1;
+        $("#results").empty();
+      }
+
+      const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=${resultsPerPage}&sroffset=${(page - 1) * resultsPerPage}&utf8=&formatversion=2&prop=pageimages&piprop=thumbnail&pithumbsize=100`;
+
+      $.ajax({
+        url: apiUrl,
+        dataType: "jsonp",
+        beforeSend: showLoader,
+        complete: hideLoader,
+        success: function (data) {
+          if (data.query && data.query.search.length > 0) {
+            data.query.search.forEach(result => {
+              console.log(data);
+              const title = result.title;
+              const snippet = result.snippet;
+              const pageUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+              const page = data.query.pages ? data.query.pages[result.pageid] : null;
+              const thumbnail = page && page.thumbnail ? page.thumbnail.source : 'https://via.placeholder.com/50';
+
+              $("#results").append(`
+                            <a href="${pageUrl}" target="_blank" style="text-decoration:none;">
+                                <div class="searchResult">
+                                    <img src="${thumbnail}" alt="${title}" />
+                                    <div>
+                                        <strong>${title}</strong><br>
+                                        <span>${snippet}</span>
+                                    </div>
+                                </div>
+                            </a>
+                        `);
+            });
+
+            if (data.continue) {
+              $("#loadMore").show();
+            } else {
+              $("#loadMore").hide();
+            }
+          } else {
+            $("#results").append('<div>No results found.</div>');
+          }
+        },
+        error: function () {
+          alert("Error fetching results from Wikipedia. Please try again.");
+        }
+      });
+    }
+
+    function loadSearchHistory() {
+      displaySearchHistory();
+    }
+
+    function saveSearch(query) {
+      let history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+      if (history.includes(query)) {
+        history = history.filter(item => item !== query);
+      }
+
+      history.unshift(query);
+      if (history.length > 5) {
+        history.pop();
+      }
+      localStorage.setItem("searchHistory", JSON.stringify(history));
+      displaySearchHistory();
+    }
+
+    $(document).on("keydown", function (e) {
+      if (e.key === "Enter") {
+        performSearch();
+        saveSearch($("#search").val().trim());y
+      }
+    });
+
+    $(document).on("click", ".suggestion", function () {
+      $("#search").val($(this).text());
+      performSearch();
+      saveSearch($("#search").val().trim()); // Save search query and update history
+    });
+
+    function displaySearchHistory() {
+      const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+      $("#history").empty(); // Clear the current history display
+
+      history.forEach(item => {
+        $("#history").append(`<div class="history-item">${item}</div>`);
+      });
+    }
+
+    function showSuggestions() {
+      const query = $("#search").val().trim();
+      if (query === "") {
+        $("#suggestions").empty();
+        return;
+      }
+
+      const suggestUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=5&format=json&origin=*`;
+
+      $.ajax({
+        url: suggestUrl,
+        dataType: "jsonp",
+        success: function (data) {
+          $("#suggestions").empty();
+          const suggestions = data[1]; // Array of suggestion titles
+          if (suggestions.length > 0) {
+            suggestions.forEach(suggestion => {
+              $("#suggestions").append(`<div class="suggestion">${suggestion}</div>`);
+            });
+          }
+        }
+      });
+    }
+
+    $("#darkModeToggle").on("click", function () {
+      $("body").toggleClass("dark-mode");
+    });
+
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.onresult = function (event) {
+      const speechResult = event.results[0][0].transcript;
+      $("#search").val(speechResult);
+      performSearch();
+    };
+
+    $("#voiceSearch").on("click", function () {
+      recognition.start();
+    });
+
+    $("#search").on("input", debounce(function () {
+      showSuggestions();
+    }, 300));
+
+    $(document).on("keydown", function (e) {
+      if (e.key === "Enter") {
+        performSearch();
+        saveSearch($("#search").val().trim()); // Save search query
+      }
+    });
+
+    $(document).on("click", ".suggestion", function () {
+      $("#search").val($(this).text());
+      performSearch();
+    });
+
+    $(document).on("click", ".history-item", function () {
+      $("#search").val($(this).text());
+      performSearch();
+    });
+
+    $("#loadMore").on("click", function () {
+      page++;
+      performSearch(true);
+    });
+
+    loadSearchHistory();
+  });
+
+</script>
+</body>
+</html>
