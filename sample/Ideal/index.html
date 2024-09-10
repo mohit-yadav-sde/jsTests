@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable Analog Clock</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .controls label, select {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <label for="clock-style">Clock Style</label>
+    <select id="clock-style">
+        <option value="classic">Classic</option>
+        <option value="modern">Modern</option>
+        <option value="minimal">Minimal</option>
+    </select>
+    <label for="timezone">Time Zone</label>
+    <select id="timezone">
+        <option value="local">Local Time</option>
+        <option value="UTC">UTC</option>
+    </select>
+    <label for="mode">Mode</label>
+    <select id="mode">
+        <option value="clock">Clock</option>
+        <option value="stopwatch">Stopwatch</option>
+        <option value="timer">Timer</option>
+    </select>
+    <button id="start-stopwatch" style="display: none;">Start Stopwatch</button>
+    <button id="reset-stopwatch" style="display: none;">Reset Stopwatch</button>
+    <button id="start-timer" style="display: none;">Start Timer (5 mins)</button>
+    <button id="reset-timer" style="display: none;">Reset Timer</button>
+</div>
+
+<script>
+  let clockStyle = localStorage.getItem('clockStyle') || 'classic';
+  let timezone = localStorage.getItem('timezone') || 'local';
+  let mode = localStorage.getItem('mode') || 'clock';
+  let canvasSize = 400;
+  let stopwatchTime = 0;
+  let timerTime = 300;  // 5-minute timer
+  let stopwatchRunning = false;
+  let timerRunning = false;
+  let lastTime = 0;
+
+  function setup() {
+    createCanvas(canvasSize, canvasSize);
+    angleMode(DEGREES);
+    noStroke();
+
+    // Set initial values from local storage
+    document.getElementById('clock-style').value = clockStyle;
+    document.getElementById('timezone').value = timezone;
+    document.getElementById('mode').value = mode;
+
+    // Event listeners for controls
+    document.getElementById('clock-style').addEventListener('change', (e) => {
+      clockStyle = e.target.value;
+      localStorage.setItem('clockStyle', clockStyle);
+    });
+
+    document.getElementById('timezone').addEventListener('change', (e) => {
+      timezone = e.target.value;
+      localStorage.setItem('timezone', timezone);
+    });
+
+    document.getElementById('mode').addEventListener('change', (e) => {
+      mode = e.target.value;
+      localStorage.setItem('mode', mode);
+      updateModeControls();
+    });
+
+    // Stopwatch and Timer controls
+    document.getElementById('start-stopwatch').addEventListener('click', () => {
+      stopwatchRunning = !stopwatchRunning;
+      document.getElementById('start-stopwatch').textContent = stopwatchRunning ? 'Pause Stopwatch' : 'Start Stopwatch';
+    });
+
+    document.getElementById('reset-stopwatch').addEventListener('click', () => {
+      stopwatchRunning = false;
+      stopwatchTime = 0;
+      document.getElementById('start-stopwatch').textContent = 'Start Stopwatch';
+    });
+
+    document.getElementById('start-timer').addEventListener('click', () => {
+      timerRunning = !timerRunning;
+      document.getElementById('start-timer').textContent = timerRunning ? 'Pause Timer' : 'Start Timer';
+    });
+
+    document.getElementById('reset-timer').addEventListener('click', () => {
+      timerRunning = false;
+      timerTime = 300;  // Reset to 5 minutes
+      document.getElementById('start-timer').textContent = 'Start Timer';
+    });
+
+    updateModeControls();
+  }
+
+  function draw() {
+    backgroundGradient(); // Dynamic background based on time
+
+    if (mode === 'clock') {
+      let now = timezone === 'UTC' ? new Date(new Date().toUTCString()) : new Date();
+      let hours = now.getHours() % 12;
+      let minutes = now.getMinutes();
+      let seconds = now.getSeconds();
+      drawClock(hours, minutes, seconds);
+    } else if (mode === 'stopwatch') {
+      drawStopwatch();
+    } else if (mode === 'timer') {
+      drawTimer();
+    }
+  }
+
+  function drawClock(hours, minutes, seconds) {
+    translate(width / 2, height / 2);
+    let hourAngle = map(hours + norm(minutes, 0, 60), 0, 12, 0, 360);
+    let minuteAngle = map(minutes, 0, 60, 0, 360);
+    let secondAngle = map(seconds, 0, 60, 0, 360);
+
+    if (clockStyle === 'classic') {
+      drawHand(hourAngle, canvasSize / 4, 8, '#FF5733');
+      drawHand(minuteAngle, canvasSize / 3, 6, '#33FFBD');
+      drawHand(secondAngle, canvasSize / 2.5, 4, '#33A1FF');
+    } else if (clockStyle === 'modern') {
+      drawArc(hourAngle, minuteAngle, secondAngle);
+    } else if (clockStyle === 'minimal') {
+      drawMinimalHands(hourAngle, minuteAngle, secondAngle);
+    }
+  }
+
+  function drawStopwatch() {
+    translate(width / 2, height / 2);
+    if (stopwatchRunning) {
+      stopwatchTime += deltaTime / 1000;
+    }
+    let seconds = stopwatchTime % 60;
+    let minutes = floor(stopwatchTime / 60) % 60;
+    let hours = floor(stopwatchTime / 3600);
+    let secondAngle = map(seconds, 0, 60, 0, 360);
+    let minuteAngle = map(minutes, 0, 60, 0, 360);
+    let hourAngle = map(hours, 0, 12, 0, 360);
+    drawClock(hours, minutes, seconds);
+  }
+
+  function drawTimer() {
+    translate(width / 2, height / 2);
+    if (timerRunning) {
+      timerTime -= deltaTime / 1000;
+      if (timerTime <= 0) {
+        timerRunning = false;
+        timerTime = 0; // Timer reached zero
+      }
+    }
+    let seconds = timerTime % 60;
+    let minutes = floor(timerTime / 60) % 60;
+    let hours = floor(timerTime / 3600);
+    drawClock(hours, minutes, seconds);
+  }
+
+  function drawHand(angle, length, weight, color) {
+    stroke(color);
+    strokeWeight(weight);
+    line(0, 0, cos(angle - 90) * length, sin(angle - 90) * length);
+  }
+
+  function drawArc(hourAngle, minuteAngle, secondAngle) {
+    noFill();
+    strokeWeight(8);
+    stroke('#FF5733');
+    arc(0, 0, canvasSize - 50, canvasSize - 50, -90, hourAngle - 90);
+    stroke('#33FFBD');
+    arc(0, 0, canvasSize - 70, canvasSize - 70, -90, minuteAngle - 90);
+    stroke('#33A1FF');
+    arc(0, 0, canvasSize - 90, canvasSize - 90, -90, secondAngle - 90);
+  }
+
+  function drawMinimalHands(hourAngle, minuteAngle, secondAngle) {
+    strokeWeight(2);
+    stroke('#FF5733');
+    line(0, 0, cos(hourAngle - 90) * canvasSize / 4, sin(hourAngle - 90) * canvasSize / 4);
+    stroke('#33FFBD');
+    line(0, 0, cos(minuteAngle - 90) * canvasSize / 3, sin(minuteAngle - 90) * canvasSize / 3);
+    stroke('#33A1FF');
+    line(0, 0, cos(secondAngle - 90) * canvasSize / 2.5, sin(secondAngle - 90) * canvasSize / 2.5);
+  }
+
+  function backgroundGradient() {
+    let now = timezone === 'UTC' ? new Date(new Date().toUTCString()) : new Date();
+    let hour = now.getHours();
+
+    let color1, color2;
+    if (hour >= 6 && hour <

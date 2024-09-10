@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Image Resizer and Compressor</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #preview, #resizedPreview { max-width: 300px; max-height: 300px; margin: 10px; border: 1px solid #ccc; }
+        .container { text-align: center; padding: 20px; }
+        .button { padding: 10px; margin: 10px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pica/9.0.1/pica.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Image Upload, Resize & Compress</h1>
+    <input accept="image/*" id="fileInput" type="file">
+    <button class="button" id="resizeButton">Resize & Compress</button>
+    <div>
+        <h3>Original Image</h3>
+        <img alt="Preview will appear here" id="preview" src="" style="display:none;">
+    </div>
+    <div>
+        <h3>Resized & Compressed Image</h3>
+        <img alt="Resized image will appear here" id="resizedPreview" src="" style="display:none;">
+        <br>
+        <a class="button" id="downloadLink" style="display:none;">Download</a>
+    </div>
+</div>
+
+<script>
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview').src = e.target.result;
+      document.getElementById('preview').style.display = 'inline';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('resizeButton').addEventListener('click', function() {
+    let img = document.getElementById('preview');
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
+
+    // Set canvas dimensions for resizing
+    canvas.width = 300; // New width
+    canvas.height = 300; // New height
+
+    // Use pica for high-quality resizing
+    pica().resize(img, canvas, {
+      unsharpAmount: 80,
+      unsharpRadius: 0.6,
+      unsharpThreshold: 2
+    }).then(() => {
+      // Convert canvas to blob for compression
+      canvas.toBlob(function(blob) {
+        let url = URL.createObjectURL(blob);
+        document.getElementById('resizedPreview').src = url;
+        document.getElementById('resizedPreview').style.display = 'inline';
+        document.getElementById('downloadLink').href = url;
+        document.getElementById('downloadLink').download = 'resized_compressed_image.png';
+        document.getElementById('downloadLink').style.display = 'inline';
+      }, 'image/jpeg', 0.85); // 85% quality for jpeg
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Image Resizer and Compressor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Segoe UI", Tahoma,
+            Geneva, Verdana, sans-serif;
+            background-color: #eefd97;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #eeeeee;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px
+            rgba(0, 0, 0, 0.1);
+            max-width: 550px;
+            width: 100%;
+        }
+        .title {
+            background-color: #a0fd94;
+            font-size: 32px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .image-upload {
+            text-align: center;
+        }
+        .upload-label {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 5px
+            rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-label:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .upload-label i {
+            margin-right: 8px;
+            font-size: 24px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .output {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .preview-label {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px
+            rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+        img:hover {
+            transform: scale(1.05);
+        }
+        .controls {
+            margin-top: 30px;
+        }
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 70%;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+            transition: border-color 0.3s;
+        }
+        input[type="number"]:focus,
+        input[type="range"]:focus,
+        select:focus {
+            border-color: #007bff;
+        }
+        .quality-group {
+            position: relative;
+        }
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 10px;
+            border-radius: 8px;
+            background: #ccc;
+            outline: none;
+            transition: background 0.3s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            box-shadow: 0 2px 5px
+            rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+        .quality-group:hover
+        input[type="range"] {
+            background: #0056b3;
+        }
+        .quality-value {
+            position: absolute;
+            top: -1px;
+            left: calc(106% - 25px);
+            color: #ff0000;
+            font-size: 18px;
+            background-color: rgb(
+                    136,
+                    223,
+                    169
+            );
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-size: 20px;
+            border-radius: 8px;
+            transition: background-color 0.3s,
+            transform 0.3s;
+            box-shadow: 0 4px 10px
+            rgba(0, 0, 0, 0.2);
+            outline: none;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .download-button {
+            background-color: #0056b3;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-size: 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: background-color 0.3s,
+            transform 0.3s;
+            box-shadow: 0 4px 10px
+            rgba(0, 0, 0, 0.2);
+        }
+        .download-button:hover {
+            background-color: #004180;
+            transform: scale(1.05);
+        }
+        #resizeUnit {
+            width: 60%;
+            font-size: 18px;
+            margin-right: 100px;
+        }
+        #pixel-dimensions,
+        #percentage-dimensions,
+        #pixel-height-dimensions {
+            display: flex;
+            align-items: center;
+        }
+        #pixel-dimensions span,
+        #percentage-dimensions span,
+        #pixel-height-dimensions span {
+            margin-left: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="title">Image Resizer and Compressor</h1>
+        <div class="image-upload">
+            <label class="upload-label" for="imageInput">
+                <i class="fas fa-cloud-upload-alt"></i> Upload an Image
+            </label>
+            <input accept="image/*" id="imageInput" type="file">
+        </div>
+        <div id="action-form" style="display: none;">
+            <div class="output">
+                <h2 class="preview-label">Preview:</h2>
+                <img alt="Preview" id="preview">
+                <p id="image-dimensions" style="margin-top: 10px;"></p>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="resizeUnit">Unit:</label>
+                    <select id="resizeUnit">
+                        <option value="pixels">Pixels</option>
+                        <option value="percentage">Percentage</option>
+                    </select>
+                </div>
+                <div class="control-group" id="pixel-dimensions">
+                    <label for="resizeWidth">Width:</label>
+                    <input id="resizeWidth" min="10" placeholder="Width" type="number">
+                    <span>px</span>
+                </div>
+                <div class="control-group" id="percentage-dimensions" style="display: none;">
+                    <label for="resizePercentage">Percent:</label>
+                    <input id="resizePercentage" max="100" min="1" placeholder="Percentage" type="number">
+                    <span>%</span>
+                </div>
+                <div class="control-group" id="pixel-height-dimensions">
+                    <label for="resizeHeight">Height:</label>
+                    <input id="resizeHeight" min="10" placeholder="Height" type="number">
+                    <span>px</span>
+                </div>
+                <div class="control-group quality-group">
+                    <label for="quality">Quality:</label>
+                    <input id="quality" max="100" min="1" type="range" value="80">
+                    <span class="quality-value" id="quality-value">80</span>
+                </div>
+                <button disabled id="resizeButton">Resize & Compress</button>
+                <a class="download-button" id="downloadButton" style="display: none">Download Compressed Image</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const imgInput = document.getElementById("imageInput");
+            const imgShow = document.getElementById("preview");
+            const rUnit = document.getElementById("resizeUnit");
+            const resizeWidth = document.getElementById("resizeWidth");
+            const resizePercentage = document.getElementById("resizePercentage");
+            const dimensions = document.getElementById("pixel-dimensions");
+            const percentageDimensions = document.getElementById("percentage-dimensions");
+            const pixelHeightDimensions = document.getElementById("pixel-height-dimensions");
+            const imgQuality = document.getElementById("quality");
+            const qualValue = document.getElementById("quality-value");
+            const resizeBtn = document.getElementById("resizeButton");
+            const downloadBtn = document.getElementById("downloadButton");
+            const imgDimensions = document.getElementById("image-dimensions");
+            const action = document.getElementById("action-form");
+            let imageResized = false;
+
+            const updateQualVal = () => {
+                qualValue.innerText = imgQuality.value;
+            };
+            updateQualVal();
+            imgQuality.addEventListener("input", updateQualVal);
+
+            imgInput.addEventListener("change", () => {
+                const imgFile = imgInput.files[0];
+                if (imgFile) {
+                    const readFile = new FileReader();
+                    readFile.onload = (e) => {
+                        imgShow.src = e.target.result;
+                        showActionForm();
+                        showImageDim(imgFile);
+                        resizeBtn.disabled = false;
+                    };
+                    readFile.onerror = () => {
+                        alert('Error reading file');
+                    };
+                    readFile.readAsDataURL(imgFile);
+                }
+            });
+
+            const showActionForm = () => {
+                action.style.display = "block";
+            };
+
+            const showImageDim = (imgFile) => {
+                const image = new Image();
+                image.onload = () => {
+                    const width = image.width;
+                    const height = image.height;
+                    imgDimensions.innerText = `Image Dimensions: ${width} x ${height} pixels`;
+                };
+                image.src = URL.createObjectURL(imgFile);
+            };
+
+            const dimFieldsShow = () => {
+                if (rUnit.value === "pixels") {
+                    dimensions.style.display = "block";
+                    pixelHeightDimensions.style.display = "block";
+                    percentageDimensions.style.display = "none";
+                } else {
+                    dimensions.style.display = "none";
+                    pixelHeightDimensions.style.display = "none";
+                    percentageDimensions.style.display = "block";
+                }
+            };
+            rUnit.addEventListener("change", dimFieldsShow);
+
+            const updateDimensions = () => {
+                if (rUnit.value === "pixels") {
+                    imgDimensions.innerText = `Image Dimensions: ${resizeWidth.value} x ${resizeHeight.value} pixels`;
+                } else {
+                    const percentage = parseInt(resizePercentage.value);
+                    if (!isNaN(percentage)) {
+                        const width = (imgShow.width * percentage) / 100;
+                        const height = (imgShow.height * percentage) / 100;
+                        imgDimensions.innerText = `Image Dimensions: ${Math.round(width)} x ${Math.round(height)} pixels`;
+                    }
+                }
+            };
+
+            resizeBtn.addEventListener("click", () => {
+                if (imageResized) {
+                    return;
+                }
+                let width, height;
+                if (rUnit.value === "percentage") {
+                    const percentage = parseInt(resizePercentage.value);
+                    if (isNaN(percentage) || percentage < 1 || percentage > 100) {
+                        alert('Please enter a valid percentage (1-100).');
+                        return;
+                    }
+                    width = (imgShow.width * percentage) / 100;
+                    height = (imgShow.height * percentage) / 100;
+                    resizeWidth.value = width;
+                    resizeHeight.value = height;
+                } else {
+                    width = parseInt(resizeWidth.value);
+                    height = parseInt(resizeHeight.value);
+                    if (isNaN(width) || width < 2 || isNaN(height) || height < 2) {
+                        alert('Please enter valid dimensions (minimum 2px).');
+                        return;
+                    }
+                }
+                const imageQuality = parseInt(imgQuality.value) / 100;
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                const imageObj = new Image();
+                imageObj.onload = () => {
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(imageObj, 0, 0, width, height);
+                    const resizedDataUrl = canvas.toDataURL("image/jpeg", imageQuality);
+                    imgShow.src = resizedDataUrl;
+                    downloadBtn.style.display = "inline-block";
+                    downloadBtn.href = resizedDataUrl;
+                    downloadBtn.download = "compressed-image.jpg";
+                    updateDimensions();
+                    imageResized = true;
+                };
+                imageObj.src = imgShow.src;
+            });
+        });
+    </script>
+</body>
+
+</html>
