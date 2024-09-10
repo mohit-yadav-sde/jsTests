@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Dynamic Resume Builder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.2.2/introjs.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: space-around;
+            background: #f4f4f4;
+        }
+        .editor, .preview {
+            width: 45%;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .editor:hover, .preview:hover {
+            transform: scale(1.02);
+        }
+        .template-btn {
+            margin: 5px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .template-btn:hover {
+            background-color: #e0e0e0;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            margin-top: 5px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            border-color: #007BFF;
+        }
+        #pdfDownload {
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="editor">
+    <h2 data-intro="Start by entering your details here." data-step="1">Resume Editor</h2>
+    <button class="template-btn" onclick="changeTemplate('default')">Default</button>
+    <button class="template-btn" onclick="changeTemplate('modern')">Modern</button>
+    <!-- More template buttons could be added here -->
+
+    <div class="section">
+        <label for="name">Name:</label>
+        <input id="name" oninput="updatePreview('name', this.value)" type="text">
+    </div>
+    <!-- Add more fields for experience, education, etc. -->
+    <button id="pdfDownload">Download PDF</button>
+</div>
+
+<div class="preview" id="resumePreview">
+    <h2>Preview</h2>
+    <!-- Dynamic content will be inserted here -->
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.2.2/intro.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+<script>
+  function updatePreview(id, value) {
+    document.getElementById(id + 'Preview').innerText = value;
+  }
+
+  function changeTemplate(template) {
+    // Logic to change template styles
+    $('#resumePreview').removeClass().addClass(template);
+  }
+
+  document.getElementById('pdfDownload').onclick = function() {
+    const element = document.getElementById('resumePreview');
+    html2pdf().from(element).save('resume.pdf');
+  };
+
+  // Start interactive tutorial
+  $(document).ready(function() {
+    introJs().start();
+  });
+</script>
+
+</body>
+</html>

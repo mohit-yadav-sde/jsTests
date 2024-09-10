@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Dynamic Resume Builder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.3.0/introjs.min.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .container {
+        display: flex;
+        width: 90%;
+        max-width: 1200px;
+    }
+
+    .builder {
+        width: 50%;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview {
+        width: 50%;
+        padding: 20px;
+        background-color: #fafafa;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-list {
+        margin-bottom: 20px;
+    }
+
+    .section {
+        background-color: #f0f0f0;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        cursor: move;
+    }
+
+    .preview-section {
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 60px;
+        margin-top: 10px;
+    }
+
+    .controls {
+        margin-top: 20px;
+    }
+
+    .btn {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    #resume-preview {
+        font-family: sans-serif;
+    }
+
+    #template-select {
+        padding: 5px;
+        margin-left: 10px;
+    }
+
+</style>
+<div class="container">
+    <div class="builder">
+        <h2>Resume Sections</h2>
+        <div class="section-list" id="section-list">
+            <div class="section" data-section="profile">
+                <h3>Profile</h3>
+                <textarea placeholder="Write your profile..."></textarea>
+            </div>
+            <div class="section" data-section="experience">
+                <h3>Work Experience</h3>
+                <textarea placeholder="List your work experience..."></textarea>
+            </div>
+            <div class="section" data-section="education">
+                <h3>Education</h3>
+                <textarea placeholder="List your education details..."></textarea>
+            </div>
+            <div class="section" data-section="skills">
+                <h3>Skills</h3>
+                <textarea placeholder="List your skills..."></textarea>
+            </div>
+        </div>
+        <div class="controls">
+            <label for="template-select">Select Template:</label>
+            <select id="template-select">
+                <option value="modern">Modern</option>
+                <option value="classic">Classic</option>
+            </select>
+            <button class="btn" id="downloadPdf">Download PDF</button>
+            <button class="btn" id="start-tutorial">Show Tutorial</button>
+        </div>
+    </div>
+
+    <!-- Right Panel - Real-Time Preview -->
+    <div class="preview">
+        <h2>Preview</h2>
+        <div class="resume-preview" id="resume-preview">
+            <div class="preview-section" id="preview-profile">
+                <h3>Profile</h3>
+                <p></p>
+            </div>
+            <div class="preview-section" id="preview-experience">
+                <h3>Work Experience</h3>
+                <p></p>
+            </div>
+            <div class="preview-section" id="preview-education">
+                <h3>Education</h3>
+                <p></p>
+            </div>
+            <div class="preview-section" id="preview-skills">
+                <h3>Skills</h3>
+                <p></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.3.0/intro.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // Set up Sortable for drag-and-drop functionality
+  const sectionList = document.getElementById('section-list');
+  const preview = document.getElementById('resume-preview');
+  Sortable.create(sectionList, {
+    animation: 150,
+    onEnd: function () {
+      updatePreviewOrder();
+    }
+  });
+
+  // Update real-time preview when text is changed
+  document.querySelectorAll('.section textarea').forEach(textarea => {
+    textarea.addEventListener('input', updatePreview);
+  });
+
+  // Update the order of preview sections based on drag-and-drop
+  function updatePreviewOrder() {
+    const order = Array.from(sectionList.children).map(section => section.getAttribute('data-section'));
+    order.forEach((section, index) => {
+      const previewSection = document.getElementById(`preview-${section}`);
+      preview.appendChild(previewSection);
+    });
+  }
+
+  // Update the preview content in real-time
+  function updatePreview() {
+    const sections = ['profile', 'experience', 'education', 'skills'];
+    sections.forEach(section => {
+      const text = document.querySelector(`.section[data-section="${section}"] textarea`).value;
+      document.querySelector(`#preview-${section} p`).innerText = text;
+    });
+  }
+
+  // Switch between templates
+  document.getElementById('template-select').addEventListener('change', function () {
+    const selectedTemplate = this.value;
+    const preview = document.getElementById('resume-preview');
+    if (selectedTemplate === 'modern') {
+      preview.style.fontFamily = 'Arial, sans-serif';
+    } else if (selectedTemplate === 'classic') {
+      preview.style.fontFamily = 'Georgia, serif';
+    }
+  });
+
+  // PDF Export using jsPDF
+  document.getElementById('downloadPdf').addEventListener('click', function () {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y = 20;
+    doc.text('Resume', 105, y, { align: 'center' });
+    y += 10;
+
+    document.querySelectorAll('.preview-section').forEach(section => {
+      doc.text(section.querySelector('h3').innerText, 10, y);
+      y += 10;
+      doc.text(section.querySelector('p').innerText, 10, y);
+      y += 20;
+    });
+
+    doc.save('resume.pdf');
+  });
+
+  // Tutorial using intro.js
+  document.getElementById('start-tutorial').addEventListener('click', function () {
+    introJs().setOptions({
+      steps: [
+        { intro: 'Welcome to the Resume Builder!' },
+        { element: '#section-list', intro: 'Drag and drop to reorder sections.' },
+        { element: '#search', intro: 'Start typing to edit your resume.' },
+        { element: '#template-select', intro: 'Choose a resume template.' },
+        { element: '#downloadPdf', intro: 'Click here to download the resume as a PDF.' }
+      ]
+    }).start();
+  });
+
+</script>
+</body>
+</html>
