@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Digital Whiteboard</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        #canvas-container { position: relative; width: 100%; height: 100vh; }
+        #whiteboard { border: 1px solid #ccc; }
+        #tools {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .note {
+            position: absolute;
+            background: yellow;
+            width: 100px;
+            height: 100px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            resize: both;
+            overflow: auto;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tools">
+    <button onclick="setTool('draw')">Draw</button>
+    <button onclick="setTool('arrow')">Arrow</button>
+    <button onclick="addNote()">Sticky Note</button>
+    <input onchange="changeColor(this.value)" type="color">
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">-</button>
+    <button onclick="undo()">Undo</button>
+    <button onclick="redo()">Redo</button>
+    <button onclick="exportCanvas()">Export</button>
+    <button onclick="clearBoard()">Clear</button>
+</div>
+<div id="canvas-container">
+    <canvas id="whiteboard"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+<script>
+  const canvas = new fabric.Canvas('whiteboard', {
+    isDrawingMode: true,
+    backgroundColor: 'white'
+  });
+  let currentTool = 'draw';
+  let currentColor = '#000000';
+
+  function setTool(tool) {
+    currentTool = tool;
+    if (tool === 'draw') {
+      canvas.isDrawingMode = true;
+    } else {
+      canvas.isDrawingMode = false;
+    }
+  }
+
+  function changeColor(color) {
+    currentColor = color;
+    canvas.freeDrawingBrush.color = color;
+  }
+
+  function addNote() {
+    const note = new fabric.Rect({
+      left: 100,
+      top: 100,
+      fill: 'yellow',
+      width: 100,
+      height: 100,
+      hasControls: true,
+      lockRotation: true
+    });
+    const text = new fabric.Textbox('Type here', {
+      left: 105,
+      top: 105,
+      width: 90,
+      fontSize: 12
+    });
+    const group = new fabric.Group([note, text], {
+      draggable: true
+    });
+    canvas.add(group);
+    saveState();
+  }
+
+  function zoomIn() { canvas.setZoom(canvas.getZoom() * 1.1); }
+  function zoomOut() { canvas.setZoom(canvas.getZoom() / 1.1); }
+
+  // Undo/Redo stack
+  const state = [];
+  let mementoIndex = -1;
+
+  canvas.on('object:added', saveState);
+  canvas.on('object:modified', saveState);
+
+  function saveState() {
+    if (mementoIndex < state.length - 1) {
+      state.splice(mementoIndex + 1);
+    }
+    state.push(JSON.stringify(canvas));
+    mementoIndex++;
+  }
+
+  function undo() {
+    if (mementoIndex > 0) {
+      mementoIndex--;
+      canvas.loadFromJSON(state[mementoIndex], canvas.renderAll.bind(canvas));
+    }
+  }
+
+  function redo() {
+    if (mementoIndex < state.length - 1) {
+      mementoIndex++;
+      canvas.loadFromJSON(state[mementoIndex], canvas.renderAll.bind(canvas));
+    }
+  }
+
+  function exportCanvas() {
+    const dataURL = canvas.toDataURL({
+      format: 'png',
+      quality: 1
+    });
+    const link = document.createElement('a');
+    link.download = 'whiteboard.png';
+    link.href = dataURL;
+    link.click();
+  }
+
+  function clearBoard() {
+    if (confirm('Are you sure you want to clear the board?')) {
+      canvas.clear();
+      saveState();
+    }
+  }
+
+  // Load from localStorage
+  if (localStorage.getItem('canvasState')) {
+    canvas.loadFromJSON(localStorage.getItem('canvasState'), canvas.renderAll.bind(canvas));
+  }
+
+  // Save to localStorage on change
+  canvas.on('object:modified', function() {
+    localStorage.setItem('canvasState', JSON.stringify(canvas));
+  });
+
+  // Arrow drawing - this is simplified, you might need to expand for better control
+  canvas.on('mouse:down', function(opt) {
+    if(currentTool === 'arrow') {
+      const pointer = canvas.getPointer(opt.e);
+      const points = [pointer.x, pointer.y, pointer.x, pointer.y];
+      const arrow = new fabric.Line(points, {
+        strokeWidth: 2,
+        fill: currentColor,
+        stroke: currentColor,
+        originX: 'center',
+        originY: 'center'
+      });
+      canvas.add(arrow);
+      canvas.setActiveObject(arrow);
+    }
+  });
+
+  canvas.on('mouse:move', function(opt) {
+    if(currentTool === 'arrow' && canvas.getActiveObject()) {
+      const pointer = canvas.getPointer(opt.e);
+      const line = canvas.getActiveObject();
+      line.set({ x2: pointer.x, y2: pointer.y });
+      canvas.renderAll();
+    }
+  });
+
+  canvas.on('mouse:up', function() {
+    if(currentTool === 'arrow') {
+      saveState();
+    }
+  });
+</script>
+
+</body>
+</html>

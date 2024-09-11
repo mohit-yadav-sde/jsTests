@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Advanced Digital Whiteboard</title>
+    <style>
+        body, html { margin: 0; height: 100%; overflow: hidden; }
+        #whiteboard {
+            width: 100%; height: 100%; background: white;
+            touch-action: none;
+        }
+        #tools {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(255,255,255,0.8); padding: 10px; border-radius: 5px;
+        }
+        button, input[type="color"] { margin: 5px; }
+        .sticky-note {
+            position: absolute; background: yellow; width: 150px; height: 150px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); resize: both; overflow: auto;
+            padding: 10px; min-width: 50px; min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+<div id="tools">
+    <button onclick="setTool('draw')">Draw</button>
+    <button onclick="setTool('arrow')">Arrow</button>
+    <button onclick="addStickyNote()">Sticky Note</button>
+    <input id="colorPicker" onchange="changeColor(this.value)" type="color">
+    <button onclick="clearBoard()">Clear</button>
+    <button onclick="exportBoard()">Export</button>
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">-</button>
+</div>
+<canvas id="whiteboard"></canvas>
+<div id="stickyNotes"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.3.0/fabric.min.js"></script>
+<script>
+  const canvas = new fabric.Canvas('whiteboard', { isDrawingMode: true });
+  let currentTool = 'draw';
+  let scale = 1.0;
+  const stickyNotes = document.getElementById('stickyNotes');
+
+  // Initialize from localStorage
+  if (localStorage.getItem('whiteboardState')) {
+    canvas.loadFromJSON(localStorage.getItem('whiteboardState'), canvas.renderAll.bind(canvas));
+  }
+
+  if (localStorage.getItem('stickyNotes')) {
+    JSON.parse(localStorage.getItem('stickyNotes')).forEach(note => {
+      createStickyNote(note);
+    });
+  }
+
+  function setTool(tool) {
+    currentTool = tool;
+    canvas.isDrawingMode = (tool === 'draw');
+  }
+
+  function changeColor(color) {
+    canvas.freeDrawingBrush.color = color;
+  }
+
+  function clearBoard() {
+    canvas.clear();
+    saveState();
+  }
+
+  function exportBoard() {
+    const dataURL = canvas.toDataURL({format: 'png'});
+    const link = document.createElement('a');
+    link.download = 'whiteboard.png';
+    link.href = dataURL;
+    link.click();
+  }
+
+  function zoomIn() { canvas.setZoom(canvas.getZoom() * 1.1); }
+  function zoomOut() { canvas.setZoom(canvas.getZoom() / 1.1); }
+
+  function addStickyNote() {
+    createStickyNote({left: 100, top: 100, width: 150, height: 150, color: 'yellow'});
+  }
+
+  function createStickyNote(props) {
+    const note = document.createElement('div');
+    note.className = 'sticky-note';
+    note.style.left = `${props.left}px`;
+    note.style.top = `${props.top}px`;
+    note.style.backgroundColor = props.color;
+    note.style.width = `${props.width}px`;
+    note.style.height = `${props.height}px`;
+    note.contentEditable = true;
+    stickyNotes.appendChild(note);
+
+    // Make note draggable and resizable
+    interact(note)
+      .draggable({
+        onmove: window.dragMoveListener
+      })
+      .resizable({
+        edges: { left: true, right: true, bottom: true, top: true }
+      })
+      .on('resizemove', function (event) {
+        let target = event.target;
+        target.style.width = event.rect.width + 'px';
+        target.style.height = event.rect.height + 'px';
+      });
+  }
+
+  function dragMoveListener(event) {
+    const target = event.target;
+    target.style.left = event.pageX - (target.offsetWidth / 2) + 'px';
+    target.style.top = event.pageY - (target.offsetHeight / 2) + 'px';
+  }
+
+  function saveState() {
+    localStorage.setItem('whiteboardState', JSON.stringify(canvas));
+    const notes = Array.from(stickyNotes.children).map(note => ({
+      left: parseInt(note.style.left),
+      top: parseInt(note.style.top),
+      width: parseInt(note.style.width),
+      height: parseInt(note.style.height),
+      color: note.style.backgroundColor,
+      content: note.innerHTML
+    }));
+    localStorage.setItem('stickyNotes', JSON.stringify(notes));
+  }
+
+  // Arrow drawing (simplified for brevity)
+  canvas.on('mouse:down', function(o) {
+    if (currentTool === 'arrow') {
+      // Arrow drawing logic here, using Fabric.js's line or custom shapes
+    }
+  });
+
+  // Save state on changes
+  canvas.on('object:modified', saveState);
+  canvas.on('object:added', saveState);
+  canvas.on('object:removed', saveState);
+  window.onbeforeunload = saveState;
+</script>
+</body>
+</html>

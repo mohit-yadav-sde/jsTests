@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Customizable Digital Whiteboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #fafafa;
+        }
+
+        #toolbar {
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #toolbar button, #toolbar select {
+            margin-right: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #a4a4a4;
+            color: #070000;
+            cursor: pointer;
+        }
+
+        #toolbar button:hover, #toolbar select:hover {
+            background-color: #1b3952;
+        }
+
+        #canvas-container {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
+        canvas {
+            background-color: #fff;
+            cursor: crosshair;
+        }
+
+        .sticky-note {
+            position: absolute;
+            padding: 10px;
+            background-color: yellow;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            resize: both;
+            overflow: auto;
+            animation: fadeIn 0.5s ease-out;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sticky-note-content {
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        .sticky-note .delete-btn {
+            align-self: flex-end;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 2px 5px;
+            margin-top: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toolbar">
+    <button onclick="setDrawMode()">Draw</button>
+    <button onclick="setArrowMode()">Draw Arrow</button>
+    <button onclick="addStickyNote()">Sticky Note</button>
+    <select id="colorPicker" onchange="changeDrawColor(this.value)">
+        <option value="#000000">Black</option>
+        <option value="#ff0000">Red</option>
+        <option value="#00ff00">Green</option>
+        <option value="#0000ff">Blue</option>
+    </select>
+    <select id="noteColorPicker" onchange="changeNoteColor(this.value)">
+        <option value="yellow">Yellow</option>
+        <option value="lightblue">Light Blue</option>
+        <option value="lightgreen">Light Green</option>
+        <option value="pink">Pink</option>
+    </select>
+    <button onclick="zoomIn()">Zoom In</button>
+    <button onclick="zoomOut()">Zoom Out</button>
+    <button onclick="undo()">Undo</button>
+    <button onclick="redo()">Redo</button>
+    <button onclick="exportToImage()">Export to Image</button>
+    <button onclick="clearBoard()">Clear Board</button>
+
+</div>
+
+<div id="canvas-container">
+    <canvas id="whiteboard"></canvas>
+</div>
+
+<script>
+  const canvas = document.getElementById('whiteboard');
+  const ctx = canvas.getContext('2d');
+  let isDrawing = false;
+  let drawMode = 'draw'; // Toggle between drawing, arrow, and adding notes
+  let scale = 1; // For zooming
+  let offsetX = 0, offsetY = 0;
+  let drawingColor = '#000000';
+  let stickyNoteColor = 'yellow';
+  let undoStack = [];
+  let redoStack = [];
+  let startX, startY; // For arrow start point
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - 50; // Account for toolbar
+
+  // Set up event listeners for drawing and arrow
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+
+  // Load previous canvas and notes
+  window.onload = () => {
+    loadCanvas();
+    loadNotes();
+  };
+
+  function setDrawMode() {
+    drawMode = 'draw';
+  }
+
+  function setArrowMode() {
+    drawMode = 'arrow';
+  }
+
+  function startDrawing(e) {
+    if (drawMode === 'draw') {
+      isDrawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    } else if (drawMode === 'arrow') {
+      startX = e.offsetX;
+      startY = e.offsetY;
+      isDrawing = true;
+    }
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+
+    if (drawMode === 'draw') {
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.strokeStyle = drawingColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else if (drawMode === 'arrow') {
+      redrawCanvas(); // Clear and redraw to make the arrow smooth
+      drawArrow(startX, startY, e.offsetX, e.offsetY);
+    }
+  }
+
+  function stopDrawing(e) {
+    if (drawMode === 'draw') {
+      isDrawing = false;
+      ctx.beginPath();
+      saveCanvasState();
+    } else if (drawMode === 'arrow') {
+      drawArrow(startX, startY, e.offsetX, e.offsetY);
+      isDrawing = false;
+      saveCanvasState();
+    }
+  }
+
+  // Draw Arrow
+  function drawArrow(fromX, fromY, toX, toY) {
+    const headlen = 10; // Length of the arrowhead
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.strokeStyle = drawingColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw the arrowhead
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.lineTo(toX, toY);
+    ctx.closePath();
+    ctx.fillStyle = drawingColor;
+    ctx.fill();
+  }
+
+  // Redraw the canvas when drawing arrows to make it smooth
+  function redrawCanvas() {
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  }
+
+  // Add Sticky Notes
+  function addStickyNote() {
+    drawMode = 'note';
+    const sticky = document.createElement('div');
+    sticky.classList.add('sticky-note');
+    sticky.style.backgroundColor = stickyNoteColor;
+    sticky.style.left = '50px';
+    sticky.style.top = '50px';
+    sticky.style.width = '150px';
+    sticky.style.height = '150px';
+    sticky.style.zIndex = getMaxZIndex() + 1; // Ensure the note comes to the front
+
+    // Sticky note content
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('sticky-note-content');
+    contentDiv.contentEditable = true;
+    sticky.appendChild(contentDiv);
+
+    // Add delete button to sticky note
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('delete-btn');
+    deleteButton.innerText = 'X';
+    deleteButton.onclick = function() {
+      sticky.remove();
+      saveNotesState(); // Update localStorage
+    };
+    sticky.appendChild(deleteButton);
+
+    document.getElementById('canvas-container').appendChild(sticky);
+
+    sticky.addEventListener('mousedown', moveSticky);
+    sticky.addEventListener('click', () => sticky.style.zIndex = getMaxZIndex() + 1); // Bring the note to the front on click
+    saveNotesState();
+  }
+
+  function moveSticky(e) {
+    const sticky = e.target.closest('.sticky-note');
+    const offsetX = e.clientX - sticky.offsetLeft;
+    const offsetY = e.clientY - sticky.offsetTop;
+
+    function move(e) {
+      sticky.style.left = `${e.clientX - offsetX}px`;
+      sticky.style.top = `${e.clientY - offsetY}px`;
+    }
+
+    function stopMove() {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', stopMove);
+      saveNotesState(); // Save the new position
+    }
+
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', stopMove);
+  }
+
+  // Get maximum z-index for bringing notes to front
+  function getMaxZIndex() {
+    const allNotes = document.querySelectorAll('.sticky-note');
+    let maxZ = 1;
+    allNotes.forEach(note => {
+      const zIndex = parseInt(window.getComputedStyle(note).zIndex);
+      if (zIndex > maxZ) {
+        maxZ = zIndex;
+      }
+    });
+    return maxZ;
+  }
+
+  // Zoom in and out
+  function zoomIn() {
+    scale += 0.2;
+    canvas.style.transform = `scale(${scale})`;
+  }
+
+  function zoomOut() {
+    if (scale > 0.4) scale -= 0.2;
+    canvas.style.transform = `scale(${scale})`;
+  }
+
+  // Undo, Redo, and Save Canvas State
+  function undo() {
+    if (undoStack.length > 0) {
+      redoStack.push(undoStack.pop());
+      loadCanvasFromStack(undoStack);
+    }
+  }
+
+  function redo() {
+    if (redoStack.length > 0) {
+      undoStack.push(redoStack.pop());
+      loadCanvasFromStack(undoStack);
+    }
+  }
+
+  function saveCanvasState() {
+    undoStack.push(canvas.toDataURL());
+  }
+
+  function loadCanvasFromStack(stack) {
+    const img = new Image();
+    if (stack.length === 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } else {
+      img.src = stack[stack.length - 1];
+      img.onload = () => ctx.drawImage(img, 0, 0);
+    }
+  }
+
+  // Save and Load Notes and Canvas
+  function saveNotesState() {
+    const notes = Array.from(document.querySelectorAll('.sticky-note')).map(note => ({
+      content: note.querySelector('.sticky-note-content').innerHTML,
+      style: note.style.cssText,
+    }));
+    localStorage.setItem('notes', JSON.stringify(notes));
+  }
+
+  function loadNotes() {
+    const savedNotes = JSON.parse(localStorage.getItem('notes'));
+    if (savedNotes) {
+      savedNotes.forEach(savedNote => {
+        const note = document.createElement('div');
+        note.classList.add('sticky-note');
+        note.style.cssText = savedNote.style;
+        note.style.zIndex = getMaxZIndex() + 1;
+
+        // Sticky note content
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('sticky-note-content');
+        contentDiv.innerHTML = savedNote.content;
+        contentDiv.contentEditable = true;
+        note.appendChild(contentDiv);
+
+        // Add delete button to sticky note
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('delete-btn');
+        deleteButton.innerText = 'X';
+        deleteButton.onclick = function() {
+          note.remove();
+          saveNotesState(); // Update localStorage
+        };
+        note.appendChild(deleteButton);
+
+        document.getElementById('canvas-container').appendChild(note);
+        note.addEventListener('mousedown', moveSticky);
+        note.addEventListener('click', () => note.style.zIndex = getMaxZIndex() + 1);
+      });
+    }
+  }
+
+  function loadCanvas() {
+    const savedCanvas = localStorage.getItem('canvas');
+    if (savedCanvas) {
+      const img = new Image();
+      img.src = savedCanvas;
+      img.onload = () => ctx.drawImage(img, 0, 0);
+    }
+  }
+
+  // Export whiteboard to image
+  function exportToImage() {
+    const link = document.createElement('a');
+    link.download = 'whiteboard.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  }
+
+  function changeDrawColor(color) {
+    drawingColor = color;
+  }
+
+  function changeNoteColor(color) {
+    stickyNoteColor = color;
+  }
+
+  window.onresize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 50;
+  };
+
+  window.onbeforeunload = () => {
+    localStorage.setItem('canvas', canvas.toDataURL());
+  };
+
+  function clearBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let stickyNotes = document.querySelectorAll('.sticky-note');
+    stickyNotes.forEach(note => note.remove());
+    localStorage.removeItem('canvasState');
+    localStorage.removeItem('stickyNotes');
+
+    undoStack = [];
+    redoStack = [];
+  }
+
+</script>
+
+</body>
+</html>
