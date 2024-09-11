@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Video Game Release Calendar</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .game-today { background-color: #e7f3fe; }
+        .game-entry { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .wishlist-btn, .reminder-btn { margin: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upcoming Video Game Releases</h2>
+    <div id="gameList"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  const games = [
+    {name: "Cyberpunk 2077", date: "2023-12-10", preview: "Cyberpunk is an open-world RPG..."},
+    {name: "Halo Infinite", date: "2023-12-15", preview: "The next chapter in the Halo saga..."},
+    {name: "Zelda: Breath of the Wild 2", date: new Date().toISOString().split('T')[0], preview: "Explore Hyrule once again..."},
+    // Add more games as needed
+  ];
+
+  $(document).ready(function() {
+    const gameList = $('#gameList');
+    const today = new Date().toISOString().split('T')[0];
+
+    games.forEach(game => {
+      let gameClass = 'game-entry';
+      if (game.date === today) gameClass += ' game-today';
+
+      const gameHTML = `
+                <div class="${gameClass}">
+                    <h5>${game.name}</h5>
+                    <p>Release Date: ${game.date}</p>
+                    <button class="btn btn-primary wishlist-btn">Add to Wishlist</button>
+                    <button class="btn btn-secondary reminder-btn">Set Reminder</button>
+                    <p><small>${game.preview}</small></p>
+                </div>
+            `;
+      gameList.append(gameHTML);
+    });
+
+    // Functionality for buttons (placeholder)
+    $('.wishlist-btn').on('click', function() {
+      alert($(this).parent().find('h5').text() + " added to wishlist!");
+    });
+
+    $('.reminder-btn').on('click', function() {
+      alert("Reminder set for " + $(this).parent().find('h5').text());
+    });
+  });
+</script>
+
+</body>
+</html>
