@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Mood</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css" rel="stylesheet">
+    <style>
+        body {
+            transition: background-color 2s;
+            color: white;
+        }
+        .player {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            text-align: center;
+        }
+        #recommendations {
+            margin-bottom: 60px;
+        }
+    </style>
+</head>
+<body>
+<section class="section">
+    <div class="container">
+        <h1 class="title">Music Mood</h1>
+        <div class="field">
+            <label class="label">Select Genre</label>
+            <div class="control">
+                <div class="select">
+                    <select id="genre">
+                        <option value="rock">Rock</option>
+                        <option value="jazz">Jazz</option>
+                        <!-- Add more genres -->
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="button is-primary" id="getRecommendations">Get Recommendations</button>
+        <div id="recommendations"></div>
+    </div>
+</section>
+
+<div class="player" id="player">
+    <button class="button" id="playPause">Play</button>
+    <span id="currentTrack">No track playing</span>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<script>
+  $(document).ready(function() {
+    let player;
+    let currentTrackId;
+    let accessToken;
+
+    // Spotify Web Playback SDK setup
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      // Here you would typically initialize the player with your Spotify Developer credentials
+      // player = new Spotify.Player({...});
+      // For this example, we'll simulate some functionality:
+      $('#playPause').on('click', function() {
+        $(this).text(function(i, text) {
+          return text === "Play" ? "Pause" : "Play";
+        });
+        // Here you would call player.togglePlay()
+      });
+    };
+
+    // Function to get recommendations
+    function getRecommendations() {
+      // Simulating API call for recommendations
+      const fakeRecommendations = [
+        {name: "Song 1", artist: "Artist 1", id: "1"},
+        {name: "Song 2", artist: "Artist 2", id: "2"},
+      ];
+      displayRecommendations(fakeRecommendations);
+    }
+
+    function displayRecommendations(tracks) {
+      $('#recommendations').html(tracks.map(track =>
+        `<div class="box" style="background-color: #${Math.floor(Math.random()*16777215).toString(16)};">
+                <h2>${track.name}</h2>
+                <p>${track.artist}</p>
+                <button class="button play-track" data-id="${track.id}">Play</button>
+            </div>`
+      ).join(''));
+      $('#getRecommendations').hide();
+
+      $('.play-track').on('click', function() {
+        currentTrackId = $(this).data('id');
+        $('#currentTrack').text($(this).siblings('h2').text());
+        // Here you would actually play the track with the player
+      });
+    }
+
+    $('#getRecommendations').on('click', function() {
+      getRecommendations();
+    });
+
+    // Background color change logic would go here, perhaps triggered by play events
+  });
+</script>
+</body>
+</html>

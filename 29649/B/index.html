@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Mood Player</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            transition: background-color 1s ease;
+            font-family: 'Arial', sans-serif;
+        }
+        #recommendations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .track {
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        #player {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #181818;
+            color: white;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Mood Music</h1>
+    <input class="form-control" id="mood" placeholder="Enter a mood or genre" type="text">
+    <button class="btn btn-primary mt-2" id="getRecommendations">Get Recommendations</button>
+    <div id="recommendations"></div>
+    <div id="player"></div>
+</div>
+
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<script>
+  // Spotify Developer Dashboard credentials
+  const CLIENT_ID = 'YOUR_CLIENT_ID';
+  const REDIRECT_URI = 'YOUR_REDIRECT_URI';
+  const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
+  const RESPONSE_TYPE = 'token';
+
+  let player;
+  let accessToken;
+
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    document.getElementById('getRecommendations').addEventListener('click', fetchTracks);
+  };
+
+  // Authentication
+  if (!window.location.hash.includes('access_token')) {
+    window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=user-read-playback-state,user-modify-playback-state`;
+  } else {
+    accessToken = window.location.hash.split('&')[0].split('=')[1];
+  }
+
+  // Fetch recommendations
+  function fetchTracks() {
+    const mood = document.getElementById('mood').value;
+    fetch(`https://api.spotify.com/v1/recommendations?seed_genres=${mood}&limit=10`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    })
+      .then(response => response.json())
+      .then(data => displayTracks(data.tracks));
+  }
+
+  function displayTracks(tracks) {
+    const recDiv = document.getElementById('recommendations');
+    recDiv.innerHTML = '';
+    tracks.forEach(track => {
+      const trackDiv = document.createElement('div');
+      trackDiv.className = 'track';
+      trackDiv.textContent = track.name + ' - ' + track.artists[0].name;
+      trackDiv.onclick = () => playTrack(track.uri);
+      recDiv.appendChild(trackDiv);
+    });
+    document.getElementById('getRecommendations').style.display = 'none';
+  }
+
+  function playTrack(uri) {
+    if (!player) {
+      player = new Spotify.Player({
+        name: 'Mood Player',
+        getOAuthToken: cb => { cb(accessToken); }
+      });
+
+      player.addListener('ready', ({ device_id }) => {
+        fetch('https://api.spotify.com/v1/me/player/play?device_id=' + device_id, {
+          method: 'PUT',
+          body: JSON.stringify({ uris: [uri] }),
+          headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }
+        });
+      });
+
+      player.connect();
+    } else {
+      fetch('https://api.spotify.com/v1/me/player/play', {
+        method: 'PUT',
+        body: JSON.stringify({ uris: [uri] }),
+        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Dynamic background based on mood (simplified example)
+  document.getElementById('mood').addEventListener('change', function() {
+    const mood = this.value;
+    document.body.style.backgroundColor = mood === 'happy' ? 'yellow' : (mood === 'sad' ? 'blue' : 'grey');
+  });
+</script>
+</body>
+</html>
