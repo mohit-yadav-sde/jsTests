@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Customer Journey Map</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .touchpoint-list, .journey-map {
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .touchpoint {
+            background-color: #ddd;
+            padding: 10px;
+            margin-right: 5px;
+            margin-bottom: 10px;
+            border-radius: 20px;
+            cursor: grab;
+            user-select: none;
+            display: inline-block;
+        }
+
+        .touchpoint:hover {
+            background-color: #ccc;
+        }
+
+        .journey-item {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .journey-item .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .slider-input {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .custom-touchpoint {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .custom-touchpoint input {
+            margin-right: 10px;
+            flex: 1;
+        }
+
+        .chart-container {
+            margin-top: 40px;
+        }
+
+        #journeyMapContainer {
+            min-height: 200px;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Progress bar */
+        .progress {
+            height: 20px;
+        }
+
+        .progress-bar {
+            width: 0;
+            transition: width 0.3s;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h4>Customer Journey Map</h4>
+
+    <!-- Touchpoint Selection -->
+    <div class="touchpoint-list">
+        <h5>Touchpoints</h5>
+        <div id="touchpointItems"></div>
+
+        <div class="custom-touchpoint">
+            <input id="customTouchpointName" placeholder="Custom Touchpoint" type="text">
+            <button class="btn btn-primary" onclick="createCustomTouchpoint()">Add Custom</button>
+        </div>
+    </div>
+
+    <div class="journey-map" id="journeyMapContainer" ondragover="allowDrop(event)" ondrop="dropTouchpoint(event)">
+        <h4>Customer Journey Map</h4>
+        <div id="journeyMap">
+            <p>Drag and drop touchpoints here</p>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress">
+        <div class="progress-bar bg-success" role="progressbar"></div>
+    </div>
+
+    <div class="chart-container">
+        <h3>Sentiment Analysis</h3>
+        <canvas id="sentimentChart"></canvas>
+        <div class="feedback" id="sentiment-feedback"></div>
+    </div>
+
+    <button class="btn btn-success mt-4" onclick="updateJourneyFeedback()">Overall Sentiment Analysis</button>
+</div>
+
+<script>
+  const touchpoints = [
+    { emoji: '🌐', name: 'Website Visit' },
+    { emoji: '🛒', name: 'Product Purchase' },
+    { emoji: '☎️', name: 'Customer Support' },
+    { emoji: '✉️', name: 'Email Follow-up' },
+    { emoji: '💬', name: 'Social Media Interaction' }
+  ];
+
+  let selectedTouchpoint = null;
+  let defaultSentiment = 1;
+
+  let ctx = document.getElementById('sentimentChart').getContext('2d');
+  let sentimentChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Positive', 'Neutral', 'Negative'],
+      datasets: [{
+        label: 'Sentiment Analysis',
+        data: [0, 0, 0],
+        backgroundColor: ['#4caf50', '#ffeb3b', '#f44336']
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  function generateTouchpoints() {
+    const touchpointItems = document.getElementById('touchpointItems');
+    touchpointItems.innerHTML = '';  // Clear existing touchpoints
+
+    touchpoints.forEach(touchpoint => {
+      const touchpointDiv = document.createElement('div');
+
+      touchpointDiv.classList.add('touchpoint');
+      touchpointDiv.setAttribute('data-type', touchpoint.name);
+      touchpointDiv.setAttribute('draggable', true);
+      touchpointDiv.innerText = `${touchpoint.emoji} ${touchpoint.name}`;
+      touchpointDiv.addEventListener('dragstart', dragTouchpoint);
+      touchpointItems.appendChild(touchpointDiv);
+    });
+  }
+
+  function createCustomTouchpoint() {
+    const customName = document.getElementById('customTouchpointName').value.trim();
+    if (customName !== '') {
+      const customTouchpoint = document.createElement('div');
+      customTouchpoint.classList.add('touchpoint');
+      customTouchpoint.setAttribute('data-type', customName);
+      customTouchpoint.innerText = customName;
+      customTouchpoint.setAttribute('draggable', true);
+      customTouchpoint.addEventListener('dragstart', dragTouchpoint);
+      document.getElementById('touchpointItems').appendChild(customTouchpoint);
+      document.getElementById('customTouchpointName').value = ''; // Clear input
+    }
+  }
+
+  function dragTouchpoint(event) {
+    selectedTouchpoint = event.target;
+  }
+
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+
+  function dropTouchpoint(event) {
+    event.preventDefault();
+    if (selectedTouchpoint) {
+      processDroppedTouchpoint(selectedTouchpoint);
+    }
+  }
+
+  function processDroppedTouchpoint(touchpoint) {
+    const journeyItem = document.createElement('div');
+    journeyItem.classList.add('journey-item');
+    journeyItem.innerHTML = `
+            <h4>${touchpoint.getAttribute('data-type')}</h4>
+            <label>Sentiment (0 = Negative, 1 = Neutral, 2 = Positive):</label>
+            <input type="range" min="0" max="2" class="slider-input" value="${defaultSentiment}" onchange="updateJourneyFeedback()">
+            <button class="remove-btn" onclick="removeJourneyItem(this)">Remove</button>
+        `;
+    document.getElementById('journeyMap').appendChild(journeyItem);
+    updateJourneyFeedback();
+    updateProgressBar();
+  }
+
+  function removeJourneyItem(button) {
+    button.parentElement.remove();
+    updateJourneyFeedback();
+    updateProgressBar();
+  }
+
+  function updateJourneyFeedback() {
+    const sliders = document.querySelectorAll('.slider-input');
+    let positive = 0, neutral = 0, negative = 0;
+
+    sliders.forEach(slider => {
+      const value = parseInt(slider.value);
+      if (value === 2) {
+        positive++;
+      } else if (value === 1) {
+        neutral++;
+      } else {
+        negative++;
+      }
+    });
+
+    sentimentChart.data.datasets[0].data = [positive, neutral, negative];
+    sentimentChart.update();
+
+    const sentimentFeedback = document.getElementById('sentiment-feedback');
+    if (positive > neutral && positive > negative) {
+      sentimentFeedback.textContent = 'Overall Sentiment: Positive';
+      sentimentFeedback.style.color = '#4caf50';
+    } else if (neutral >= positive && neutral >= negative) {
+      sentimentFeedback.textContent = 'Overall Sentiment: Neutral';
+      sentimentFeedback.style.color = '#ffeb3b';
+    } else {
+      sentimentFeedback.textContent = 'Overall Sentiment: Negative';
+      sentimentFeedback.style.color = '#f44336';
+    }
+  }
+
+  function updateProgressBar() {
+    const journeyItems = document.querySelectorAll('.journey-item').length;
+    const total = touchpoints.length + 1;
+    const progress = (journeyItems / total) * 100;
+    document.querySelector('.progress-bar').style.width = `${progress}%`;
+  }
+
+  generateTouchpoints();
+
+</script>
+
+</body>
+</html>

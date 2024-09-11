@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Journey Mapper</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css" rel="stylesheet">
+    <style>
+        #workspace {
+            border: 2px dashed #ccc;
+            height: 600px;
+            width: 70%;
+            float: left;
+            position: relative;
+        }
+        .touchpoint {
+            width: 50px;
+            height: 50px;
+            background: #4CAF50;
+            border-radius: 50%;
+            position: absolute;
+            cursor: move;
+            text-align: center;
+            line-height: 50px;
+            color: white;
+        }
+        #controls {
+            float: right;
+            width: 25%;
+        }
+        #sentimentBar, #journeyProgress {
+            width: 100%;
+            background-color: #f3f3f3;
+            margin: 10px 0;
+        }
+        #sentimentValue, #journeyValue {
+            width: 0%;
+            height: 30px;
+            background-color: #2196F3;
+        }
+        #chartArea {
+            width: 100%;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="workspace"></div>
+<div id="controls">
+    <div>Drag these to workspace:</div>
+    <div class="touchpoint" draggable="true">TP</div>
+    <div id="sentimentBar"><div id="sentimentValue"></div></div>
+    <div id="journeyProgress"><div id="journeyValue"></div></div>
+    <div id="chartArea"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  $(function() {
+    let touchpointCount = 0;
+    const maxTouchpoints = 10;
+
+    // Drag and drop functionality
+    $(".touchpoint").draggable({
+      helper: "clone",
+      start: function() {
+        $(this).hide();
+      }
+    });
+
+    $("#workspace").droppable({
+      drop: function(event, ui) {
+        let $el = ui.draggable.clone();
+        $el.css({
+          top: ui.position.top,
+          left: ui.position.left,
+          position: 'absolute'
+        }).draggable({
+          containment: "#workspace"
+        }).appendTo(this).show();
+        touchpointCount++;
+        updateProgress();
+        // Here you would also update sentiment and chart
+      }
+    });
+
+    function updateProgress() {
+      let progress = (touchpointCount / maxTouchpoints) * 100;
+      $('#journeyValue').css('width', progress + '%');
+      // Update sentiment and chart here
+    }
+
+    // Initialize Chart
+    const ctx = document.getElementById('chartArea').getContext('2d');
+    const myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Positive', 'Neutral', 'Negative'],
+        datasets: [{
+          data: [0, 0, 0],
+          backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+          borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 206, 86, 1)', 'rgba(255, 99, 132, 1)'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Function to update chart would go here, triggered when a new touchpoint is added or sentiment changed
+  });
+</script>
+
+</body>
+</html>
