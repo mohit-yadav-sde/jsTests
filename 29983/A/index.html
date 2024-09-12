@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Language Translation Learning Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #wordChart {
+            height: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Language Translation Learning Tool</h1>
+
+    <!-- Translation Section -->
+    <div class="form-group">
+        <label for="sourceLang">Source Language:</label>
+        <select class="form-control" id="sourceLang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <!-- Add more languages as needed -->
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="targetLang">Target Language:</label>
+        <select class="form-control" id="targetLang">
+            <option value="es">Spanish</option>
+            <option value="en">English</option>
+            <!-- Add more languages as needed -->
+        </select>
+    </div>
+    <textarea class="form-control" id="sentenceInput" placeholder="Enter sentence to translate" rows="3"></textarea>
+    <button class="btn btn-primary mt-2" onclick="translate()">Translate</button>
+    <div class="mt-3" id="translationResult"></div>
+
+    <!-- Vocabulary Tracker -->
+    <h2 class="mt-4">Vocabulary Tracker</h2>
+    <canvas id="wordChart"></canvas>
+
+    <!-- Quiz Section -->
+    <h2 class="mt-4">Interactive Quiz</h2>
+    <div id="quizArea"></div>
+    <button class="btn btn-info mt-2" onclick="startQuiz()">Start Quiz</button>
+    <div id="quizFeedback"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+  let wordCount = {};
+  let quizWords = [];
+
+  function translate() {
+    const sentence = document.getElementById('sentenceInput').value;
+    const sourceLang = document.getElementById('sourceLang').value;
+    const targetLang = document.getElementById('targetLang').value;
+
+    // Here you would typically call an API like Google Translate
+    // For demonstration, we'll simulate a translation
+    $.ajax({
+      url: 'https://translation.googleapis.com/language/translate/v2',
+      method: 'POST',
+      data: {
+        q: sentence,
+        source: sourceLang,
+        target: targetLang,
+        key: 'YOUR_GOOGLE_API_KEY' // You need to get an API key from Google Cloud
+      },
+      success: function(response) {
+        document.getElementById('translationResult').innerText = response.data.translations[0].translatedText;
+        updateVocabulary(sentence.split(' '));
+        updateChart();
+      }
+    });
+  }
+
+  function updateVocabulary(words) {
+    words.forEach(word => {
+      word = word.toLowerCase();
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+  }
+
+  function updateChart() {
+    const ctx = document.getElementById('wordChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(wordCount),
+        datasets: [{
+          label: 'Word Frequency',
+          data: Object.values(wordCount),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            }
+          }]
+        }
+      }
+    });
+  }
+
+  function startQuiz() {
+    const words = Object.keys(wordCount);
+    if(words.length < 4) {
+      alert('Please translate more sentences to generate a quiz.');
+      return;
+    }
+
+    quizWords = words.sort(() => 0.5 - Math.random()).slice(0, 5); // Random 5 words
+    let quizHTML = '';
+    quizWords.forEach(word => {
+      quizHTML += `<p>${word} <input type="text" id="answer_${word}" placeholder="Translation"></p>`;
+    });
+    document.getElementById('quizArea').innerHTML = quizHTML;
+    document.getElementById('quizFeedback').innerText = '';
+  }
+
+  function checkQuiz() {
+    let correct = 0;
+    quizWords.forEach(word => {
+      // This would need to use the translation API for checking answers
+      // For now, we'll simulate checking
+      if (document.getElementById(`answer_${word}`).value.toLowerCase() === 'simulatedtranslation') {
+        correct++;
+      }
+    });
+    document.getElementById('quizFeedback').innerText = `You got ${correct} out of ${quizWords.length} correct!`;
+  }
+
+  // Add event listener for quiz submission
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('quizArea').addEventListener('click', function(e) {
+      if(e.target.tagName === 'BUTTON' && e.target.textContent === 'Check Answers') {
+        checkQuiz();
+      }
+    });
+  });
+</script>
+</body>
+</html>

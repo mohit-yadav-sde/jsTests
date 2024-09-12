@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Language Translation Learning Tool</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        #translation, #vocabulary, #quiz { margin-top: 20px; }
+        .chart-container { width: 100%; height: 300px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Language Learning Tool</h1>
+
+    <!-- Translation Section -->
+    <div id="translation">
+        <select id="sourceLang"></select>
+        <select id="targetLang"></select>
+        <textarea class="form-control" id="inputText" placeholder="Enter text to translate..." rows="3"></textarea>
+        <button class="btn btn-primary" onclick="translateText()">Translate</button>
+        <div class="mt-2" id="translatedText"></div>
+    </div>
+
+    <!-- Vocabulary Tracker -->
+    <div id="vocabulary">
+        <h2>Vocabulary Chart</h2>
+        <div class="chart-container">
+            <canvas id="vocabChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Quiz Section -->
+    <div id="quiz">
+        <h2>Interactive Quiz</h2>
+        <div id="quizContent"></div>
+        <button class="btn btn-secondary" id="startQuiz" onclick="startQuiz()">Start Quiz</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@google-cloud/translate"></script>
+<script>
+  // Setup for Google Translate
+  const {Translate} = require('@google-cloud/translate').v2;
+  const translate = new Translate({projectId: "YOUR_PROJECT_ID"});
+
+  let vocabulary = {};
+
+  // Populate language options
+  async function populateLanguages() {
+    const [languages] = await translate.getLanguages();
+    let sourceLang = document.getElementById('sourceLang');
+    let targetLang = document.getElementById('targetLang');
+    languages.forEach(lang => {
+      let opt = document.createElement('option');
+      opt.value = lang.code;
+      opt.textContent = lang.name;
+      sourceLang.appendChild(opt.cloneNode(true));
+      targetLang.appendChild(opt);
+    });
+  }
+
+  // Translate text function
+  async function translateText() {
+    let text = document.getElementById('inputText').value;
+    let source = document.getElementById('sourceLang').value;
+    let target = document.getElementById('targetLang').value;
+    const [translation] = await translate.translate(text, target);
+    document.getElementById('translatedText').innerText = translation;
+
+    // Update vocabulary
+    updateVocabulary(text.toLowerCase().split(/\s+/));
+  }
+
+  // Update vocabulary count
+  function updateVocabulary(words) {
+    words.forEach(word => {
+      vocabulary[word] = (vocabulary[word] || 0) + 1;
+    });
+    updateChart();
+  }
+
+  // Update Chart
+  function updateChart() {
+    const ctx = document.getElementById('vocabChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(vocabulary),
+        datasets: [{
+          label: 'Word Frequency',
+          data: Object.values(vocabulary),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: { scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
+    });
+  }
+
+  // Quiz functionality
+  function startQuiz() {
+    let quizContent = document.getElementById('quizContent');
+    quizContent.innerHTML = ''; // Clear previous quiz
+    let words = Object.keys(vocabulary).sort(() => Math.random() - 0.5).slice(0, 5);
+
+    words.forEach(word => {
+      let div = document.createElement('div');
+      div.innerHTML = `<p>${word} - <span id="${word}"></span></p>`;
+      quizContent.appendChild(div);
+      // Here you would ideally fetch a definition or translation for the quiz
+      // For simplicity, we're not translating again but you would use `translate` here
+    });
+    // Implement quiz logic like matching or multiple choice here
+  }
+
+  populateLanguages();
+</script>
+
+</body>
+</html>

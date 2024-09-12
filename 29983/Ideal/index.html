@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Language Translation Learning Tool</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        h1 {
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .section {
+            width: 45%;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            color: #4CAF50;
+        }
+        #translationInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        select {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px;
+            border: 1px solid #ccc;
+        }
+        #translatedOutput, #vocabularyList, #quizCanvas, #quizFeedback {
+            margin-top: 15px;
+        }
+        #vocabularyChart {
+            width: 100%;
+            height: 300px;
+        }
+        #vocabularyList {
+            padding: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #quizProgress {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        #quizProgressBar {
+            width: 0;
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+        .quiz-option {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .quiz-option:hover {
+            background-color: #ddd;
+        }
+        #quizBox {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Language Translation Learning Tool</h1>
+
+<div class="container">
+    <!-- Translation Section -->
+    <div class="section" id="translationBox">
+        <h2>Real-Time Sentence Translation</h2>
+        <input id="translationInput" placeholder="Enter a sentence" type="text" />
+
+        <!-- Source Language Dropdown -->
+        <label for="sourceLanguage">From:</label>
+        <select id="sourceLanguage">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <!-- Add more languages -->
+        </select>
+
+        <!-- Target Language Dropdown -->
+        <label for="targetLanguage">To:</label>
+        <select id="targetLanguage">
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <!-- Add more languages -->
+        </select>
+
+        <button onclick="translateSentence()">Translate</button>
+        <p id="translatedOutput"></p>
+    </div>
+
+    <!-- Vocabulary Tracking Section -->
+    <div class="section" id="vocabBox">
+        <h2>Vocabulary Tracker</h2>
+        <div id="vocabularyChart"></div>
+        <div id="vocabularyList"><strong>Tracked Words:</strong></div>
+    </div>
+</div>
+
+<!-- Quiz Section -->
+<div class="section" id="quizBox">
+    <h2>Interactive Quiz</h2>
+    <p>Match the translated words to their correct meanings!</p>
+    <div id="quizProgress">
+        <div id="quizProgressBar"></div>
+    </div>
+    <div id="quizCanvas"></div>
+    <p id="quizFeedback"></p>
+</div>
+
+<!-- Script Section -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<script>
+  let vocabularyData = JSON.parse(localStorage.getItem('vocabularyData')) || [];
+  let quizWords = JSON.parse(localStorage.getItem('quizWords')) || [];
+  let currentQuizIndex = parseInt(localStorage.getItem('currentQuizIndex')) || 0;
+  let correctAnswers = parseInt(localStorage.getItem('correctAnswers')) || 0;
+
+  // 1. Real-Time Translation using Google Translate API
+  async function translateSentence() {
+    const inputSentence = document.getElementById("translationInput").value;
+    const sourceLanguage = document.getElementById("sourceLanguage").value;
+    const targetLanguage = document.getElementById("targetLanguage").value;
+
+    if (!inputSentence) {
+      alert("Please enter a sentence.");
+      return;
+    }
+
+    const apiKey = 'AIzaSyDE4v7DdLM9tMZTjkcEEUA_7gyfTvdRPKk';  // Replace with your Google Translate API key
+    const url = `https://translation.googleapis.com/language/translate/v2?q=${encodeURIComponent(inputSentence)}&source=${sourceLanguage}&target=${targetLanguage}&key=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const translatedText = data.data.translations[0].translatedText;
+      document.getElementById("translatedOutput").textContent = `Translated (${targetLanguage}): ${translatedText}`;
+
+      // Add translated words to vocabulary tracker
+      updateVocabulary(inputSentence, translatedText);
+    } catch (error) {
+      console.error("Error translating sentence:", error);
+      document.getElementById("translatedOutput").textContent = "Translation failed. Try again.";
+    }
+  }
+
+  // 2. Vocabulary Tracker with D3.js Visualization
+  function updateVocabulary(input, translated) {
+    const word = translated.split(" ")[0];  // Simple logic to track the first word of the translation
+    const existingWord = vocabularyData.find(d => d.word === word);
+
+    if (existingWord) {
+      existingWord.count += 1;
+    } else {
+      vocabularyData.push({ word: word, count: 1 });
+      quizWords.push({ word: word, translated: translated });
+    }
+
+    saveProgress();
+    renderVocabularyChart();
+    renderVocabularyList();
+    updateQuiz();
+  }
+
+  function renderVocabularyChart() {
+    d3.select("#vocabularyChart").select("svg").remove();  // Clear previous chart
+
+    const svg = d3.select("#vocabularyChart").append("svg")
+      .attr("width", 400)
+      .attr("height", 200);
+
+    const x = d3.scaleBand().range([0, 400]).domain(vocabularyData.map(d => d.word)).padding(0.2);
+    const y = d3.scaleLinear().range([200, 0]).domain([0, d3.max(vocabularyData, d => d.count)]);
+
+    svg.append("g").call(d3.axisBottom(x)).attr("transform", "translate(0, 180)");
+    svg.append("g").call(d3.axisLeft(y));
+
+    svg.selectAll(".bar").data(vocabularyData).enter()
+      .append("rect").attr("x", d => x(d.word))
+      .attr("y", d => y(d.count))
+      .attr("width", x.bandwidth())
+      .attr("height", d => 180 - y(d.count))
+      .attr("fill", "#4CAF50");
+  }
+
+  function renderVocabularyList() {
+    const vocabularyList = document.getElementById("vocabularyList");
+    vocabularyList.innerHTML = "<strong>Tracked Words:</strong>";
+    vocabularyData.forEach(d => {
+      vocabularyList.innerHTML += `<p>${d.word}: ${d.count} time(s)</p>`;
+    });
+  }
+
+  // 3. Interactive Quiz
+  function updateQuiz() {
+    if (quizWords.length > 0) {
+      const progressPercentage = (currentQuizIndex / quizWords.length) * 100;
+      document.getElementById("quizProgressBar").style.width = `${progressPercentage}%`;
+
+      loadNextQuiz();
+    }
+  }
+
+  function loadNextQuiz() {
+    if (currentQuizIndex >= quizWords.length) {
+      document.getElementById("quizFeedback").textContent = `Quiz complete! You got ${correctAnswers}/${quizWords.length} correct.`;
+      resetQuiz(); // Reset quiz when completed
+      return;
+    }
+
+    const quizCanvas = document.getElementById("quizCanvas");
+    quizCanvas.innerHTML = "";
+    const currentWord = quizWords[currentQuizIndex];
+
+    quizCanvas.innerHTML += `<p>What is the translation for: <strong>${currentWord.word}</strong>?</p>`;
+    const options = shuffle([currentWord.translated, ...getRandomOptions(currentWord.translated)]);
+
+    options.forEach(option => {
+      const optionDiv = document.createElement("div");
+      optionDiv.className = "quiz-option";
+      optionDiv.textContent = option;
+      optionDiv.onclick = () => checkAnswer(option, currentWord.translated);
+      quizCanvas.appendChild(optionDiv);
+    });
+  }
+
+  function checkAnswer(selectedOption, correctOption) {
+    if (selectedOption === correctOption) {
+      correctAnswers++;
+    }
+    currentQuizIndex++;
+    saveProgress();
+    updateQuiz();
+  }
+
+  function getRandomOptions(correctAnswer) {
+    const randomOptions = quizWords.filter(q => q.translated !== correctAnswer).map(q => q.translated);
+    return randomOptions.slice(0, 2);  // Return 2 random incorrect options
+  }
+
+  function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+  }
+
+  // Save progress to localStorage
+  function saveProgress() {
+    localStorage.setItem('vocabularyData', JSON.stringify(vocabularyData));
+    localStorage.setItem('quizWords', JSON.stringify(quizWords));
+    localStorage.setItem('currentQuizIndex', currentQuizIndex);
+    localStorage.setItem('correctAnswers', correctAnswers);
+  }
+
+  // Reset quiz progress
+  function resetQuiz() {
+    currentQuizIndex = 0;
+    correctAnswers = 0;
+    saveProgress();
+  }
+
+  // Initialize the app with saved data
+  function initializeApp() {
+    renderVocabularyChart();
+    renderVocabularyList();
+    updateQuiz();
+  }
+
+  initializeApp();
+</script>
+
+</body>
+</html>
+
