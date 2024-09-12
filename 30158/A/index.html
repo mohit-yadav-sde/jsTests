@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Interactive World Map</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #map {
+            width: 70%;
+            height: 100vh;
+            float: left;
+        }
+        #sidebar {
+            width: 30%;
+            height: 100vh;
+            float: right;
+            padding: 20px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+        }
+        .highlighted {
+            fill: green !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="sidebar">
+    <input class="form-control mb-3" id="search" placeholder="Search for a country..." type="text">
+    <h3 id="countryName"></h3>
+    <p><strong>Population:</strong> <span id="population"></span></p>
+    <p id="description"></p>
+</div>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+  const width = document.getElementById('map').clientWidth;
+  const height = document.getElementById('map').clientHeight;
+
+  const svg = d3.select("#map").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  const projection = d3.geoMercator();
+  const path = d3.geoPath().projection(projection);
+
+  const countries = svg.append("g");
+
+  // Load GeoJSON data
+  d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(function(world) {
+    countries.selectAll("path")
+      .data(world.features)
+      .enter().append("path")
+      .attr("d", path)
+      .attr("class", "country")
+      .on("mouseover", function(d) {
+        d3.select(this).style("fill", "orange");
+        d3.select("#countryName").text(d.properties.name);
+        // Assume population data is available in properties
+        d3.select("#population").text(d.properties.population || 'Unknown');
+      })
+      .on("mouseout", function(d) {
+        d3.select(this).style("fill", null);
+      })
+      .on("click", function(d) {
+        fetchCountryInfo(d.properties.name);
+      });
+  });
+
+  // Search functionality
+  d3.select("#search").on("input", function() {
+    const searchTerm = this.value.toLowerCase();
+    countries.selectAll(".country")
+      .classed("highlighted", d => d.properties.name.toLowerCase().includes(searchTerm));
+  });
+
+  function fetchCountryInfo(countryName) {
+    // Placeholder for fetching Wikipedia or other data
+    d3.select("#description").text(`Fetching info for ${countryName}...`);
+    // Here you would call an API like Wikipedia's or your own data source
+    // Example with Wikipedia:
+    fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(countryName)}&origin=*`)
+      .then(response => response.json())
+      .then(data => {
+        const pages = data.query.pages;
+        const pageId = Object.keys(pages)[0];
+        d3.select("#description").text(pages[pageId].extract || 'No detailed information available.');
+      });
+  }
+
+  // Fit map to container
+  projection.fitSize([width, height], world);
+</script>
+
+</body>
+</html>
