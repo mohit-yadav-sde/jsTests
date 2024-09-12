@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Smart City Traffic Monitor</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        #toolbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        #toolbar button {
+            margin: 5px 0;
+            padding: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #eta-display {
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+    <!-- Mapbox GL JS and CSS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css" rel="stylesheet">
+    <!-- Mapbox Geocoder Plugin -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="toolbar">
+    <div id="start-geocoder" style="margin-bottom: 10px;"></div>
+    <div id="end-geocoder"></div>
+    <button onclick="getTrafficData()">Get Traffic</button>
+    <button onclick="getAlternateRoute()">Get Alternate Route</button>
+    <div id="eta-display">ETA: N/A</div>
+</div>
+
+<div id="map"></div>
+
+<script>
+  mapboxgl.accessToken = 'YOUR_MAPBOX TOKEN';
+
+  let startMarker, endMarker, startCoords, endCoords;
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-74.0060, 40.7128],
+    zoom: 12
+  });
+
+  const startGeocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    placeholder: 'Start Location',
+    mapboxgl: mapboxgl,
+    marker: false,
+  });
+
+  document.getElementById('start-geocoder').appendChild(startGeocoder.onAdd(map));
+
+  startGeocoder.on('result', (event) => {
+    const coords = event.result.geometry.coordinates;
+    setMarker(coords, 'start');
+  });
+
+  const endGeocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    placeholder: 'End Location',
+    mapboxgl: mapboxgl,
+    marker: false,
+  });
+
+  document.getElementById('end-geocoder').appendChild(endGeocoder.onAdd(map));
+
+  endGeocoder.on('result', (event) => {
+    const coords = event.result.geometry.coordinates;
+    setMarker(coords, 'end');
+  });
+
+  function setMarker(coords, type) {
+    const markerColor = type === 'start' ? '#1DB954' : '#ff4d4d';
+
+    if (type === 'start') {
+      if (startMarker) startMarker.setLngLat(coords);
+      else startMarker = new mapboxgl.Marker({ color: markerColor }).setLngLat(coords).addTo(map);
+      startCoords = [coords[1], coords[0]];
+    } else {
+      if (endMarker) endMarker.setLngLat(coords);
+      else endMarker = new mapboxgl.Marker({ color: markerColor }).setLngLat(coords).addTo(map);
+      endCoords = [coords[1], coords[0]];
+    }
+
+    map.panTo(coords);
+  }
+
+  function getAlternateRoute() {
+    if (!startCoords || !endCoords) {
+      alert('Please select both start and end locations.');
+      return;
+    }
+
+    fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?alternatives=true&geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data.routes || data.routes.length < 2) {
+          alert('No alternate routes available.');
+          return;
+        }
+
+        const route = data.routes[1].geometry;
+        const eta = Math.round(data.routes[1].duration / 60);
+
+        document.getElementById('eta-display').innerText = `ETA: ${eta} min`;
+
+        if (map.getLayer('alternateRoute')) {
+          map.removeLayer('alternateRoute');
+          map.removeSource('alternateRoute');
+        }
+
+        map.addSource('alternateRoute', {
+          'type': 'geojson',
+          'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': route
+          }
+        });
+
+        map.addLayer({
+          'id': 'alternateRoute',
+          'type': 'line',
+          'source': 'alternateRoute',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#0000FF',
+            'line-width': 8,
+            'line-opacity': 0.8
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching alternate route:', error);
+        alert('An error occurred while fetching the alternate route.');
+      });
+  }
+
+  function getTrafficData() {
+    if (!startCoords || !endCoords) {
+      alert('Please select both start and end locations.');
+      return;
+    }
+
+    fetch(`https://api.mapbox.com/v4/mapbox.mapbox-traffic-v1/tilequery/${startCoords[1]},${startCoords[0]}.json?radius=1000&layers=traffic&limit=50&access_token=${mapboxgl.accessToken}`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data.features || data.features.length === 0) {
+          alert('No traffic incidents found.');
+          return;
+        }
+
+        data.features.forEach(incident => {
+          const coordinates = incident.geometry.coordinates;
+          const congestion = incident.properties.congestion;
+
+          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.join(',')}.json?access_token=${mapboxgl.accessToken}`)
+            .then(res => res.json())
+            .then(geoData => {
+              const city = geoData.features.find(f => f.place_type.includes('place'))?.text || 'Unknown City';
+
+              new mapboxgl.Marker({
+                color: '#FF0000',
+                scale: 1.8
+              })
+                .setLngLat(coordinates)
+                .setPopup(new mapboxgl.Popup().setHTML(`
+                <strong>Traffic Incident:</strong> ${congestion}<br>
+                <strong>City:</strong> ${city}
+              `))
+                .addTo(map);
+            });
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching traffic data:', error);
+        alert('An error occurred while fetching traffic data.');
+      });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart City Traffic Monitor</title>
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; }
+        .search-container { position: absolute; top: 10px; left: 50px; z-index: 1000; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .route-info { position: absolute; bottom: 10px; width: 90%; left: 5%; background: white; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="search-container">
+    <input id="start" placeholder="Start location" type="text" />
+    <input id="end" placeholder="End location" type="text" />
+    <button onclick="findRoutes()">Find Routes</button>
+</div>
+<div class="route-info" id="routeInfo"></div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/here-js-api@3.1.3/scripts/mapsjs-core.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/here-js-api@3.1.3/scripts/mapsjs-service.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/here-js-api@3.1.3/scripts/mapsjs-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/here-js-api@3.1.3/scripts/mapsjs-mapevents.js"></script>
+<script>
+  // Initialize the platform object:
+  var platform = new H.service.Platform({
+    'apikey': 'YOUR_HERE_API_KEY'
+  });
+
+  var defaultLayers = platform.createDefaultLayers();
+
+  // Initialize a map
+  var map = new H.Map(
+    document.getElementById('map'),
+    defaultLayers.vector.normal.map,
+    {
+      center: {lat: 52.5160, lng: 13.3779},
+      zoom: 13,
+      pixelRatio: window.devicePixelRatio || 1
+    }
+  );
+
+  // Enable the event system
+  var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+  // Enable UI
+  var ui = H.ui.UI.createDefault(map, defaultLayers);
+
+  // Autocomplete functionality for search inputs
+  function setupAutocomplete(inputId) {
+    var service = platform.getSearchService(),
+      input = document.getElementById(inputId);
+
+    input.addEventListener('input', function(e) {
+      service.autosuggest({
+        q: input.value,
+        at: map.getCenter().lat + ',' + map.getCenter().lng
+      }, (result) => {
+        // Here you would handle the autosuggest results, for simplicity, not implemented fully
+        console.log(result);
+      });
+    });
+  }
+
+  setupAutocomplete('start');
+  setupAutocomplete('end');
+
+  function findRoutes() {
+    var routingParameters = {
+      'routingMode': 'fast',
+      'transportMode': 'car',
+      'origin': document.getElementById('start').value,
+      'destination': document.getElementById('end').value,
+      'return': 'polyline,summary'
+    };
+
+    var onResult = function(result) {
+      if (result.routes.length) {
+        result.routes.forEach((route, index) => {
+          var routeColor = ['red', 'blue', 'green'][index]; // Simple color coding
+          L.geoJSON(route.shape).addTo(map).setStyle({color: routeColor});
+
+          // Display route info
+          var routeInfo = document.getElementById('routeInfo');
+          routeInfo.innerHTML += `<p style="color:${routeColor};">Route ${index + 1}: ${route.summary.text} - ETA: ${route.summary.travelTime / 60} mins</p>`;
+        });
+      }
+    };
+
+    var router = platform.getRoutingService(null, 8);
+    router.calculateRoute(routingParameters, onResult,
+      function(error) {
+        alert(error.message);
+      });
+  }
+
+  // Add city information on click - this would need an event listener for clicks on map or markers
+  map.addEventListener('tap', function(evt) {
+    // Here you would fetch and display city information based on evt's coordinates
+    console.log('Clicked at: ', evt.target.getLatLng());
+  });
+</script>
+
+</body>
+</html>
