@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Subscription Optimizer</title>
+    <style>
+        :root {
+            --primary-bg: #ffffff;
+            --secondary-bg: #f4f4f4;
+            --primary-text: #333;
+            --secondary-text: #555;
+            --accent-color: #4CAF50;
+            --remove-color: #ff4d4d;
+        }
+
+        [data-theme="dark"] {
+            --primary-bg: #181818;
+            --secondary-bg: #282828;
+            --primary-text: #f1f1f1;
+            --secondary-text: #000;
+            --accent-color: #1db954;
+            --remove-color: #ff4d4d;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--secondary-bg);
+            color: var(--primary-text);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #available-subscriptions, #comparison {
+            width: 45%;
+            padding: 20px;
+            background-color: var(--primary-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-text);
+        }
+
+        .subscription {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: var(--secondary-bg);
+            border-radius: 10px;
+            cursor: grab;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .subscription:hover {
+            background-color: var(--primary-bg);
+            transform: scale(1.03);
+        }
+
+        .comparison-result {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #fffbe6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .remove-button {
+            background-color: var(--remove-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .remove-button:hover {
+            background-color: red;
+        }
+
+        .cta-button {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background-color: #3a923e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: var(--secondary-text);
+        }
+
+        .total-cost {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #themeToggle:hover {
+            background-color: #3a923e;
+        }
+    </style>
+</head>
+<body>
+
+<button id="themeToggle">Switch to Dark Mode</button>
+
+<div id="available-subscriptions">
+    <h2>Available Subscriptions</h2>
+    <div id="subscriptionList"></div>
+</div>
+
+<div id="comparison" ondragover="allowDrop(event)" ondrop="drop(event)">
+    <h2>Your Comparison</h2>
+    <div class="empty-state" id="comparisonResults">
+        Drag services here to compare
+    </div>
+    <div class="total-cost" id="totalCost">Total Cost: $0</div>
+    <button class="cta-button" onclick="generateScript()">Generate Negotiation Script</button>
+    <div id="negotiationScript"></div>
+</div>
+
+<script>
+  const subscriptionData = [
+    { name: 'Netflix', price: 12 },
+    { name: 'Spotify', price: 10 },
+    { name: 'Hulu', price: 14 },
+    { name: 'Disney+', price: 8 },
+    { name: 'Amazon Prime', price: 13 },
+    { name: 'YouTube Premium', price: 11 },
+    { name: 'Apple Music', price: 9 },
+    { name: 'HBO Max', price: 15 },
+    { name: 'Paramount+', price: 7 },
+    { name: 'Peacock', price: 6 },
+    { name: 'Audible', price: 15 },
+    { name: 'Tidal', price: 10 },
+  ];
+
+  const subscriptionList = document.getElementById('subscriptionList');
+  const comparisonResults = document.getElementById('comparisonResults');
+  const totalCostElement = document.getElementById('totalCost');
+  let selectedSubscriptions = [];
+
+  // Dynamically populate the available subscriptions
+  function populateSubscriptions() {
+    subscriptionData.forEach(sub => {
+      const subscriptionDiv = document.createElement('div');
+      subscriptionDiv.className = 'subscription';
+      subscriptionDiv.draggable = true;
+      subscriptionDiv.setAttribute('data-name', sub.name);
+      subscriptionDiv.setAttribute('data-price', sub.price);
+      subscriptionDiv.ondragstart = drag;
+      subscriptionDiv.innerHTML = `
+                <span>${sub.name}</span>
+                <span>$${sub.price}</span>
+            `;
+      subscriptionList.appendChild(subscriptionDiv);
+    });
+  }
+
+  // Allow drop functionality
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  // Handle dragging
+  function drag(ev) {
+    ev.dataTransfer.setData("name", ev.target.getAttribute('data-name'));
+    ev.dataTransfer.setData("price", ev.target.getAttribute('data-price'));
+  }
+
+  // Handle dropping into the comparison area
+  function drop(ev) {
+    ev.preventDefault();
+    const name = ev.dataTransfer.getData("name");
+    const price = parseFloat(ev.dataTransfer.getData("price"));
+
+    if (!selectedSubscriptions.some(sub => sub.name === name)) {
+      addSubscriptionToComparison(name, price);
+    } else {
+      alert('This service has already been added to your comparison.');
+    }
+  }
+
+  // Add subscription to comparison area
+  function addSubscriptionToComparison(name, price) {
+    selectedSubscriptions.push({ name, price });
+    comparisonResults.innerHTML += `
+            <div class="comparison-result" id="${name}">
+                <span>${name}</span>
+                <span>$${price}</span>
+                <button class="remove-button" onclick="removeSubscription('${name}')">Remove</button>
+            </div>`;
+    updateTotalCost();
+    persistWatchlist();
+  }
+
+  // Remove subscription from comparison
+  function removeSubscription(name) {
+    selectedSubscriptions = selectedSubscriptions.filter(sub => sub.name !== name);
+    document.getElementById(name).remove();
+    if (selectedSubscriptions.length === 0) {
+      comparisonResults.classList.add('empty-state');
+      comparisonResults.innerHTML = 'Drag services here to compare';
+    }
+    updateTotalCost();
+    persistWatchlist();
+  }
+
+  // Update total cost
+  function updateTotalCost() {
+    const totalCost = selectedSubscriptions.reduce((sum, sub) => sum + sub.price, 0);
+    totalCostElement.innerText = `Total Cost: $${totalCost}`;
+  }
+
+  // Generate negotiation script
+  function generateScript() {
+    const scriptArea = document.getElementById('negotiationScript');
+    if (selectedSubscriptions.length === 0) {
+      scriptArea.innerText = 'Please add subscriptions to compare first.';
+    } else {
+      let script = 'Dear Provider,\n\nI currently subscribe to the following services:\n\n';
+      selectedSubscriptions.forEach(sub => {
+        script += `- ${sub.name} at $${sub.price}/month\n`;
+      });
+      script += '\nI am looking to reduce my costs. Can you offer any discounts or bundles?\n\nThank you for your consideration.';
+      scriptArea.innerText = script;
+    }
+  }
+
+  // Persist watchlist using local storage
+  function persistWatchlist() {
+    localStorage.setItem('subscriptionWatchlist', JSON.stringify(selectedSubscriptions));
+  }
+
+  // Load watchlist on page load
+  function loadWatchlist() {
+    const savedList = JSON.parse(localStorage.getItem('subscriptionWatchlist')) || [];
+    savedList.forEach(sub => {
+      addSubscriptionToComparison(sub.name, sub.price);
+    });
+  }
+
+  // Switch between light and dark mode
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    const theme = document.body.getAttribute('data-theme');
+    if (theme === 'dark') {
+      document.body.setAttribute('data-theme', 'light');
+      themeToggle.innerText = 'Switch to Dark Mode';
+    } else {
+      document.body.setAttribute('data-theme', 'dark');
+      themeToggle.innerText = 'Switch to Light Mode';
+    }
+  });
+
+  // Initialize the app
+  window.onload = function() {
+    populateSubscriptions();
+    loadWatchlist();
+  };
+</script>
+
+</body>
+</html>
