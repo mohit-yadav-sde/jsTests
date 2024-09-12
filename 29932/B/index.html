@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Movie Recommendation App</title>
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .genre-select { margin: 10px; }
+        .movie-poster { width: 100px; margin: 5px; cursor: move; }
+        .watchlist { border: 2px dashed #ccc; min-height: 100px; padding: 10px; }
+        #chartContainer { width: 80%; height: 300px; margin: 20px auto; }
+    </style>
+</head>
+<body>
+
+<div>
+    <h2>Select Genres</h2>
+    <select class="genre-select" id="genre1"></select>
+    <select class="genre-select" id="genre2"></select>
+    <select class="genre-select" id="genre3"></select>
+    <select class="genre-select" id="genre4"></select>
+    <select class="genre-select" id="genre5"></select>
+    <button onclick="fetchMovies()">Find Movies</button>
+</div>
+
+<div id="movieDisplay"></div>
+<div class="watchlist" id="watchlist">Drag movies here to add to your watchlist</div>
+<div id="chartContainer"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const API_KEY = 'YOUR_TMDB_API_KEY';
+  let genres = {};
+
+  // Populate genres
+  $.getJSON(`https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`, function(data) {
+    genres = data.genres;
+    $('.genre-select').each(function() {
+      let select = $(this);
+      $.each(genres, function(id, genre) {
+        select.append($("<option />").val(genre.id).text(genre.name));
+      });
+    });
+  });
+
+  function fetchMovies() {
+    let genreIds = $('.genre-select').map(function(){
+      return $(this).val();
+    }).get().join(',');
+
+    $.getJSON(`https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&with_genres=${genreIds}`, function(data) {
+      let moviesHTML = data.results.slice(0, 10).map(movie =>
+        `<img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" alt="${movie.title}" class="movie-poster" draggable="true" ondragstart="drag(event)" data-id="${movie.id}">`
+      ).join('');
+      $('#movieDisplay').html(moviesHTML);
+    });
+  }
+
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.getAttribute('data-id'));
+  }
+
+  function drop(ev) {
+    ev.preventDefault();
+    let data = ev.dataTransfer.getData("text");
+    // Here you might want to fetch movie details again or store just the ID
+    let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    if (!watchlist.includes(data)) {
+      watchlist.push(data);
+      localStorage.setItem('watchlist', JSON.stringify(watchlist));
+    }
+  }
+
+  // Load watchlist on page load
+  $(function() {
+    let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    watchlist.forEach(id => {
+      // Here you should fetch and display each movie in the watchlist area
+      // For simplicity, we're not fetching details again
+    });
+  });
+
+  // Chart for popular movies (this would require another API call)
+  // This is a placeholder for chart logic
+  $(function() {
+    // Fetch popular movies and create chart
+    $.getJSON(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`, function(data) {
+      let labels = data.results.map(movie => movie.title);
+      let popularity = data.results.map(movie => movie.popularity);
+
+      new Chart(document.getElementById("chartContainer"), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Popularity',
+            data: popularity,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
