@@ -113,6 +113,12 @@
             justify-content: space-between;
             margin-bottom: 20px;
         }
+
+        .error-message {
+            color: #e50914;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +140,8 @@
     <div class="recommendations" id="recommendations"></div>
 
     <iframe allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" id="spotify-player" src=""></iframe>
+
+    <div class="error-message" id="error-message"></div>
 </div>
 
 <script>
@@ -143,27 +151,35 @@
   let currentPlayingTrack = '';
 
   async function getToken() {
-    const result = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET)
-      },
-      body: 'grant_type=client_credentials'
-    });
-    const data = await result.json();
-    accessToken = data.access_token;
+    try {
+      const result = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET)
+        },
+        body: 'grant_type=client_credentials'
+      });
+      const data = await result.json();
+      accessToken = data.access_token;
+    } catch (error) {
+      showError('Failed to get Spotify access token. Please check your credentials.');
+    }
   }
 
   async function fetchGenres() {
     if (!accessToken) {
       await getToken();
     }
-    const result = await fetch('https://api.spotify.com/v1/recommendations/available-genre-seeds', {
-      headers: { 'Authorization': 'Bearer ' + accessToken }
-    });
-    const data = await result.json();
-    populateGenreDropdowns(data.genres);
+    try {
+      const result = await fetch('https://api.spotify.com/v1/recommendations/available-genre-seeds', {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      });
+      const data = await result.json();
+      populateGenreDropdowns(data.genres);
+    } catch (error) {
+      showError('Failed to fetch genres from Spotify.Your Client Secret or Key is invalid');
+    }
   }
 
   function populateGenreDropdowns(genres) {
@@ -192,29 +208,36 @@
     const recommendations = document.getElementById('recommendations');
     recommendations.innerHTML = '';
 
-    const result = await fetch(`https://api.spotify.com/v1/recommendations?seed_genres=${genres}&limit=5`, {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + accessToken
-      }
-    });
+    try {
+      const result = await fetch(`https://api.spotify.com/v1/recommendations?seed_genres=${genres}&limit=5`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken
+        }
+      });
 
-    const data = await result.json();
+      const data = await result.json();
+      document.getElementById('fetch-button').style.display = 'none';
 
-    document.getElementById('fetch-button').style.display = 'none';
+      if (data.tracks && data.tracks.length > 0) {
+        data.tracks.forEach(track => {
+          const songDiv = document.createElement('div');
+          songDiv.classList.add('song-item');
 
-    data.tracks.forEach(track => {
-      const songDiv = document.createElement('div');
-      songDiv.classList.add('song-item');
-
-      songDiv.innerHTML = `
+          songDiv.innerHTML = `
                 <img src="${track.album.images[0].url}" alt="Album Cover">
                 <strong>${track.name}</strong>
                 <div>${track.artists[0].name}</div>
                 <button onclick="playSong('${track.uri}', this)">Play</button>
             `;
-      recommendations.appendChild(songDiv);
-    });
+          recommendations.appendChild(songDiv);
+        });
+      } else {
+        showError('No recommendations found for the selected genres.');
+      }
+    } catch (error) {
+      showError('Error fetching music recommendations.');
+    }
   }
 
   function playSong(trackUri, button) {
@@ -223,12 +246,17 @@
     iframe.style.display = 'block';
 
     const songItems = document.querySelectorAll('.song-item');
-    songItems.forEach(item => item.classList.remove('playing')); // Remove "playing" class from all items
-    button.parentElement.classList.add('playing'); // Add "playing" class to the current song
+    songItems.forEach(item => item.classList.remove('playing'));
+    button.parentElement.classList.add('playing');
 
     const moodColors = ['#ff6f61', '#6b5b95', '#88b04b', '#f7cac9', '#92a8d1', '#955251'];
     const randomColor = moodColors[Math.floor(Math.random() * moodColors.length)];
     document.body.style.backgroundColor = randomColor;
+  }
+
+  function showError(message) {
+    const errorMessage = document.getElementById('error-message');
+    errorMessage.textContent = message;
   }
 
   window.onload = fetchGenres;
