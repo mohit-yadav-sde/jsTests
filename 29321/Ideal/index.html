@@ -1,397 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <title>High-Quality Image Compressor</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Image Resizer and Compressor</title>
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Add any required CSS here -->
     <style>
-        * {
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #fff;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            overflow-x: hidden;
+            transition: filter 0.3s ease;
         }
-        body {
-            font-family: "Segoe UI", Tahoma,
-            Geneva, Verdana, sans-serif;
-            background-color: #eefd97;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #eeeeee;
-            padding: 50px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px
-            rgba(0, 0, 0, 0.1);
-            max-width: 550px;
-            width: 100%;
-        }
-        .title {
-            background-color: #a0fd94;
-            font-size: 32px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-        .image-upload {
+        h1 {
             text-align: center;
+            margin: 20px 0;
         }
-        .upload-label {
-            background-color: #007bff;
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100%;
+            background-color: #1e1e1e;
+            padding-top: 20px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .sidebar a {
+            display: block;
             color: #fff;
             padding: 15px 20px;
-            border-radius: 8px;
-            cursor: pointer;
+            text-decoration: none;
             font-size: 18px;
-            margin-bottom: 20px;
-            transition: background-color 0.3s;
-            box-shadow: 0 2px 5px
-            rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .upload-label:hover {
-            background-color: #0056b3;
-            transform: scale(1.05);
-        }
-        .upload-label i {
-            margin-right: 8px;
-            font-size: 24px;
-        }
-        input[type="file"] {
-            display: none;
-        }
-        .output {
-            margin-top: 30px;
-            text-align: center;
-        }
-        .preview-label {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 20px auto;
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px
-            rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s;
-        }
-        img:hover {
-            transform: scale(1.05);
-        }
-        .controls {
-            margin-top: 30px;
-        }
-        .control-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        label {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-        input[type="number"],
-        input[type="range"],
-        select {
-            width: 70%;
-            padding: 10px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            font-size: 18px;
-            transition: border-color 0.3s;
-        }
-        input[type="number"]:focus,
-        input[type="range"]:focus,
-        select:focus {
-            border-color: #007bff;
-        }
-        .quality-group {
-            position: relative;
-        }
-        input[type="range"] {
-            width: 100%;
-            -webkit-appearance: none;
-            height: 10px;
-            border-radius: 8px;
-            background: #ccc;
-            outline: none;
             transition: background 0.3s;
         }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #007bff;
-            cursor: pointer;
-            box-shadow: 0 2px 5px
-            rgba(0, 0, 0, 0.2);
+        .sidebar a:hover {
+            background-color: #333;
+        }
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            color: #e50914;
+        }
+        /* Main Content Styles */
+        .main-content {
+            margin-left: 200px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+        /* Image Gallery Styles */
+        #image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        .image-item {
             position: relative;
-            z-index: 2;
+            width: 300px;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s;
         }
-        .quality-group:hover
-        input[type="range"] {
-            background: #0056b3;
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .quality-value {
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+        /* Call to Action Buttons */
+        .cta-buttons {
             position: absolute;
-            top: -1px;
-            left: calc(106% - 25px);
-            color: #ff0000;
-            font-size: 18px;
-            background-color: rgb(
-                    136,
-                    223,
-                    169
-            );
-            padding: 4px 10px;
-            border-radius: 6px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        button {
+        .image-item:hover .cta-buttons {
+            opacity: 1;
+        }
+        .cta-buttons button {
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .cta-buttons button:hover {
+            background-color: #b00610;
+        }
+        /* Selected Image Styles */
+        #selected-image-container {
+            display: none;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #selected-image {
+            max-width: 80%;
+            max-height: 500px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        #controls button, #controls a {
+            padding: 12px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #compress-btn {
             background-color: #007bff;
             color: #fff;
-            border: none;
-            padding: 15px 30px;
-            cursor: pointer;
-            font-size: 20px;
-            border-radius: 8px;
-            transition: background-color 0.3s,
-            transform 0.3s;
-            box-shadow: 0 4px 10px
-            rgba(0, 0, 0, 0.2);
-            outline: none;
         }
-        button:hover {
+        #compress-btn:hover {
             background-color: #0056b3;
-            transform: scale(1.05);
         }
-        .download-button {
-            background-color: #0056b3;
+        #download-btn {
+            background-color: #28a745;
             color: #fff;
-            border: none;
-            padding: 15px 30px;
-            cursor: pointer;
-            font-size: 20px;
-            border-radius: 8px;
             text-decoration: none;
-            display: inline-block;
-            margin-top: 20px;
-            transition: background-color 0.3s,
-            transform 0.3s;
-            box-shadow: 0 4px 10px
-            rgba(0, 0, 0, 0.2);
+            display: none;
         }
-        .download-button:hover {
-            background-color: #004180;
-            transform: scale(1.05);
+        #download-btn:hover {
+            background-color: #1e7e34;
         }
-        #resizeUnit {
-            width: 60%;
-            font-size: 18px;
-            margin-right: 100px;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: rgba(0,0,0,0.8);
         }
-        #pixel-dimensions,
-        #percentage-dimensions,
-        #pixel-height-dimensions {
-            display: flex;
-            align-items: center;
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
         }
-        #pixel-dimensions span,
-        #percentage-dimensions span,
-        #pixel-height-dimensions span {
-            margin-left: 10px;
-            font-size: 18px;
-            color: #333;
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #e50914;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Blur Effect */
+        .blur {
+            filter: blur(5px);
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            .sidebar a {
+                text-align: center;
+                padding: 10px 0;
+            }
+            .sidebar a span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 60px;
+            }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1 class="title">Image Resizer and Compressor</h1>
-        <div class="image-upload">
-            <label class="upload-label" for="imageInput">
-                <i class="fas fa-cloud-upload-alt"></i> Upload an Image
-            </label>
-            <input accept="image/*" id="imageInput" type="file">
-        </div>
-        <div id="action-form" style="display: none;">
-            <div class="output">
-                <h2 class="preview-label">Preview:</h2>
-                <img alt="Preview" id="preview">
-                <p id="image-dimensions" style="margin-top: 10px;"></p>
-            </div>
-            <div class="controls">
-                <div class="control-group">
-                    <label for="resizeUnit">Unit:</label>
-                    <select id="resizeUnit">
-                        <option value="pixels">Pixels</option>
-                        <option value="percentage">Percentage</option>
-                    </select>
-                </div>
-                <div class="control-group" id="pixel-dimensions">
-                    <label for="resizeWidth">Width:</label>
-                    <input id="resizeWidth" min="10" placeholder="Width" type="number">
-                    <span>px</span>
-                </div>
-                <div class="control-group" id="percentage-dimensions" style="display: none;">
-                    <label for="resizePercentage">Percent:</label>
-                    <input id="resizePercentage" max="100" min="1" placeholder="Percentage" type="number">
-                    <span>%</span>
-                </div>
-                <div class="control-group" id="pixel-height-dimensions">
-                    <label for="resizeHeight">Height:</label>
-                    <input id="resizeHeight" min="10" placeholder="Height" type="number">
-                    <span>px</span>
-                </div>
-                <div class="control-group quality-group">
-                    <label for="quality">Quality:</label>
-                    <input id="quality" max="100" min="1" type="range" value="80">
-                    <span class="quality-value" id="quality-value">80</span>
-                </div>
-                <button disabled id="resizeButton">Resize & Compress</button>
-                <a class="download-button" id="downloadButton" style="display: none">Download Compressed Image</a>
-            </div>
+
+<div class="sidebar">
+    <div class="logo">My Wallpaper</div>
+    <a href="#" id="home-link"><i class="fas fa-home"></i> <span>Home</span></a>
+    <a href="#" id="liked-images-link"><i class="fas fa-heart"></i> <span>Liked Images</span></a>
+</div>
+
+<div class="main-content" id="main-content">
+    <h1 id="page-title">High-Quality Light Wallpapers</h1>
+
+    <!-- Image Gallery -->
+    <div id="image-gallery"></div>
+
+    <!-- Selected Image and Controls -->
+    <div id="selected-image-container">
+        <img alt="Selected Image" id="selected-image" src="">
+        <div id="controls">
+            <button id="compress-btn">Compress Image</button>
+            <a download="compressed-image.jpg" href="#" id="download-btn">Download Compressed Image</a>
         </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const imgInput = document.getElementById("imageInput");
-            const imgShow = document.getElementById("preview");
-            const rUnit = document.getElementById("resizeUnit");
-            const resizeWidth = document.getElementById("resizeWidth");
-            const resizePercentage = document.getElementById("resizePercentage");
-            const dimensions = document.getElementById("pixel-dimensions");
-            const percentageDimensions = document.getElementById("percentage-dimensions");
-            const pixelHeightDimensions = document.getElementById("pixel-height-dimensions");
-            const imgQuality = document.getElementById("quality");
-            const qualValue = document.getElementById("quality-value");
-            const resizeBtn = document.getElementById("resizeButton");
-            const downloadBtn = document.getElementById("downloadButton");
-            const imgDimensions = document.getElementById("image-dimensions");
-            const action = document.getElementById("action-form");
-            let imageResized = false;
 
-            const updateQualVal = () => {
-                qualValue.innerText = imgQuality.value;
-            };
-            updateQualVal();
-            imgQuality.addEventListener("input", updateQualVal);
+    <!-- Modal for Compression -->
+    <div class="modal" id="compression-modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <p>Compressing Image...</p>
+        </div>
+    </div>
+</div>
 
-            imgInput.addEventListener("change", () => {
-                const imgFile = imgInput.files[0];
-                if (imgFile) {
-                    const readFile = new FileReader();
-                    readFile.onload = (e) => {
-                        imgShow.src = e.target.result;
-                        showActionForm();
-                        showImageDim(imgFile);
-                        resizeBtn.disabled = false;
-                    };
-                    readFile.onerror = () => {
-                        alert('Error reading file');
-                    };
-                    readFile.readAsDataURL(imgFile);
-                }
-            });
+<!-- Add any required JS libraries here -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<script>
+  const UNSPLASH_ACCESS_KEY = 'YOUR_UNSPLASH_ACCESS_KEY'; // Replace with your Unsplash Access Key
 
-            const showActionForm = () => {
-                action.style.display = "block";
-            };
+  const imageGallery = document.getElementById('image-gallery');
+  const selectedImageContainer = document.getElementById('selected-image-container');
+  const selectedImage = document.getElementById('selected-image');
+  const compressBtn = document.getElementById('compress-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const compressionModal = document.getElementById('compression-modal');
+  const pageTitle = document.getElementById('page-title');
+  const homeLink = document.getElementById('home-link');
+  const likedImagesLink = document.getElementById('liked-images-link');
+  const mainContent = document.getElementById('main-content');
 
-            const showImageDim = (imgFile) => {
-                const image = new Image();
-                image.onload = () => {
-                    const width = image.width;
-                    const height = image.height;
-                    imgDimensions.innerText = `Image Dimensions: ${width} x ${height} pixels`;
-                };
-                image.src = URL.createObjectURL(imgFile);
-            };
+  let originalImageBlob;
+  let likedImages = JSON.parse(localStorage.getItem('likedImages')) || [];
 
-            const dimFieldsShow = () => {
-                if (rUnit.value === "pixels") {
-                    dimensions.style.display = "block";
-                    pixelHeightDimensions.style.display = "block";
-                    percentageDimensions.style.display = "none";
-                } else {
-                    dimensions.style.display = "none";
-                    pixelHeightDimensions.style.display = "none";
-                    percentageDimensions.style.display = "block";
-                }
-            };
-            rUnit.addEventListener("change", dimFieldsShow);
+  // Fetch images from Unsplash API
+  function fetchImages() {
+    imageGallery.innerHTML = '';
+    pageTitle.textContent = 'High-Quality Light Wallpapers';
+    selectedImageContainer.style.display = 'none';
 
-            const updateDimensions = () => {
-                if (rUnit.value === "pixels") {
-                    imgDimensions.innerText = `Image Dimensions: ${resizeWidth.value} x ${resizeHeight.value} pixels`;
-                } else {
-                    const percentage = parseInt(resizePercentage.value);
-                    if (!isNaN(percentage)) {
-                        const width = (imgShow.width * percentage) / 100;
-                        const height = (imgShow.height * percentage) / 100;
-                        imgDimensions.innerText = `Image Dimensions: ${Math.round(width)} x ${Math.round(height)} pixels`;
-                    }
-                }
-            };
-
-            resizeBtn.addEventListener("click", () => {
-                if (imageResized) {
-                    return;
-                }
-                let width, height;
-                if (rUnit.value === "percentage") {
-                    const percentage = parseInt(resizePercentage.value);
-                    if (isNaN(percentage) || percentage < 1 || percentage > 100) {
-                        alert('Please enter a valid percentage (1-100).');
-                        return;
-                    }
-                    width = (imgShow.width * percentage) / 100;
-                    height = (imgShow.height * percentage) / 100;
-                    resizeWidth.value = width;
-                    resizeHeight.value = height;
-                } else {
-                    width = parseInt(resizeWidth.value);
-                    height = parseInt(resizeHeight.value);
-                    if (isNaN(width) || width < 2 || isNaN(height) || height < 2) {
-                        alert('Please enter valid dimensions (minimum 2px).');
-                        return;
-                    }
-                }
-                const imageQuality = parseInt(imgQuality.value) / 100;
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-                const imageObj = new Image();
-                imageObj.onload = () => {
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(imageObj, 0, 0, width, height);
-                    const resizedDataUrl = canvas.toDataURL("image/jpeg", imageQuality);
-                    imgShow.src = resizedDataUrl;
-                    downloadBtn.style.display = "inline-block";
-                    downloadBtn.href = resizedDataUrl;
-                    downloadBtn.download = "compressed-image.jpg";
-                    updateDimensions();
-                    imageResized = true;
-                };
-                imageObj.src = imgShow.src;
-            });
+    fetch(`https://api.unsplash.com/photos/random?count=12&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`)
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(photo => {
+          createImageItem(photo);
         });
-    </script>
-</body>
+      })
+      .catch(error => {
+        console.error('Error fetching images:', error);
+        imageGallery.innerHTML = '<p>Error fetching images. Please try again later.</p>';
+      });
+  }
 
+  function createImageItem(photo) {
+    const imgDiv = document.createElement('div');
+    imgDiv.classList.add('image-item');
+
+    const img = document.createElement('img');
+    img.src = photo.urls.small;
+    img.alt = photo.alt_description || 'Unsplash Image';
+
+    // Call to Action Buttons
+    const ctaButtons = document.createElement('div');
+    ctaButtons.classList.add('cta-buttons');
+
+    const selectBtn = document.createElement('button');
+    selectBtn.textContent = 'Select';
+    selectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectImage(photo.urls.full);
+    });
+
+    const likeBtn = document.createElement('button');
+    likeBtn.innerHTML = likedImages.some(image => image.id === photo.id) ? 'Unlike' : 'Like';
+    likeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleLikeImage(photo, likeBtn);
+    });
+
+    ctaButtons.appendChild(selectBtn);
+    ctaButtons.appendChild(likeBtn);
+
+    imgDiv.appendChild(img);
+    imgDiv.appendChild(ctaButtons);
+    imageGallery.appendChild(imgDiv);
+  }
+
+  function toggleLikeImage(photo, likeBtn) {
+    if (likedImages.some(image => image.id === photo.id)) {
+      likedImages = likedImages.filter(image => image.id !== photo.id);
+      likeBtn.textContent = 'Like';
+    } else {
+      likedImages.push({ id: photo.id, url: photo.urls.full, thumbnail: photo.urls.small, alt: photo.alt_description });
+      likeBtn.textContent = 'Unlike';
+    }
+    localStorage.setItem('likedImages', JSON.stringify(likedImages));
+  }
+
+  function selectImage(imageUrl) {
+    selectedImage.src = imageUrl;
+    selectedImageContainer.style.display = 'block';
+    compressBtn.style.display = 'inline-block';
+    downloadBtn.style.display = 'none';
+    fetchImageBlob(imageUrl);
+    window.scrollTo({
+      top: selectedImageContainer.offsetTop,
+      behavior: 'smooth'
+    });
+  }
+
+  function fetchImageBlob(imageUrl) {
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        originalImageBlob = blob;
+      })
+      .catch(error => {
+        console.error('Error fetching image blob:', error);
+      });
+  }
+
+  compressBtn.addEventListener('click', () => {
+    if (originalImageBlob) {
+      // Show modal with animation and apply blur effect
+      compressionModal.style.display = 'block';
+      mainContent.classList.add('blur');
+      compressImage(originalImageBlob, 0.7, (compressedBlob) => {
+        const compressedUrl = URL.createObjectURL(compressedBlob);
+        selectedImage.src = compressedUrl;
+        downloadBtn.href = compressedUrl;
+        downloadBtn.style.display = 'inline-block';
+        // Hide modal after compression and remove blur effect
+        compressionModal.style.display = 'none';
+        mainContent.classList.remove('blur');
+      });
+    }
+  });
+
+  function compressImage(blob, quality, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const img = new Image();
+      img.src = reader.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((compressedBlob) => {
+          callback(compressedBlob);
+        }, 'image/jpeg', quality);
+      };
+    };
+  }
+
+  // Sidebar Navigation
+  homeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetchImages();
+  });
+
+  likedImagesLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    displayLikedImages();
+  });
+
+  function displayLikedImages() {
+    imageGallery.innerHTML = '';
+    pageTitle.textContent = 'Your Liked Images';
+    selectedImageContainer.style.display = 'none';
+
+    if (likedImages.length === 0) {
+      imageGallery.innerHTML = '<p>You have no liked images.</p>';
+    } else {
+      likedImages.forEach(photo => {
+        const imgDiv = document.createElement('div');
+        imgDiv.classList.add('image-item');
+
+        const img = document.createElement('img');
+        img.src = photo.thumbnail;
+        img.alt = photo.alt || 'Unsplash Image';
+
+        // Call to Action Buttons
+        const ctaButtons = document.createElement('div');
+        ctaButtons.classList.add('cta-buttons');
+
+        const selectBtn = document.createElement('button');
+        selectBtn.textContent = 'Select';
+        selectBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectImage(photo.url);
+        });
+
+        const likeBtn = document.createElement('button');
+        likeBtn.textContent = 'Unlike';
+        likeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleLikeImage(photo, likeBtn);
+          displayLikedImages();
+        });
+
+        ctaButtons.appendChild(selectBtn);
+        ctaButtons.appendChild(likeBtn);
+
+        imgDiv.appendChild(img);
+        imgDiv.appendChild(ctaButtons);
+        imageGallery.appendChild(imgDiv);
+      });
+    }
+  }
+
+  // Initial Fetch
+  fetchImages();
+</script>
+
+</body>
 </html>

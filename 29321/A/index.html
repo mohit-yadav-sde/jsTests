@@ -3,71 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Image Resizer and Compressor</title>
+    <title>My Wallpaper App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #preview, #resizedPreview { max-width: 300px; max-height: 300px; margin: 10px; border: 1px solid #ccc; }
-        .container { text-align: center; padding: 20px; }
-        .button { padding: 10px; margin: 10px; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background: #f4f4f4;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar {
+            height: 100vh;
+            width: 200px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #2c3e50;
+            overflow-x: hidden;
+            padding-top: 20px;
+            transition: 0.5s;
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 20px;
+            color: #ecf0f1;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #34495e;
+        }
+
+        .main-content {
+            margin-left: 200px;
+            padding: 20px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            transition: transform .2s;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.1);
+            filter: blur(2px);
+        }
+
+        .image-container img {
+            width: 100%;
+            display: block;
+            transition: all 0.3s;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: .5s ease;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .image-container:hover .overlay {
+            opacity: 1;
+        }
+
+        .action-btn {
+            margin: 0 10px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: white;
+            color: black;
+            transition: transform .2s;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+            animation: zoom 0.6s;
+        }
+
+        @keyframes zoom {
+            from {transform: scale(0)}
+            to {transform: scale(1)}
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover, .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .compress-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pica/9.0.1/pica.min.js"></script>
 </head>
 <body>
 
-<div class="container">
-    <h1>Image Upload, Resize & Compress</h1>
-    <input accept="image/*" id="fileInput" type="file">
-    <button class="button" id="resizeButton">Resize & Compress</button>
-    <div>
-        <h3>Original Image</h3>
-        <img alt="Preview will appear here" id="preview" src="" style="display:none;">
-    </div>
-    <div>
-        <h3>Resized & Compressed Image</h3>
-        <img alt="Resized image will appear here" id="resizedPreview" src="" style="display:none;">
-        <br>
-        <a class="button" id="downloadLink" style="display:none;">Download</a>
-    </div>
+<div class="sidebar">
+    <a href="#home">Home</a>
+    <a href="#liked">Liked Images</a>
+</div>
+
+<div class="main-content">
+    <div class="gallery" id="gallery"></div>
+    <div class="gallery" id="likedImages" style="display:none;"></div>
+</div>
+
+<div id="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="img01">
+    <button class="compress-btn" onclick="compressImage()">Compress & Download</button>
 </div>
 
 <script>
-  document.getElementById('fileInput').addEventListener('change', function(e) {
-    let file = e.target.files[0];
-    if (!file) return;
+  document.addEventListener('DOMContentLoaded', (event) => {
+    const gallery = document.getElementById('gallery');
+    const likedImages = document.getElementById('likedImages');
+    const modal = document.getElementById('modal');
+    const modalImg = document.getElementById("img01");
+    const images = [
+      {src: 'url_to_image1.jpg', liked: false},
+      {src: 'url_to_image2.jpg', liked: false},
+      // Add more images here
+    ];
 
-    let reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('preview').src = e.target.result;
-      document.getElementById('preview').style.display = 'inline';
+    let likedImagesArray = JSON.parse(localStorage.getItem('likedImages')) || [];
+
+    function toggleLike(imgContainer, index) {
+      images[index].liked = !images[index].liked;
+      if (images[index].liked) {
+        likedImagesArray.push(images[index].src);
+      } else {
+        likedImagesArray = likedImagesArray.filter(img => img !== images[index].src);
+      }
+      localStorage.setItem('likedImages', JSON.stringify(likedImagesArray));
+      renderImages();
+    }
+
+    function renderImages() {
+      gallery.innerHTML = '';
+      likedImages.innerHTML = '';
+      images.forEach((img, index) => {
+        const container = document.createElement('div');
+        container.className = 'image-container';
+        container.innerHTML = `
+                <img src="${img.src}" alt="Wallpaper ${index}">
+                <div class="overlay">
+                    <button class="action-btn" onclick="openModal('${img.src}')">Select</button>
+                    <button class="action-btn like-btn" onclick="toggleLike(this.parentElement.parentElement, ${index})">${img.liked ? 'Unlike' : 'Like'}</button>
+                </div>
+            `;
+        if (likedImagesArray.includes(img.src)) {
+          likedImages.appendChild(container.cloneNode(true));
+        }
+        gallery.appendChild(container);
+      });
+    }
+
+    function openModal(src) {
+      modal.style.display = "block";
+      modalImg.src = src;
+    }
+
+    function compressImage() {
+      const img = new Image();
+      img.src = modalImg.src;
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'compressed_image.jpg';
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/jpeg', 0.9); // Quality can be adjusted here
+      };
+    }
+
+    document.querySelector('.close').onclick = function() {
+      modal.style.display = "none";
     };
-    reader.readAsDataURL(file);
-  });
 
-  document.getElementById('resizeButton').addEventListener('click', function() {
-    let img = document.getElementById('preview');
-    let canvas = document.createElement('canvas');
-    let ctx = canvas.getContext('2d');
-
-    // Set canvas dimensions for resizing
-    canvas.width = 300; // New width
-    canvas.height = 300; // New height
-
-    // Use pica for high-quality resizing
-    pica().resize(img, canvas, {
-      unsharpAmount: 80,
-      unsharpRadius: 0.6,
-      unsharpThreshold: 2
-    }).then(() => {
-      // Convert canvas to blob for compression
-      canvas.toBlob(function(blob) {
-        let url = URL.createObjectURL(blob);
-        document.getElementById('resizedPreview').src = url;
-        document.getElementById('resizedPreview').style.display = 'inline';
-        document.getElementById('downloadLink').href = url;
-        document.getElementById('downloadLink').download = 'resized_compressed_image.png';
-        document.getElementById('downloadLink').style.display = 'inline';
-      }, 'image/jpeg', 0.85); // 85% quality for jpeg
+    // Navigation
+    document.querySelectorAll('.sidebar a').forEach(link => {
+      link.onclick = function(e) {
+        e.preventDefault();
+        if (this.getAttribute('href') === '#home') {
+          gallery.style.display = 'grid';
+          likedImages.style.display = 'none';
+        } else {
+          gallery.style.display = 'none';
+          likedImages.style.display = 'grid';
+        }
+      };
     });
+
+    renderImages();
   });
 </script>
 
