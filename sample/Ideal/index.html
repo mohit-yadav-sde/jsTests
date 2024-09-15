@@ -2,213 +2,143 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customizable Analog Clock</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Workout Planner with Drag-and-Drop</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 0;
             background-color: #f4f4f4;
         }
-        .controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            flex-direction: column;
+        h1, h2 {
+            text-align: center;
+            margin-top: 20px;
         }
-        .controls label, select {
-            margin-bottom: 10px;
-            font-size: 16px;
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px;
+        }
+        .exercises, .week-plan {
+            width: 48%;
+        }
+        .exercise, .day-card {
+            background-color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: move;
+            transition: transform 0.3s ease;
+        }
+        .exercise:hover {
+            transform: scale(1.02);
+        }
+        .day-card {
+            min-height: 200px;
+            padding: 20px;
+        }
+        .exercise-list {
+            min-height: 150px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .day-card h3 {
+            text-align: center;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        ul li {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
 
-<div class="controls">
-    <label for="clock-style">Clock Style</label>
-    <select id="clock-style">
-        <option value="classic">Classic</option>
-        <option value="modern">Modern</option>
-        <option value="minimal">Minimal</option>
-    </select>
-    <label for="timezone">Time Zone</label>
-    <select id="timezone">
-        <option value="local">Local Time</option>
-        <option value="UTC">UTC</option>
-    </select>
-    <label for="mode">Mode</label>
-    <select id="mode">
-        <option value="clock">Clock</option>
-        <option value="stopwatch">Stopwatch</option>
-        <option value="timer">Timer</option>
-    </select>
-    <button id="start-stopwatch" style="display: none;">Start Stopwatch</button>
-    <button id="reset-stopwatch" style="display: none;">Reset Stopwatch</button>
-    <button id="start-timer" style="display: none;">Start Timer (5 mins)</button>
-    <button id="reset-timer" style="display: none;">Reset Timer</button>
+<h1>AI-Powered Workout Planner</h1>
+
+<div class="container">
+    <!-- Available Exercises -->
+    <div class="exercises">
+        <h2>Available Exercises</h2>
+        <div id="exercise-list"></div>
+    </div>
+
+    <!-- Weekly Plan -->
+    <div class="week-plan">
+        <h2>Your Weekly Plan</h2>
+        <div class="day-card" id="monday">
+            <h3>Monday</h3>
+            <div class="exercise-list" id="monday-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        </div>
+        <div class="day-card" id="tuesday">
+            <h3>Tuesday</h3>
+            <div class="exercise-list" id="tuesday-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        </div>
+        <div class="day-card" id="wednesday">
+            <h3>Wednesday</h3>
+            <div class="exercise-list" id="wednesday-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        </div>
+        <div class="day-card" id="thursday">
+            <h3>Thursday</h3>
+            <div class="exercise-list" id="thursday-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        </div>
+        <div class="day-card" id="friday">
+            <h3>Friday</h3>
+            <div class="exercise-list" id="friday-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        </div>
+    </div>
 </div>
+<div id="exercise-details"></div>
+
 
 <script>
-  let clockStyle = localStorage.getItem('clockStyle') || 'classic';
-  let timezone = localStorage.getItem('timezone') || 'local';
-  let mode = localStorage.getItem('mode') || 'clock';
-  let canvasSize = 400;
-  let stopwatchTime = 0;
-  let timerTime = 300;  // 5-minute timer
-  let stopwatchRunning = false;
-  let timerRunning = false;
-  let lastTime = 0;
+  const apiKey = 'f6646c4bbamshd7395369e2051dfp16f149jsnee4ad542bb86';
 
-  function setup() {
-    createCanvas(canvasSize, canvasSize);
-    angleMode(DEGREES);
-    noStroke();
-
-    // Set initial values from local storage
-    document.getElementById('clock-style').value = clockStyle;
-    document.getElementById('timezone').value = timezone;
-    document.getElementById('mode').value = mode;
-
-    // Event listeners for controls
-    document.getElementById('clock-style').addEventListener('change', (e) => {
-      clockStyle = e.target.value;
-      localStorage.setItem('clockStyle', clockStyle);
-    });
-
-    document.getElementById('timezone').addEventListener('change', (e) => {
-      timezone = e.target.value;
-      localStorage.setItem('timezone', timezone);
-    });
-
-    document.getElementById('mode').addEventListener('change', (e) => {
-      mode = e.target.value;
-      localStorage.setItem('mode', mode);
-      updateModeControls();
-    });
-
-    // Stopwatch and Timer controls
-    document.getElementById('start-stopwatch').addEventListener('click', () => {
-      stopwatchRunning = !stopwatchRunning;
-      document.getElementById('start-stopwatch').textContent = stopwatchRunning ? 'Pause Stopwatch' : 'Start Stopwatch';
-    });
-
-    document.getElementById('reset-stopwatch').addEventListener('click', () => {
-      stopwatchRunning = false;
-      stopwatchTime = 0;
-      document.getElementById('start-stopwatch').textContent = 'Start Stopwatch';
-    });
-
-    document.getElementById('start-timer').addEventListener('click', () => {
-      timerRunning = !timerRunning;
-      document.getElementById('start-timer').textContent = timerRunning ? 'Pause Timer' : 'Start Timer';
-    });
-
-    document.getElementById('reset-timer').addEventListener('click', () => {
-      timerRunning = false;
-      timerTime = 300;  // Reset to 5 minutes
-      document.getElementById('start-timer').textContent = 'Start Timer';
-    });
-
-    updateModeControls();
+  function fetchExerciseDetails() {
+    fetch('https://ai-workout-planner-exercise-fitness-nutrition-guide.p.rapidapi.com/exerciseDetails?noqueue=1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': 'ai-workout-planner-exercise-fitness-nutrition-guide.p.rapidapi.com',
+        'x-rapidapi-key': apiKey
+      },
+      body: JSON.stringify({
+        "exercise_name": "Dumbbell Squats",
+        "lang": "en"
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Exercise Details:', data);
+        displayExerciseDetails(data); // Call a function to display the details dynamically
+      })
+      .catch(error => console.error('Error fetching exercise details:', error));
   }
 
-  function draw() {
-    backgroundGradient(); // Dynamic background based on time
-
-    if (mode === 'clock') {
-      let now = timezone === 'UTC' ? new Date(new Date().toUTCString()) : new Date();
-      let hours = now.getHours() % 12;
-      let minutes = now.getMinutes();
-      let seconds = now.getSeconds();
-      drawClock(hours, minutes, seconds);
-    } else if (mode === 'stopwatch') {
-      drawStopwatch();
-    } else if (mode === 'timer') {
-      drawTimer();
-    }
+  function displayExerciseDetails(data) {
+    const exerciseDetails = document.getElementById('exercise-details');
+    exerciseDetails.innerHTML = `
+    <h2>${data.exercise_name}</h2>
+    <p>${data.description}</p>
+    <h3>Primary Muscles</h3>
+    <ul>${data.primary_muscles.map(muscle => `<li>${muscle}</li>`).join('')}</ul>
+    <h3>Secondary Muscles</h3>
+    <ul>${data.secondary_muscles.map(muscle => `<li>${muscle}</li>`).join('')}</ul>
+    <h3>Equipment Needed</h3>
+    <ul>${data.equipment_needed.map(item => `<li>${item}</li>`).join('')}</ul>
+    <h3>Instructions</h3>
+    <ul>${data.instructions.map(step => `<li>${step}</li>`).join('')}</ul>
+  `;
   }
 
-  function drawClock(hours, minutes, seconds) {
-    translate(width / 2, height / 2);
-    let hourAngle = map(hours + norm(minutes, 0, 60), 0, 12, 0, 360);
-    let minuteAngle = map(minutes, 0, 60, 0, 360);
-    let secondAngle = map(seconds, 0, 60, 0, 360);
+  // Call the function to fetch exercise details
+  fetchExerciseDetails();
 
-    if (clockStyle === 'classic') {
-      drawHand(hourAngle, canvasSize / 4, 8, '#FF5733');
-      drawHand(minuteAngle, canvasSize / 3, 6, '#33FFBD');
-      drawHand(secondAngle, canvasSize / 2.5, 4, '#33A1FF');
-    } else if (clockStyle === 'modern') {
-      drawArc(hourAngle, minuteAngle, secondAngle);
-    } else if (clockStyle === 'minimal') {
-      drawMinimalHands(hourAngle, minuteAngle, secondAngle);
-    }
-  }
+</script>
 
-  function drawStopwatch() {
-    translate(width / 2, height / 2);
-    if (stopwatchRunning) {
-      stopwatchTime += deltaTime / 1000;
-    }
-    let seconds = stopwatchTime % 60;
-    let minutes = floor(stopwatchTime / 60) % 60;
-    let hours = floor(stopwatchTime / 3600);
-    let secondAngle = map(seconds, 0, 60, 0, 360);
-    let minuteAngle = map(minutes, 0, 60, 0, 360);
-    let hourAngle = map(hours, 0, 12, 0, 360);
-    drawClock(hours, minutes, seconds);
-  }
-
-  function drawTimer() {
-    translate(width / 2, height / 2);
-    if (timerRunning) {
-      timerTime -= deltaTime / 1000;
-      if (timerTime <= 0) {
-        timerRunning = false;
-        timerTime = 0; // Timer reached zero
-      }
-    }
-    let seconds = timerTime % 60;
-    let minutes = floor(timerTime / 60) % 60;
-    let hours = floor(timerTime / 3600);
-    drawClock(hours, minutes, seconds);
-  }
-
-  function drawHand(angle, length, weight, color) {
-    stroke(color);
-    strokeWeight(weight);
-    line(0, 0, cos(angle - 90) * length, sin(angle - 90) * length);
-  }
-
-  function drawArc(hourAngle, minuteAngle, secondAngle) {
-    noFill();
-    strokeWeight(8);
-    stroke('#FF5733');
-    arc(0, 0, canvasSize - 50, canvasSize - 50, -90, hourAngle - 90);
-    stroke('#33FFBD');
-    arc(0, 0, canvasSize - 70, canvasSize - 70, -90, minuteAngle - 90);
-    stroke('#33A1FF');
-    arc(0, 0, canvasSize - 90, canvasSize - 90, -90, secondAngle - 90);
-  }
-
-  function drawMinimalHands(hourAngle, minuteAngle, secondAngle) {
-    strokeWeight(2);
-    stroke('#FF5733');
-    line(0, 0, cos(hourAngle - 90) * canvasSize / 4, sin(hourAngle - 90) * canvasSize / 4);
-    stroke('#33FFBD');
-    line(0, 0, cos(minuteAngle - 90) * canvasSize / 3, sin(minuteAngle - 90) * canvasSize / 3);
-    stroke('#33A1FF');
-    line(0, 0, cos(secondAngle - 90) * canvasSize / 2.5, sin(secondAngle - 90) * canvasSize / 2.5);
-  }
-
-  function backgroundGradient() {
-    let now = timezone === 'UTC' ? new Date(new Date().toUTCString()) : new Date();
-    let hour = now.getHours();
-
-    let color1, color2;
-    if (hour >= 6 && hour <
+</body>
+</html>

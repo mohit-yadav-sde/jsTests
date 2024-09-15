@@ -3,61 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Video Game Release Calendar</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Movie Release Calendar</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet" />
     <style>
-        .game-today { background-color: #e7f3fe; }
-        .game-entry { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
-        .wishlist-btn, .reminder-btn { margin: 5px; }
+        body { font-family: Arial, sans-serif; }
+        #calendar { max-width: 900px; margin: 40px auto; }
+        .movie-list, .wishlist, .booked-movies { margin-top: 20px; }
+        .movie-item { border: 1px solid #ddd; padding: 10px; margin-top: 10px; }
+        .movie-poster { width: 50px; height: auto; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Upcoming Video Game Releases</h2>
-    <div id="gameList"></div>
+<div id="calendar"></div>
+
+<div class="movie-details">
+    <h2>Movies on Selected Date</h2>
+    <div class="movie-list"></div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<div class="wishlist">
+    <h2>My Wishlist</h2>
+    <div class="wishlist-movies"></div>
+</div>
+
+<div class="booked-movies">
+    <h2>Booked Movies</h2>
+    <div class="booked-movies-list"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
 <script>
-  const games = [
-    {name: "Cyberpunk 2077", date: "2023-12-10", preview: "Cyberpunk is an open-world RPG..."},
-    {name: "Halo Infinite", date: "2023-12-15", preview: "The next chapter in the Halo saga..."},
-    {name: "Zelda: Breath of the Wild 2", date: new Date().toISOString().split('T')[0], preview: "Explore Hyrule once again..."},
-    // Add more games as needed
-  ];
-
   $(document).ready(function() {
-    const gameList = $('#gameList');
-    const today = new Date().toISOString().split('T')[0];
-
-    games.forEach(game => {
-      let gameClass = 'game-entry';
-      if (game.date === today) gameClass += ' game-today';
-
-      const gameHTML = `
-                <div class="${gameClass}">
-                    <h5>${game.name}</h5>
-                    <p>Release Date: ${game.date}</p>
-                    <button class="btn btn-primary wishlist-btn">Add to Wishlist</button>
-                    <button class="btn btn-secondary reminder-btn">Set Reminder</button>
-                    <p><small>${game.preview}</small></p>
-                </div>
-            `;
-      gameList.append(gameHTML);
+    let calendar = $('#calendar').fullCalendar({
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'month,basicWeek,basicDay'
+      },
+      events: [
+        { title: 'Movie1', start: '2023-05-01', poster: 'url_to_poster1.jpg' },
+        { title: 'Movie2', start: '2023-05-15', poster: 'url_to_poster2.jpg' },
+        // Add more movie events here
+      ],
+      dayClick: function(date, jsEvent, view) {
+        displayMoviesForDate(date.format());
+      }
     });
 
-    // Functionality for buttons (placeholder)
-    $('.wishlist-btn').on('click', function() {
-      alert($(this).parent().find('h5').text() + " added to wishlist!");
-    });
+    function displayMoviesForDate(date) {
+      let movies = calendar.fullCalendar('clientEvents', function(event) {
+        return event.start.format('YYYY-MM-DD') === date;
+      });
+      let html = '';
+      movies.forEach(movie => {
+        html += `<div class="movie-item">
+                        <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
+                        ${movie.title} - ${movie.start.format()}
+                        <button onclick="addToWishlist('${movie.title}', '${movie.poster}')">Add to Wishlist</button>
+                        <button onclick="bookMovie('${movie.title}', '${movie.start.format()}')">Book</button>
+                        <button onclick="setReminder('${movie.title}', '${movie.start.format()}')">Set Reminder</button>
+                    </div>`;
+      });
+      $('.movie-list').html(html);
+    }
 
-    $('.reminder-btn').on('click', function() {
-      alert("Reminder set for " + $(this).parent().find('h5').text());
-    });
+    function addToWishlist(title, poster) {
+      let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      if (!wishlist.some(movie => movie.title === title)) {
+        wishlist.push({title, poster});
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        updateWishlistDisplay();
+      }
+    }
+
+    function updateWishlistDisplay() {
+      let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      let html = '';
+      wishlist.forEach(movie => {
+        html += `<div class="movie-item">
+                        <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
+                        ${movie.title}
+                        <button onclick="removeFromWishlist('${movie.title}')">Remove</button>
+                    </div>`;
+      });
+      $('.wishlist-movies').html(html);
+    }
+
+    function bookMovie(title, date) {
+      let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+      bookings.push({title, date});
+      localStorage.setItem('bookings', JSON.stringify(bookings));
+      alert(`${title} booked for ${date}`);
+    }
+
+    function setReminder(title, date) {
+      alert(`Reminder set for ${title} on ${date}`);
+      // Here you would typically integrate with a reminder service or calendar API
+    }
+
+    function removeFromWishlist(title) {
+      let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      let updatedWishlist = wishlist.filter(movie => movie.title !== title);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      updateWishlistDisplay();
+    }
+
+    updateWishlistDisplay(); // Initial display of wishlist
   });
 </script>
-
 </body>
 </html>
