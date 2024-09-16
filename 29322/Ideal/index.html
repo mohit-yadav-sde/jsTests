@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -34,7 +33,6 @@
         padding: 20px;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         height: 100vh;
-
     }
 
     .sidebar h2 {
@@ -183,12 +181,11 @@
         border-radius: 10px;
     }
 
-    #filter{
+    #filter {
         padding: 5px;
         border-radius: 5px;
         border: 1px solid #ccc;
     }
-
 </style>
 <div class="main-container">
     <aside class="sidebar">
@@ -204,25 +201,22 @@
             </select>
         </div>
 
-        <button class ="toggle-button" id="darkModeToggle">Toggle Dark Mode</button>
+        <button class="toggle-button" id="darkModeToggle">Toggle Dark Mode</button>
     </aside>
 
     <main class="content">
         <div class="search-container">
             <input autocomplete="off" id="search" placeholder="Search Wikipedia" type="text" />
-            <button class="voice-button" id="voiceSearch">🎤  Search</button>
-
+            <button class="voice-button" id="voiceSearch">🎤 Search</button>
         </div>
         <div id="suggestions"></div>
         <div id="loader" style="display: none;">Loading...</div>
-
         <div id="results"></div>
-
         <button class="load-more-button" id="loadMore" style="display:none;">Load More</button>
     </main>
 </div>
-<script>
 
+<script>
   $(document).ready(function () {
     let page = 1;
     const resultsPerPage = 10;
@@ -254,7 +248,6 @@
 
       $("#suggestions").empty();
 
-
       if (!isLoadMore) {
         page = 1;
         $("#results").empty();
@@ -270,7 +263,6 @@
         success: function (data) {
           if (data.query && data.query.search.length > 0) {
             data.query.search.forEach(result => {
-              console.log(data);
               const title = result.title;
               const snippet = result.snippet;
               const pageUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
@@ -278,16 +270,16 @@
               const thumbnail = page && page.thumbnail ? page.thumbnail.source : 'https://via.placeholder.com/50';
 
               $("#results").append(`
-                            <a href="${pageUrl}" target="_blank" style="text-decoration:none;">
-                                <div class="searchResult">
-                                    <img src="${thumbnail}" alt="${title}" />
-                                    <div>
-                                        <strong>${title}</strong><br>
-                                        <span>${snippet}</span>
+                                <a href="${pageUrl}" target="_blank" style="text-decoration:none;">
+                                    <div class="searchResult">
+                                        <img src="${thumbnail}" alt="${title}" />
+                                        <div>
+                                            <strong>${title}</strong><br>
+                                            <span>${snippet}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </a>
-                        `);
+                                </a>
+                            `);
             });
 
             if (data.continue) {
@@ -328,6 +320,11 @@
         performSearch();
         saveSearch($("#search").val().trim());
       }
+    });
+
+    $("#voiceSearch").on("click", function () {
+      performSearch();  // Added this line to trigger search on button click
+      saveSearch($("#search").val().trim());  // Save the search to history
     });
 
     $(document).on("click", ".suggestion", function () {
@@ -412,7 +409,6 @@
 
     loadSearchHistory();
   });
-
 </script>
 </body>
 </html>
