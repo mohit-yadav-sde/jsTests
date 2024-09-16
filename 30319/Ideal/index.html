@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Google Books Search</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #eaeaea;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        #search-term {
+            padding: 15px;
+            border: 2px solid #ccc;
+            border-radius: 50px;
+            width: 50%;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        #search-term:focus {
+            border-color: #28a745;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 50px;
+            width: 50%;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1;
+        }
+
+        .suggestions div {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .suggestions div:hover {
+            background-color: #f1f1f1;
+        }
+
+        .book-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .book-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+
+        .book-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .book-card h3 {
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+
+        .book-card p {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #voice-search-btn {
+            margin-left: 10px;
+            padding: 15px;
+            background-color: #28a745;
+            border-radius: 50%;
+            color: white;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 25px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .tag:hover {
+            background-color: #0056b3;
+        }
+
+        .remove-tag {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 8px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .book-card {
+            animation: fadeInUp 0.5s ease-in-out;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #voice-search-btn.active {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Google Books Search </h1>
+
+    <div class="search-bar">
+        <input id="search-term" onkeyup="suggestBooks()" placeholder="Search for books..." type="text">
+        <button id="voice-search-btn" onclick="startVoiceSearch()">🎤</button>
+        <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <div class="book-list" id="book-list"></div>
+
+    <h2>Your Wish List</h2>
+    <div id="wish-list"></div>
+</div>
+
+<script>
+  const API_KEY = 'AIzaSyDkTmNauMGiX_bvkpEaBp0bLqn4TFgOvJs' //'YOUR_GOOGLE_BOOKS_API_KEY';
+  let favorites = JSON.parse(localStorage.getItem('wishList')) || [];
+
+  // Function to fetch random books
+  function loadRandomBooks() {
+    const randomSearchTerm = getRandomSearchTerm();
+    fetch(`https://www.googleapis.com/books/v1/volumes?q=${randomSearchTerm}&maxResults=10&key=${API_KEY}`)
+      .then(response => response.json())
+      .then(data => displayBooks(data.items))
+      .catch(error => console.error('Error fetching data:', error));
+  }
+
+  // Generate random search term
+  function getRandomSearchTerm() {
+    const randomWords = ['adventure', 'mystery', 'science', 'history', 'fiction', 'biography', 'technology', 'art', 'design', 'education'];
+    return randomWords[Math.floor(Math.random() * randomWords.length)];
+  }
+
+  // Auto-suggest function
+  function suggestBooks() {
+    const searchTerm = document.getElementById('search-term').value;
+    if (searchTerm.length < 3) return;
+
+    fetch(`https://www.googleapis.com/books/v1/volumes?q=${searchTerm}&key=${API_KEY}`)
+      .then(response => response.json())
+      .then(data => displaySuggestions(data.items))
+      .catch(error => console.error('Error fetching suggestions:', error));
+  }
+
+  function displaySuggestions(books) {
+    const suggestionsDiv = document.getElementById('suggestions');
+    suggestionsDiv.innerHTML = '';
+
+    books.forEach(book => {
+      const suggestionDiv = document.createElement('div');
+      suggestionDiv.innerText = book.volumeInfo.title;
+      suggestionDiv.onclick = () => {
+        document.getElementById('search-term').value = book.volumeInfo.title;
+        searchBooks(book.volumeInfo.title);
+        suggestionsDiv.innerHTML = '';
+      };
+      suggestionsDiv.appendChild(suggestionDiv);
+    });
+  }
+
+  // Function to search books
+  function searchBooks(query) {
+    fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&key=${API_KEY}`)
+      .then(response => response.json())
+      .then(data => displayBooks(data.items))
+      .catch(error => console.error('Error fetching data:', error));
+  }
+
+  function displayBooks(books) {
+    const bookList = document.getElementById('book-list');
+    bookList.innerHTML = '';
+
+    books.forEach(book => {
+      const bookCard = document.createElement('div');
+      bookCard.classList.add('book-card');
+      bookCard.innerHTML = `
+                <img src="${book.volumeInfo.imageLinks?.thumbnail || 'https://via.placeholder.com/200x250'}" alt="${book.volumeInfo.title}">
+                <h3>${book.volumeInfo.title}</h3>
+                <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'Unknown'}</p>
+                <button onclick="addToWishList('${book.id}')">Add to Wish List</button>
+                <button onclick="readBook('${book.volumeInfo.previewLink}')">Read Book</button>
+            `;
+      bookList.appendChild(bookCard);
+    });
+  }
+
+  function addToWishList(bookId) {
+    if (!favorites.includes(bookId)) {
+      favorites.push(bookId);
+      localStorage.setItem('wishList', JSON.stringify(favorites));
+      displayWishList();
+    }
+  }
+
+  function displayWishList() {
+    const wishListDiv = document.getElementById('wish-list');
+    wishListDiv.innerHTML = '';
+
+    favorites.forEach(bookId => {
+      fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${API_KEY}`)
+        .then(response => response.json())
+        .then(book => {
+          const tagDiv = document.createElement('span');
+          tagDiv.classList.add('tag');
+          tagDiv.innerHTML = `${book.volumeInfo.title} <span class="remove-tag" onclick="removeFromWishList('${bookId}')">x</span>`;
+          tagDiv.onclick = () => searchBooks(book.volumeInfo.title);
+          wishListDiv.appendChild(tagDiv);
+        })
+        .catch(error => console.error('Error loading wish list:', error));
+    });
+  }
+
+  // Remove book from wish list
+  function removeFromWishList(bookId) {
+    favorites = favorites.filter(id => id !== bookId);
+    localStorage.setItem('wishList', JSON.stringify(favorites));
+    displayWishList();
+  }
+
+  // Function to read the book
+  function readBook(link) {
+    window.open(link, '_blank');
+  }
+
+  // Voice search using Web Speech API
+  function startVoiceSearch() {
+    const voiceSearchBtn = document.getElementById('voice-search-btn');
+    voiceSearchBtn.classList.add('active');
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById('search-term').value = transcript;
+      searchBooks(transcript); // Search with the voice command
+      voiceSearchBtn.classList.remove('active');
+    };
+
+    recognition.onerror = () => {
+      voiceSearchBtn.classList.remove('active');
+    };
+  }
+
+  // Load wish list and random books on page load
+  window.onload = function () {
+    displayWishList();
+    loadRandomBooks(); // Load random 10 books on page load
+  };
+</script>
+
+</body>
+</html>
