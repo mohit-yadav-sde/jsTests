@@ -139,14 +139,14 @@
     <div class="section" id="vocabBox">
         <h2>Vocabulary Tracker</h2>
         <div id="vocabularyChart"></div>
-        <div id="vocabularyList"><strong>Tracked Words:</strong></div>
+        <div id="vocabularyList"><strong>Tracked Translations:</strong></div>
     </div>
 </div>
 
 <!-- Quiz Section -->
 <div class="section" id="quizBox">
     <h2>Interactive Quiz</h2>
-    <p>Match the translated words to their correct meanings!</p>
+    <p>Translate the foreign words back into English!</p>
     <div id="quizProgress">
         <div id="quizProgressBar"></div>
     </div>
@@ -174,7 +174,7 @@
       return;
     }
 
-    const apiKey = 'YOUR_GOOGLE_API_KEY';  // Replace with your Google Translate API key
+    const apiKey = 'YOUR_GOOGLE_TRANSLATE_API_KEY';  // Replace with your Google Translate API key
     const url = `https://translation.googleapis.com/language/translate/v2?q=${encodeURIComponent(inputSentence)}&source=${sourceLanguage}&target=${targetLanguage}&key=${apiKey}`;
 
     try {
@@ -183,7 +183,7 @@
       const translatedText = data.data.translations[0].translatedText;
       document.getElementById("translatedOutput").textContent = `Translated (${targetLanguage}): ${translatedText}`;
 
-      // Add translated words to vocabulary tracker
+      // Add a random vocabulary word from the sentence to the vocabulary tracker
       updateVocabulary(inputSentence, translatedText);
     } catch (error) {
       console.error("Error translating sentence:", error);
@@ -193,20 +193,34 @@
 
   // 2. Vocabulary Tracker with D3.js Visualization
   function updateVocabulary(input, translated) {
-    const word = translated.split(" ")[0];  // Simple logic to track the first word of the translation
-    const existingWord = vocabularyData.find(d => d.word === word);
+    const inputWords = filterWords(input.split(' '));  // Filter words from input
+    const translatedWords = filterWords(translated.split(' '));  // Filter words from translation
+
+    // Select a random word from the input sentence and its translation
+    const randomIndex = Math.floor(Math.random() * inputWords.length);
+    const inputWord = inputWords[randomIndex];
+    const translatedWord = translatedWords[randomIndex];
+
+    if (!inputWord || !translatedWord) return; // Avoid adding empty entries
+
+    const existingWord = vocabularyData.find(d => d.word === translatedWord);
 
     if (existingWord) {
       existingWord.count += 1;
     } else {
-      vocabularyData.push({ word: word, count: 1 });
-      quizWords.push({ word: word, translated: translated });
+      vocabularyData.push({ word: translatedWord, count: 1 });
+      quizWords.push({ word: translatedWord, translated: inputWord }); // Track individual word pairs
     }
 
     saveProgress();
     renderVocabularyChart();
     renderVocabularyList();
     updateQuiz();
+  }
+
+  // Function to filter out names or capitalized words (excluding the first word)
+  function filterWords(words) {
+    return words.filter((word, index) => index === 0 || word[0] === word[0]);
   }
 
   function renderVocabularyChart() {
@@ -232,7 +246,7 @@
 
   function renderVocabularyList() {
     const vocabularyList = document.getElementById("vocabularyList");
-    vocabularyList.innerHTML = "<strong>Tracked Words:</strong>";
+    vocabularyList.innerHTML = "<strong>Tracked Translations:</strong>";
     vocabularyData.forEach(d => {
       vocabularyList.innerHTML += `<p>${d.word}: ${d.count} time(s)</p>`;
     });
@@ -259,7 +273,7 @@
     quizCanvas.innerHTML = "";
     const currentWord = quizWords[currentQuizIndex];
 
-    quizCanvas.innerHTML += `<p>What is the translation for: <strong>${currentWord.word}</strong>?</p>`;
+    quizCanvas.innerHTML += `<p>What is the English meaning of: <strong>${currentWord.word}</strong>?</p>`;
     const options = shuffle([currentWord.translated, ...getRandomOptions(currentWord.translated)]);
 
     options.forEach(option => {
@@ -316,4 +330,3 @@
 
 </body>
 </html>
-
