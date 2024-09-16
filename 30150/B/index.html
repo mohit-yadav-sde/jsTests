@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Recipe Finder & Meal Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .recipe-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .recipe-card img { width: 100%; height: 200px; object-fit: cover; }
+        .modal-content { width: fit-content; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1>Recipe Finder</h1>
+    <input class="form-control mb-3" id="searchInput" placeholder="Search recipes or ingredients..." type="text">
+    <select class="form-select mb-3" id="dietFilter">
+        <option value="">All Diets</option>
+        <option value="vegan">Vegan</option>
+        <option value="vegetarian">Vegetarian</option>
+        <option value="gluten-free">Gluten-Free</option>
+        <option value="keto">Keto</option>
+    </select>
+
+    <div class="recipe-grid" id="recipeGrid"></div>
+
+    <h2 class="mt-4">Favorites</h2>
+    <div id="favorites"></div>
+
+    <h2 class="mt-4">Weekly Meal Plan</h2>
+    <div id="mealPlan"></div>
+
+    <!-- Modal for meal planning -->
+    <div class="modal fade" id="mealPlanModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Meal Plan</h5>
+                    <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <select class="form-select" id="dayOfWeek">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <!-- Add other days -->
+                    </select>
+                    <button class="btn btn-primary mt-2" onclick="addToMealPlan()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let recipes = []; // This would be populated with actual recipe data or API calls
+  let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  let mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || days.reduce((obj, day) => { obj[day] = []; return obj; }, {});
+
+  function displayRecipes(recipesToShow) {
+    const grid = document.getElementById('recipeGrid');
+    grid.innerHTML = recipesToShow.map(recipe => `
+            <div class="recipe-card">
+                <img src="${recipe.image}" alt="${recipe.title}">
+                <div class="p-2">
+                    <h5>${recipe.title}</h5>
+                    <p>Time: ${recipe.time} min | Calories: ${recipe.calories}</p>
+                    <button class="btn btn-outline-primary" onclick="saveFavorite(${recipe.id})">Favorite</button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#mealPlanModal" onclick="setCurrentRecipeForMealPlan(${recipe.id})">Plan</button>
+                    <button class="btn btn-outline-success" onclick="downloadPDF(${recipe.id})">Download PDF</button>
+                </div>
+            </div>
+        `).join('');
+  }
+
+  function saveFavorite(id) {
+    if (!favorites.includes(id)) {
+      favorites.push(id);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      displayFavorites();
+    }
+  }
+
+  function displayFavorites() {
+    const favDiv = document.getElementById('favorites');
+    favDiv.innerHTML = favorites.map(id => `<span class="badge bg-secondary m-1" onclick="showRecipeDetails(${id})">${getRecipeById(id).title} <button class="btn-close" aria-label="Close" onclick="removeFavorite(${id})"></button></span>`).join('');
+  }
+
+  function removeFavorite(id) {
+    favorites = favorites.filter(favId => favId !== id);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    displayFavorites();
+    displayRecipes(recipes); // Refresh to show updated favorite status
+  }
+
+  function setCurrentRecipeForMealPlan(id) {
+    window.currentRecipeIdForMealPlan = id;
+  }
+
+  function addToMealPlan() {
+    const day = document.getElementById('dayOfWeek').value;
+    mealPlan[day].push(window.currentRecipeIdForMealPlan);
+    localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+    displayMealPlan();
+  }
+
+  function displayMealPlan() {
+    const planDiv = document.getElementById('mealPlan');
+    planDiv.innerHTML = days.map(day => `
+            <div>
+                <h3>${day}</h3>
+                ${mealPlan[day].map(id => `<p>${getRecipeById(id).title} <button class="btn btn-sm btn-danger" onclick="removeFromMealPlan('${day}', ${id})">X</button></p>`).join('')}
+            </div>
+        `).join('');
+  }
+
+  function removeFromMealPlan(day, id) {
+    mealPlan[day] = mealPlan[day].filter(recipeId => recipeId !== id);
+    localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+    displayMealPlan();
+  }
+
+  function downloadPDF(id) {
+    const recipe = getRecipeById(id);
+    const doc = new jspdf.jsPDF();
+    doc.text(recipe.title, 10, 10);
+    // Here you would format and add more content like ingredients, instructions, etc.
+    doc.save(`${recipe.title}.pdf`);
+  }
+
+  function getRecipeById(id) {
+    return recipes.find(r => r.id === id);
+  }
+
+  // Initial setup
+  displayRecipes(recipes);
+  displayFavorites();
+  displayMealPlan();
+
+  // Search functionality (to be improved with actual data or API)
+  document.getElementById('searchInput').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const dietFilter = document.getElementById('dietFilter').value;
+    const filteredRecipes = recipes.filter(recipe =>
+      (recipe.title.toLowerCase().includes(searchTerm) || recipe.ingredients.some(ing => ing.toLowerCase().includes(searchTerm))) &&
+      (dietFilter === '' || recipe.diet === dietFilter)
+    );
+    displayRecipes(filteredRecipes);
+  });
+
+  document.getElementById('dietFilter').addEventListener('change', function() {
+    document.getElementById('searchInput').dispatchEvent(new Event('input'));
+  });
+</script>
+
+</body>
+</html>

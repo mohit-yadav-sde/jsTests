@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Recipe Finder</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .recipe-card { margin: 10px; }
+        .tag { cursor: pointer; margin: 2px; }
+        .modal-body { max-height: calc(100vh - 200px); overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="my-4">Recipe Finder</h1>
+
+    <!-- Search and Filters -->
+    <div class="input-group mb-3">
+        <input class="form-control" id="searchInput" placeholder="Search recipes or ingredients..." type="text">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" onclick="searchRecipes()" type="button">Search</button>
+        </div>
+    </div>
+    <select class="form-control mb-3" id="dietFilter">
+        <option value="">All Diets</option>
+        <option value="vegan">Vegan</option>
+        <option value="vegetarian">Vegetarian</option>
+        <option value="gluten-free">Gluten-Free</option>
+        <option value="keto">Keto</option>
+    </select>
+
+    <!-- Recipe Grid -->
+    <div class="row" id="recipeGrid"></div>
+
+    <!-- Favorites Section -->
+    <div class="mt-4" id="favorites"></div>
+
+    <!-- Weekly Meal Plan -->
+    <h2 class="my-4">Weekly Meal Plan</h2>
+    <div id="mealPlan"></div>
+
+    <!-- Modal for Meal Plan -->
+    <div class="modal" id="mealPlanModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Meal Plan</h5>
+                    <button class="close" data-dismiss="modal" type="button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <select class="form-control" id="daySelect">
+                        <option value="Monday">Monday</option>
+                        <!-- Add other days similarly -->
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="addToMealPlan()" type="button">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+<script>
+  const recipes = [
+    {name: 'Vegan Salad', diet: 'vegan', time: '15 mins', calories: 250, image: 'vegan_salad.jpg', instructions: '...'},
+    // Add more dummy recipes here
+  ];
+
+  let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  let mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || {};
+
+  function displayRecipes(recipeList = recipes) {
+    const grid = document.getElementById('recipeGrid');
+    grid.innerHTML = '';
+    recipeList.forEach(recipe => {
+      const card = `
+            <div class="col-md-4 recipe-card">
+                <div class="card">
+                    <img src="${recipe.image}" class="card-img-top" alt="${recipe.name}">
+                    <div class="card-body">
+                        <h5 class="card-title">${recipe.name}</h5>
+                        <p><strong>Time:</strong> ${recipe.time} | <strong>Calories:</strong> ${recipe.calories}</p>
+                        <button class="btn btn-primary" onclick="saveFavorite('${recipe.name}')">Favorite</button>
+                        <button class="btn btn-secondary" onclick="openMealPlanModal('${recipe.name}')">Add to Plan</button>
+                        <button class="btn btn-info" onclick="downloadPDF('${recipe.name}')">Download PDF</button>
+                    </div>
+                </div>
+            </div>`;
+      grid.innerHTML += card;
+    });
+  }
+
+  function saveFavorite(name) {
+    if (!favorites.includes(name)) {
+      favorites.push(name);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      displayFavorites();
+    }
+  }
+
+  function displayFavorites() {
+    const favDiv = document.getElementById('favorites');
+    favDiv.innerHTML = favorites.map(fav => `<span class="badge badge-primary tag" onclick="searchByFavorite('${fav}')">${fav} <span onclick="removeFavorite('${fav}', event)">×</span></span>`).join(' ');
+  }
+
+  function removeFavorite(name, event) {
+    event.stopPropagation();
+    favorites = favorites.filter(f => f !== name);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    displayFavorites();
+  }
+
+  function searchByFavorite(favorite) {
+    const result = recipes.filter(recipe => recipe.name === favorite);
+    displayRecipes(result);
+  }
+
+  function searchRecipes() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const diet = document.getElementById('dietFilter').value;
+    const results = recipes.filter(recipe =>
+      (recipe.name.toLowerCase().includes(searchTerm) || recipe.instructions.toLowerCase().includes(searchTerm)) &&
+      (diet === '' || recipe.diet === diet));
+    displayRecipes(results);
+  }
+
+  function openMealPlanModal(recipeName) {
+    document.getElementById('mealPlanModal').dataset.recipe = recipeName;
+    $('#mealPlanModal').modal('show');
+  }
+
+  function addToMealPlan() {
+    const day = document.getElementById('daySelect').value;
+    const recipeName = document.getElementById('mealPlanModal').dataset.recipe;
+    if (!mealPlan[day]) mealPlan[day] = [];
+    mealPlan[day].push(recipeName);
+    localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+    $('#mealPlanModal').modal('hide');
+    displayMealPlan();
+  }
+
+  function displayMealPlan() {
+    const planDiv = document.getElementById('mealPlan');
+    planDiv.innerHTML = Object.keys(mealPlan).map(day => `
+            <h3>${day}</h3>
+            <div>${mealPlan[day].join(', ')}</div>
+        `).join('');
+  }
+
+  function downloadPDF(name) {
+    const doc = new jsPDF();
+    const recipe = recipes.find(r => r.name === name);
+    doc.text(recipe.name, 10, 10);
+    doc.text(recipe.instructions, 10, 20);
+    doc.save(`${name}.pdf`);
+  }
+
+  // Initial display
+  displayRecipes();
+  displayFavorites();
+  displayMealPlan();
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

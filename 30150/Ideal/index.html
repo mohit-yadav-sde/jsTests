@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Recipe Finder with Nutrition and Meal Plan</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3, h4 {
+            color: #333;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2, h4 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        .heading-section {
+            text-align: center;
+        }
+
+        /* Form Styling */
+        #search-form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #search-form input[type="text"] {
+            padding: 15px;
+            width: 50%;
+            border-radius: 50px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #search-form input[type="text"]:focus {
+            border-color: #28a745;
+            outline: none;
+        }
+
+        #search-form select, #search-form button {
+            margin-left: 10px;
+            padding: 15px;
+            border-radius: 50px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #search-form button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+
+        #search-form button:hover {
+            background-color: #218838;
+        }
+
+        /* Recipe Card Styling */
+        #results, #top-recipes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .recipe-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            position: relative;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .recipe-card img {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        .recipe-card h3 {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .recipe-card p {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .recipe-card button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .recipe-card button:hover {
+            background-color: #0056b3;
+        }
+
+        .download-btn {
+            background-color: #17a2b8;
+            margin-top: 10px;
+        }
+
+        .download-btn:hover {
+            background-color: #138496;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .close-btn:hover {
+            background-color: darkred;
+        }
+
+        /* Favorite Recipes */
+        .favorite-recipes {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .favorite-tag {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .favorite-tag:hover {
+            background-color: #0056b3;
+        }
+
+        .remove-tag {
+            margin-left: 10px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .remove-tag:hover {
+            background-color: darkred;
+        }
+
+        /* Weekly Meal Plan Styling */
+        #meal-plan {
+            margin-top: 30px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .meal-day {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .meal-day strong {
+            color: #333;
+        }
+
+        .meal-day button {
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .meal-day button:hover {
+            background-color: #c82333;
+        }
+
+        /* Grocery List */
+        .grocery-list {
+            margin-top: 20px;
+        }
+
+        .grocery-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .grocery-list li {
+            margin-bottom: 5px;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h5 {
+            margin: 0;
+        }
+
+        .modal-close {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .modal-close:hover {
+            background-color: darkred;
+        }
+
+        .day-select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .day-select option {
+            padding: 10px;
+        }
+
+        .modal button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .modal button:hover {
+            background-color: #218838;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="favorite-recipes">
+        <h3>Recipe Finder with Nutrition and Meal Plan</h3>
+    </div>
+
+    <!-- Search Form -->
+    <div id="search-form">
+        <input id="ingredient-search" placeholder="Search recipes by name or ingredients..." type="text">
+        <select id="diet-filter">
+            <option value="">All Diets</option>
+            <option value="vegan">Vegan</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="gluten free">Gluten-Free</option>
+            <option value="keto">Keto</option>
+        </select>
+        <button onclick="searchRecipes()">Search</button>
+    </div>
+
+    <!-- Top Recipes Section -->
+    <div id = "top-recipe-div">
+    <div class="favorite-recipes top-recipes-header">
+        <h5>Top Recipes</h5>
+    </div>
+    <div id="top-recipes"></div>
+</div>
+    <!-- Search Results -->
+    <h2 id="search-results-header" style="display:none;">Search Results</h2>
+    <div id="results"></div>
+
+    <!-- Favorite Recipes Section -->
+    <div class="favorite-recipes">
+        <h5>Favorite Recipes</h5>
+        <div id="favorite-recipes"></div>
+    </div>
+
+    <!-- Weekly Meal Plan Section -->
+    <div id="meal-plan">
+        <h4>Your Weekly Meal Plan</h4>
+        <hr/>
+        <div class="meal-day"><strong>Monday:</strong> <span id="monday"></span></div>
+        <div class="meal-day"><strong>Tuesday:</strong> <span id="tuesday"></span></div>
+        <div class="meal-day"><strong>Wednesday:</strong> <span id="wednesday"></span></div>
+        <div class="meal-day"><strong>Thursday:</strong> <span id="thursday"></span></div>
+        <div class="meal-day"><strong>Friday:</strong> <span id="friday"></span></div>
+        <div class="meal-day"><strong>Saturday:</strong> <span id="saturday"></span></div>
+        <div class="meal-day"><strong>Sunday:</strong> <span id="sunday"></span></div>
+        <div class="grocery-list">
+            <h3>Grocery List</h3>
+            <ul id="grocery-list"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Meal Plan Day Selection -->
+<div class="modal" id="meal-plan-modal">
+    <div class="modal-header">
+        <h5>Select a Day for the Meal Plan</h5>
+        <button class="modal-close" onclick="closeModal()">x</button>
+    </div>
+    <select class="day-select" id="day-select">
+        <option value="monday">Monday</option>
+        <option value="tuesday">Tuesday</option>
+        <option value="wednesday">Wednesday</option>
+        <option value="thursday">Thursday</option>
+        <option value="friday">Friday</option>
+        <option value="saturday">Saturday</option>
+        <option value="sunday">Sunday</option>
+    </select>
+    <button onclick="addToSelectedDay()">Add to Meal Plan</button>
+</div>
+
+
+<script>
+  const API_KEY = 'Spoonacular_API_key'; // Spoonacular API key
+  let favoriteRecipes = JSON.parse(localStorage.getItem('favoriteRecipes')) || [];
+  let mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || {};
+  let recipeToAdd = null;
+
+
+  async function searchRecipes() {
+    const ingredient = document.getElementById('ingredient-search').value;
+    const diet = document.getElementById('diet-filter').value;
+
+    // Check if user has input a search term
+    if (!ingredient) {
+      document.getElementById('results').innerHTML = `<p>Please enter an ingredient or recipe name.</p>`;
+      return;
+    }
+
+    // Construct the API URL with error checks
+    const url = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&query=${ingredient}&diet=${diet}&number=10&addRecipeInformation=true&fillIngredients=true`;
+
+    console.log('API Request URL:', url);  // Debugging
+
+    try {
+      // Make API call
+      const response = await fetch(url);
+
+      // Check if the response was successful
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response Data:', data); // Debugging
+
+      // If there are no results
+      if (!data.results || data.results.length === 0) {
+        document.getElementById('results').innerHTML = `<p>No recipes found. Try a different search or filter.</p>`;
+        return;
+      }
+
+      // Display the recipes
+      document.getElementById('top-recipe-div').style.display = "none"
+      displayRecipes(data.results);
+
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
+      document.getElementById('results').innerHTML = `<p>There was an error fetching the recipes. Please try again later.</p>`;
+    }
+  }
+
+
+  function displayRecipes(recipes) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = ''; // Clear previous results
+
+    recipes.forEach(recipe => {
+      const recipeCard = `
+            <div class="recipe-card">
+                <img src="${recipe.image}" alt="${recipe.title}">
+                <h3>${recipe.title}</h3>
+                <p>Cooking Time: ${recipe.readyInMinutes} mins</p>
+                <p>Calories: ${recipe.nutrition && recipe.nutrition.nutrients[0] ? recipe.nutrition.nutrients[0].amount : 'N/A'} kcal</p>
+                <button onclick="saveFavorite(${recipe.id}, '${recipe.title}')">Save as Favorite</button>
+                <button onclick="showMealPlanModal(${recipe.id}, '${recipe.title}')">Add to Meal Plan</button>
+                <button class="download-btn" onclick="downloadRecipe('${recipe.title}', '${recipe.instructions}', '${recipe.image}')">Download Recipe</button>
+            </div>
+        `;
+      resultsDiv.innerHTML += recipeCard;
+    });
+
+    document.getElementById('search-results-header').style.display = 'block';
+  }
+
+  // Save Favorite Recipe
+  function saveFavorite(id, title) {
+    if (!favoriteRecipes.some(recipe => recipe.id === id)) {
+      favoriteRecipes.push({ id, title });
+      localStorage.setItem('favoriteRecipes', JSON.stringify(favoriteRecipes));
+      displayFavorites();
+    }
+  }
+
+  // Display Favorite Recipes as Tags
+  function displayFavorites() {
+    const favoritesDiv = document.getElementById('favorite-recipes');
+    favoritesDiv.innerHTML = '';
+    favoriteRecipes.forEach((recipe) => {
+      const favoriteTag = `
+        <span class="favorite-tag" onclick="searchFavorite(${recipe.id})">${recipe.title}</span>
+        <span class="remove-tag" onclick="removeFavorite(${recipe.id})">x</span>
+      `;
+      favoritesDiv.innerHTML += favoriteTag;
+    });
+  }
+
+  // Remove Favorite Recipe
+  function removeFavorite(id) {
+    favoriteRecipes = favoriteRecipes.filter(recipe => recipe.id !== id);
+    localStorage.setItem('favoriteRecipes', JSON.stringify(favoriteRecipes));
+    displayFavorites();
+  }
+
+  // Search Favorite Recipe by ID
+  function searchFavorite(id) {
+    fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`)
+      .then(response => response.json())
+      .then(data => {
+        const searchResultsDiv = document.getElementById('results');
+        searchResultsDiv.innerHTML = `
+          <div class="recipe-card">
+              <img src="${data.image}" alt="${data.title}">
+              <h3>${data.title}</h3>
+              <p>Cooking Time: ${data.readyInMinutes} mins</p>
+              <p>Calories: ${data.nutrition && data.nutrition.nutrients[0] ? data.nutrition.nutrients[0].amount : 'N/A'} kcal</p>
+              <button onclick="saveFavorite(${data.id}, '${data.title}')">Save as Favorite</button>
+              <button onclick="showMealPlanModal(${data.id}, '${data.title}')">Add to Meal Plan</button>
+              <button class="download-btn" onclick="downloadRecipe('${data.title}', '${data.instructions}', '${data.image}')">Download Recipe</button>
+          </div>
+        `;
+      });
+
+    document.getElementById('top-recipes-header').style.display = 'none';
+    document.getElementById('top-recipes').style.display = 'none';
+    document.getElementById('search-results-header').style.display = 'block';
+  }
+
+  // Show meal plan modal
+  function showMealPlanModal(id, title) {
+    recipeToAdd = { id, title };
+    document.getElementById('meal-plan-modal').classList.add('active');
+  }
+
+  // Add to selected day in meal plan
+  function addToSelectedDay() {
+    const day = document.getElementById('day-select').value;
+    if (recipeToAdd && day) {
+      mealPlan[day] = recipeToAdd;
+      localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+      displayMealPlan();
+      closeModal();
+    }
+  }
+
+  // Close meal plan modal
+  function closeModal() {
+    document.getElementById('meal-plan-modal').classList.remove('active');
+  }
+
+  // Display Meal Plan
+  function displayMealPlan() {
+    Object.keys(mealPlan).forEach(day => {
+      const dayElement = document.getElementById(day);
+      dayElement.innerHTML = mealPlan[day] ? `${mealPlan[day].title} <button class="remove-plan-btn" onclick="removeFromMealPlan('${day}')">Remove</button>` : 'No plan';
+    });
+  }
+
+  // Remove from Meal Plan
+  function removeFromMealPlan(day) {
+    delete mealPlan[day];
+    localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+    displayMealPlan();
+  }
+
+  // Load top recipes, favorites, and meal plan on page load
+  window.onload = () => {
+    loadTopRecipes();
+    displayFavorites();
+    displayMealPlan();
+  };
+
+  async function loadTopRecipes() {
+    const url = `https://api.spoonacular.com/recipes/random?apiKey=${API_KEY}&number=5`;
+
+    try {
+      const response = await fetch(url);
+
+      // Handle failed requests
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Check if 'recipes' exists in the response
+      if (!data.recipes || data.recipes.length === 0) {
+        document.getElementById('top-recipes').innerHTML = '<p>No top recipes found. Please try again later.</p>';
+        return;
+      }
+
+      const topRecipesDiv = document.getElementById('top-recipes');
+      topRecipesDiv.innerHTML = '';  // Clear previous content if any
+
+      data.recipes.forEach(recipe => {
+        const recipeCard = `
+                <div class="recipe-card">
+                    <img src="${recipe.image}" alt="${recipe.title}">
+                    <h3>${recipe.title}</h3>
+                    <p>Cooking Time: ${recipe.readyInMinutes} mins</p>
+                    <p>Calories: ${recipe.nutrition && recipe.nutrition.nutrients[0] ? recipe.nutrition.nutrients[0].amount : 'N/A'} kcal</p>
+                    <button onclick="saveFavorite(${recipe.id}, '${recipe.title}')">Save as Favorite</button>
+                    <button onclick="showMealPlanModal(${recipe.id}, '${recipe.title}')">Add to Meal Plan</button>
+                    <button class="download-btn" onclick="downloadRecipe('${recipe.title}', '${recipe.instructions}', '${recipe.image}')">Download Recipe</button>
+                </div>
+            `;
+        topRecipesDiv.innerHTML += recipeCard;
+      });
+
+    } catch (error) {
+      console.error('Error fetching top recipes:', error);
+      document.getElementById('top-recipes').innerHTML = `<p>Error loading top recipes. Please try again later.</p>`;
+    }
+  }
+
+
+  function formatInstructions(instructions) {
+    // Remove HTML tags such as <ol>, <li>, etc.
+    let cleanInstructions = instructions.replace(/<\/?[^>]+(>|$)/g, "");
+
+    // Format the instructions nicely with numbers or bullet points
+    let formattedInstructions = cleanInstructions.split('.').map((step, index) => {
+      return step.trim() ? `${index + 1}. ${step.trim()}` : '';
+    }).filter(Boolean).join('\n');
+
+    return formattedInstructions;
+  }
+
+  // Download Recipe as PDF
+  function downloadRecipe(title, instructions, imageUrl) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Set recipe title
+    doc.setFontSize(16);
+    doc.text(title, 10, 10);
+
+    // Set instructions with proper formatting
+    doc.setFontSize(12);
+    doc.text("Instructions:", 10, 20);
+    doc.text(formatInstructions(instructions), 10, 30, { maxWidth: 180 });
+
+    // Add image if available, skip if CORS issue occurs
+    if (imageUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';  // This will trigger a CORS request, could fail
+      img.src = imageUrl;
+      img.onload = function () {
+        doc.addImage(img, 'JPEG', 10, 60, 50, 50);
+        doc.save(`${title}.pdf`);
+      };
+      img.onerror = function () {
+        // Handle CORS failure gracefully
+        doc.save(`${title}.pdf`);
+      };
+    } else {
+      // No image to load
+      doc.save(`${title}.pdf`);
+    }
+  }
+</script>
+
+</body>
+</html>
