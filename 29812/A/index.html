@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Water Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        .water-container {
+            width: 200px;
+            height: 400px;
+            background: linear-gradient(to top, #3498db, #85c1e9);
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .water-level {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #00bfff;
+        }
+        .cup {
+            width: 50px;
+            height: 50px;
+            background-color: #e0ffff;
+            border-radius: 50%;
+            margin: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+        }
+        #cups {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .message-box {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            animation: fadeIn 1s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        canvas {
+            max-width: 90%;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .water-container { width: 150px; height: 300px; }
+            .cup { width: 40px; height: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="cups">
+    <div class="cup">250ml</div>
+    <div class="cup">250ml</div>
+    <div class="cup">250ml</div>
+    <div class="cup">250ml</div>
+</div>
+
+<div class="water-container">
+    <div class="water-level" id="waterLevel"></div>
+</div>
+
+<canvas height="200" id="waterChart" width="400"></canvas>
+
+<div class="message-box" id="messageBox"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script>
+  let waterIntake = 0;
+  const waterGoal = 2000; // in ml
+  const cupSize = 250; // in ml
+  const cups = document.querySelectorAll('.cup');
+  const waterLevel = document.getElementById('waterLevel');
+  const messageBox = document.getElementById('messageBox');
+  const ctx = document.getElementById('waterChart').getContext('2d');
+
+  let chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [0, waterGoal],
+        backgroundColor: ['#00bfff', '#e0e0e0'],
+      }],
+      labels: ['Consumed', 'Remaining']
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutoutPercentage: 80,
+    }
+  });
+
+  function updateDisplay() {
+    const percentage = (waterIntake / waterGoal) * 100;
+    waterLevel.style.height = `${percentage}%`;
+    chart.data.datasets[0].data[0] = waterIntake;
+    chart.data.datasets[0].data[1] = waterGoal - waterIntake;
+    chart.update();
+  }
+
+  function fetchMotivation() {
+    fetch('https://api.quotable.io/random?tags=inspirational')
+      .then(response => response.json())
+      .then(data => {
+        messageBox.textContent = data.content;
+      })
+      .catch(() => {
+        messageBox.textContent = "Keep going, you're doing great!";
+      });
+  }
+
+  cups.forEach(cup => {
+    cup.addEventListener('click', () => {
+      waterIntake += cupSize;
+      if (waterIntake > waterGoal) waterIntake = waterGoal;
+      updateDisplay();
+      fetchMotivation();
+    });
+  });
+
+  updateDisplay(); // Initial update
+</script>
+
+</body>
+</html>

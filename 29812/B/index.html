@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Water Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .water-container {
+            width: 200px;
+            height: 400px;
+            background: linear-gradient(to top, #0099ff 0%, #0099ff var(--fill-level, 0%), #e0e0e0 var(--fill-level, 0%), #e0e0e0 100%);
+            border-radius: 0 0 15px 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cups {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .cup {
+            width: 50px;
+            height: 50px;
+            background: #0099ff;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #chartContainer {
+            width: 90%;
+            max-width: 400px;
+            margin: 20px 0;
+        }
+        .motivational-message {
+            padding: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border-radius: 10px;
+            max-width: 300px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div class="water-container" style="--fill-level: 0%;"></div>
+<div class="cups">
+    <div class="cup" onclick="updateWater(250)"></div>
+    <div class="cup" onclick="updateWater(250)"></div>
+    <div class="cup" onclick="updateWater(250)"></div>
+</div>
+<div id="chartContainer">
+    <canvas id="waterChart"></canvas>
+</div>
+<div class="motivational-message" id="motivationalMessage"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const totalGoal = 2000; // 2 liters in ml
+  let currentWater = 0;
+  const ctx = document.getElementById('waterChart').getContext('2d');
+  let chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Consumed', 'Remaining'],
+      datasets: [{
+        data: [0, totalGoal],
+        backgroundColor: ['#0099ff', '#e0e0e0'],
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, max: totalGoal }
+      }
+    }
+  });
+
+  function updateWater(amount) {
+    currentWater += amount;
+    if (currentWater > totalGoal) currentWater = totalGoal;
+
+    // Update visual container
+    document.querySelector('.water-container').style.setProperty('--fill-level', `${(currentWater / totalGoal) * 100}%`);
+
+    // Update chart
+    chart.data.datasets[0].data = [currentWater, totalGoal - currentWater];
+    chart.update();
+
+    // Fetch motivational quote
+    fetch('https://api.quotable.io/random')
+      .then(response => response.json())
+      .then(data => {
+        const messageDiv = document.getElementById('motivationalMessage');
+        messageDiv.textContent = data.content;
+        messageDiv.style.opacity = '1';
+        setTimeout(() => messageDiv.style.opacity = '0', 5000);
+      });
+  }
+</script>
+</body>
+</html>
