@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Dad Joke Generator</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <header>
+        <button id="theme-toggle">Toggle Theme</button>
+    </header>
+    <main>
+        <div class="joke-card" id="joke-container">
+            <div class="spinner" id="spinner"></div>
+            <p id="joke-text">Click for a dad joke!</p>
+        </div>
+        <button id="new-joke">New Joke</button>
+        <button id="save-joke">Save Joke</button>
+        <div id="favorites">
+            <h2>Favorite Jokes</h2>
+            <ul id="favorite-list"></ul>
+        </div>
+    </main>
+</div>
+<div id="download-modal" style="display:none;">
+    <canvas id="joke-canvas"></canvas>
+    <a id="download-link">Download Joke Card</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const jokeText = document.getElementById('joke-text');
+    const newJokeBtn = document.getElementById('new-joke');
+    const saveJokeBtn = document.getElementById('save-joke');
+    const spinner = document.getElementById('spinner');
+    const favoriteList = document.getElementById('favorite-list');
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    const downloadModal = document.getElementById('download-modal');
+    const downloadLink = document.getElementById('download-link');
+
+    let currentJoke = '';
+    let favorites = JSON.parse(localStorage.getItem('dadJokes')) || [];
+
+    const API_URL = 'https://icanhazdadjoke.com/';
+
+    function fetchJoke() {
+      spinner.style.display = 'block';
+      fetch(API_URL, { headers: { 'Accept': 'application/json' } })
+        .then(response => response.json())
+        .then(data => {
+          currentJoke = data.joke;
+          jokeText.textContent = currentJoke;
+        })
+        .finally(() => spinner.style.display = 'none');
+    }
+
+    function saveJoke() {
+      if (!favorites.includes(currentJoke)) {
+        favorites.push(currentJoke);
+        localStorage.setItem('dadJokes', JSON.stringify(favorites));
+        updateFavorites();
+      }
+    }
+
+    function updateFavorites() {
+      favoriteList.innerHTML = '';
+      favorites.forEach(joke => {
+        const li = document.createElement('li');
+        li.textContent = joke;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.onclick = () => removeJoke(joke);
+        li.appendChild(removeBtn);
+        favoriteList.appendChild(li);
+      });
+    }
+
+    function removeJoke(joke) {
+      favorites = favorites.filter(j => j !== joke);
+      localStorage.setItem('dadJokes', JSON.stringify(favorites));
+      updateFavorites();
+    }
+
+    function toggleTheme() {
+      body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+    }
+
+    function prepareDownload() {
+      html2canvas(document.querySelector('.joke-card')).then(canvas => {
+        downloadModal.style.display = 'block';
+        document.getElementById('joke-canvas').replaceWith(canvas);
+        downloadLink.href = canvas.toDataURL('image/png');
+        downloadLink.download = 'dad-joke.png';
+      });
+    }
+
+    // Event listeners
+    newJokeBtn.onclick = fetchJoke;
+    saveJokeBtn.onclick = saveJoke;
+    themeToggle.onclick = toggleTheme;
+    downloadLink.onclick = () => setTimeout(() => downloadModal.style.display = 'none', 500);
+
+    // Initial setup
+    fetchJoke();
+    updateFavorites();
+    if (localStorage.getItem('theme') === 'dark') {
+      body.classList.add('dark-mode');
+    }
+  });
+</script>
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        transition: background-color 0.3s, color 0.3s;
+        background-color: #f0f0f0;
+        color: #333;
+    }
+
+    .dark-mode {
+        background-color: #333;
+        color: #f0f0f0;
+    }
+
+    .app {
+        text-align: center;
+        margin: 20px auto;
+        max-width: 600px;
+    }
+
+    .joke-card {
+        background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s, opacity 0.5s;
+    }
+
+    #joke-text {
+        transition: opacity 0.5s;
+    }
+
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #333;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    button {
+        margin: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    #favorite-list li {
+        background: #fff;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #favorite-list button {
+        background: #dc3545;
+    }
+
+    #favorite-list button:hover {
+        background: #c82333;
+    }
+
+    #download-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #joke-canvas {
+        max-width: 90%;
+        max-height: 90%;
+    }
+</style>
+</body>
+</html>

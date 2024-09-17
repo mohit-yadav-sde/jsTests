@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dad Jokes Hub</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-theme {
+            background: linear-gradient(135deg, #2e5e51, #4cd1ef);
+            color: #eaeaea;
+        }
+
+        .favorite-jokes {
+            margin-bottom: 20px;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .joke-display, .favorite-jokes {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .joke-card {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 1.5rem;
+            line-height: 1.8;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+
+        .joke-card.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .favorite-card {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            color: #333;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .favorite-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn, #themeSwitcher {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 1rem;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        #themeSwitcher {
+            background-color: #555;
+        }
+
+        #themeSwitcher:hover {
+            background-color: #777;
+        }
+
+        #jokeTitle, .favorite-jokes h2 {
+            margin-bottom: 20px;
+        }
+
+        /* Spinner for loading jokes */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <h1>Dad Jokes Hub</h1>
+    <button id="themeSwitcher">Switch Theme</button>
+</header>
+
+<main class="main-content">
+    <!-- Joke Display Section -->
+    <section class="joke-display">
+        <h2 id="jokeTitle">Here's a Dad Joke for You</h2>
+        <div class="joke-card" id="jokeCard">
+            <p id="jokeText">Click below for a new joke!</p>
+        </div>
+        <button class="btn" id="newJokeBtn">Get Another Joke</button>
+        <button class="btn" id="saveJokeBtn">Save as Favorite</button>
+        <button class="btn" id="downloadJokeBtn">Download Joke as Card</button>
+    </section>
+
+    <!-- Favorite Jokes Section -->
+    <section class="favorite-jokes">
+        <h2>Your Favorite Jokes</h2>
+        <div id="favoriteJokesList"></div>
+    </section>
+</main>
+
+<script>
+  const jokeEl = document.getElementById('jokeText');
+  const newJokeBtn = document.getElementById('newJokeBtn');
+  const saveJokeBtn = document.getElementById('saveJokeBtn');
+  const favoriteJokesList = document.getElementById('favoriteJokesList');
+  const downloadJokeBtn = document.getElementById('downloadJokeBtn');
+  const jokeCard = document.getElementById('jokeCard');
+  const themeSwitcher = document.getElementById('themeSwitcher');
+  const body = document.body;
+
+  let favoriteJokes = JSON.parse(localStorage.getItem('favoriteJokes')) || [];
+  let isAnimating = false;
+
+  // Save joke to favorites
+  function addToFavorites(joke) {
+    if (!favoriteJokes.includes(joke)) {
+      favoriteJokes.push(joke);
+      localStorage.setItem('favoriteJokes', JSON.stringify(favoriteJokes));
+      renderFavorites();
+    }
+  }
+
+  // Remove joke from favorites
+  function removeFromFavorites(joke) {
+    favoriteJokes = favoriteJokes.filter(j => j !== joke);
+    localStorage.setItem('favoriteJokes', JSON.stringify(favoriteJokes));
+    renderFavorites();
+  }
+
+  // Add spinner during joke fetching
+  function showSpinner() {
+    const spinner = document.createElement('div');
+    spinner.classList.add('spinner');
+    jokeCard.appendChild(spinner);
+  }
+
+  function removeSpinner() {
+    const spinner = document.querySelector('.spinner');
+    if (spinner) {
+      jokeCard.removeChild(spinner);
+    }
+  }
+
+  // Fetch a new joke and animate the transition
+  async function generateJoke() {
+    if (isAnimating) return;
+
+    // Start animation: fade out and slide out the current joke
+    jokeCard.classList.remove('show');
+    jokeCard.classList.add('hide');
+    isAnimating = true;
+
+    showSpinner();
+
+    setTimeout(async () => {
+      try {
+        const config = { headers: { Accept: 'application/json' } };
+        const res = await fetch('https://icanhazdadjoke.com', config);
+        if (!res.ok) throw new Error('Failed to fetch joke');
+        const data = await res.json();
+        jokeEl.textContent = data.joke;
+        updateJokeCardGradient();
+      } catch (error) {
+        jokeEl.textContent = 'Oops! Failed to load joke.';
+      } finally {
+        removeSpinner();
+      }
+
+      // After fetching, fade and slide the new joke in
+      jokeCard.classList.remove('hide');
+      jokeCard.classList.add('show');
+      isAnimating = false;
+    }, 500);
+  }
+
+  // Render favorite jokes
+  function renderFavorites() {
+    favoriteJokesList.innerHTML = '';
+    favoriteJokes.forEach(joke => {
+      const card = document.createElement('div');
+      card.classList.add('favorite-card');
+
+      const jokeText = document.createElement('p');
+      jokeText.textContent = joke;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.classList.add('remove-btn');
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => removeFromFavorites(joke));
+
+      card.appendChild(jokeText);
+      card.appendChild(removeBtn);
+
+      favoriteJokesList.appendChild(card);
+    });
+  }
+
+  function downloadJokeCard() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800;
+    canvas.height = 400;
+
+    // Random gradient backgrounds
+    const gradientColors = [
+      ['#ff9a9e', '#fad0c4'],
+      ['#a18cd1', '#fbc2eb'],
+      ['#ffecd2', '#fcb69f'],
+      ['#f6d365', '#fda085']
+    ];
+    const randomGradient = gradientColors[Math.floor(Math.random() * gradientColors.length)];
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, randomGradient[0]);
+    gradient.addColorStop(1, randomGradient[1]);
+
+    // Draw background
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Set text properties
+    ctx.fillStyle = "#333";
+    ctx.font = "30px Roboto";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Wrap the joke text
+    const jokeText = jokeEl.textContent;
+    const maxWidth = canvas.width - 100;
+    const lineHeight = 40;
+    const lines = wrapText(ctx, jokeText, maxWidth);
+
+    // Draw text
+    const yOffset = (canvas.height - lines.length * lineHeight) / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, canvas.width / 2, yOffset + i * lineHeight);
+    });
+
+    // Download the card
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL();
+    link.download = 'dad_joke_card.png';
+    link.click();
+  }
+
+  // Function to wrap text within a specified width
+  function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+
+      if (testWidth > maxWidth && n > 0) {
+        lines.push(line.trim());
+        line = words[n] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+
+    lines.push(line.trim());
+    return lines;
+  }
+
+  // Update joke card gradient dynamically
+  function updateJokeCardGradient() {
+    const gradients = [
+      'linear-gradient(135deg, #ff9a9e, #fad0c4)',
+      'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+      'linear-gradient(135deg, #ffecd2, #fcb69f)',
+      'linear-gradient(135deg, #f6d365, #fda085)',
+    ];
+    const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+    jokeCard.style.background = randomGradient;
+  }
+
+  // Theme switching
+  function switchTheme() {
+    body.classList.toggle('dark-theme');
+    const theme = body.classList.contains('dark-theme') ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+  }
+
+  // Load theme from localStorage
+  function loadTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      body.classList.add('dark-theme');
+    }
+  }
+
+  // Event listeners
+  newJokeBtn.addEventListener('click', generateJoke);
+  saveJokeBtn.addEventListener('click', () => addToFavorites(jokeEl.textContent));
+  downloadJokeBtn.addEventListener('click', downloadJokeCard);
+  themeSwitcher.addEventListener('click', switchTheme);
+
+  // Initialize
+  generateJoke();
+  renderFavorites();
+  loadTheme();
+</script>
+
+</body>
+</html>
