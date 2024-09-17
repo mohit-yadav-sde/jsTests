@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Network Speed Test</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .speed-test-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .result {
+            margin: 20px 0;
+            font-size: 2em;
+            transition: all 0.5s ease;
+        }
+
+        #progressBar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #bar {
+            width: 1%;
+            height: 30px;
+            background-color: #4CAF50;
+            transition: width 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="speed-test-container">
+    <h1>Network Speed Test</h1>
+    <button id="startTest">CHECK SPEED</button>
+    <div id="results">
+        <div class="result">Download: <span id="downloadSpeed">0.00</span> Mbps</div>
+        <div class="result">Upload: <span id="uploadSpeed">0.00</span> Mbps</div>
+        <div class="result">Ping: <span id="ping">0</span> ms</div>
+    </div>
+    <div id="progressBar"><div id="bar"></div></div>
+    <button id="downloadResults" style="display:none;">Download Results</button>
+</div>
+
+<script>
+  document.getElementById('startTest').addEventListener('click', startSpeedTest);
+
+  function startSpeedTest() {
+    const downloadSpeed = document.getElementById('downloadSpeed');
+    const uploadSpeed = document.getElementById('uploadSpeed');
+    const ping = document.getElementById('ping');
+    const progressBar = document.getElementById('bar');
+    const downloadResultsBtn = document.getElementById('downloadResults');
+
+    let download = 0, upload = 0, latency = 0;
+    let progress = 0;
+    const maxDownload = 100 + Math.random() * 200; // Simulating speeds up to 300 Mbps
+    const maxUpload = 50 + Math.random() * 100; // Up to 150 Mbps
+    const maxLatency = 200; // Max latency in ms
+
+    const interval = setInterval(() => {
+      if (progress < 100) {
+        progress += 1;
+        progressBar.style.width = progress + '%';
+
+        // Simulate increasing speed
+        download += (maxDownload / 100);
+        upload += (maxUpload / 100);
+        latency += (maxLatency / 100);
+
+        downloadSpeed.textContent = download.toFixed(2);
+        uploadSpeed.textContent = upload.toFixed(2);
+        ping.textContent = Math.round(latency);
+      } else {
+        clearInterval(interval);
+        downloadResultsBtn.style.display = 'inline-block';
+      }
+    }, 50);
+
+    downloadResultsBtn.onclick = () => {
+      const results = `Download Speed: ${download.toFixed(2)} Mbps\nUpload Speed: ${upload.toFixed(2)} Mbps\nPing: ${Math.round(latency)} ms`;
+      const blob = new Blob([results], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'speed_test_results.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  }
+</script>
+
+</body>
+</html>

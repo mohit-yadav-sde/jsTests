@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Advanced Network Speed Test</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap');
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Josefin Sans', sans-serif;
+            height: 100vh;
+            background: linear-gradient(45deg, #14222e, #2c3c5a);
+            color: #eaeaea;
+        }
+        #startTest{
+            margin-bottom: 20px;
+            margin-top:10px;
+        }
+
+        .container {
+            position: relative;
+            display: inline-block;
+            padding: 32px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.08));
+            background-color: #223140;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: -16px 16px 16px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .loader-widget {
+            width: 500px;
+        }
+
+        .loader {
+            position: relative;
+            display: inline-block;
+            height: 240px;
+            width: 240px;
+            border-radius: 50%;
+            background: conic-gradient(rgba(1, 182, 190, 0.3) 0%, transparent 65%);
+            animation: radarRotate 2s linear infinite;
+        }
+
+        @keyframes radarRotate {
+            100% { transform: rotate(-360deg); }
+        }
+
+        .content {
+            display: flex;
+            width: 100%;
+            font-size: 64px;
+            margin: 12px 0 32px 0;
+            flex-direction: column;
+        }
+
+        .content small {
+            font-size: 40%;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .hide { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="loader-widget">
+        <h1>CHECK INTERNET SPEED</h1>
+        <span class="loader hide"></span>
+        <div class="loader-content">
+            <div class="content hide" id="downloadSpeedDisplay">Download: 0<small>Mbps</small></div>
+            <div class="content hide" id="uploadSpeedDisplay">Upload: 0<small>Mbps</small></div>
+            <div class="content hide" id="pingDisplay">Ping: 0<small>ms</small></div>
+            <button id="startTest">CHECK</button>
+        </div>
+        <button class="hide" id="downloadResults">Download Results</button>
+    </div>
+</div>
+
+<script>
+  document.getElementById('startTest').addEventListener('click', startSpeedTest);
+
+  function startSpeedTest() {
+    // Clear previous test results
+    document.getElementById('downloadSpeedDisplay').innerHTML = 'Download: 0<small>Mbps</small>';
+    document.getElementById('uploadSpeedDisplay').innerHTML = 'Upload: 0<small>Mbps</small>';
+    document.getElementById('pingDisplay').innerHTML = 'Ping: 0<small>ms</small>';
+
+    document.querySelector('.loader-content').classList.add('hide');
+    document.querySelector('.loader').classList.remove('hide');
+
+    // Perform tests
+    testDownloadSpeed()
+      .then(downloadSpeed => {
+        animateResult('downloadSpeedDisplay', downloadSpeed, 'Mbps');
+        return testUploadSpeed();
+      })
+      .then(uploadSpeed => {
+        animateResult('uploadSpeedDisplay', uploadSpeed, 'Mbps');
+        return testPing();
+      })
+      .then(ping => {
+        document.getElementById('pingDisplay').innerHTML = `Ping: ${ping}<small>ms</small>`;
+        document.querySelector('.loader-content').classList.remove('hide');
+        document.querySelector('.loader').classList.add('hide');
+        document.getElementById('downloadResults').classList.remove('hide');
+      })
+      .catch(error => {
+        console.error('Speed Test Error:', error);
+        document.querySelector('.content').innerHTML = 'Error';
+        document.querySelector('.loader').classList.add('hide');
+      });
+  }
+
+  // Test Download Speed
+  function testDownloadSpeed() {
+    return new Promise((resolve, reject) => {
+      const imageLink = 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Tokyo_Sky_Tree_2012.JPG';
+      const downloadSize = 8185374; // Image size in bytes
+      const startTime = new Date().getTime();
+      const img = new Image();
+      img.src = imageLink + "?nn=" + startTime; // Prevent caching
+      img.onload = function() {
+        const endTime = new Date().getTime();
+        const duration = (endTime - startTime) / 1000; // in seconds
+        const loadedBytes = downloadSize * 8; // Convert to bits
+        const speedMbps = (loadedBytes / duration) / (1024 * 1024); // Convert to Mbps
+        resolve(speedMbps.toFixed(2));
+      };
+      img.onerror = reject;
+    });
+  }
+
+  // Test Upload Speed (reduced file size to 5MB for faster response)
+  function testUploadSpeed() {
+    return new Promise((resolve, reject) => {
+      const data = new Blob([new Array(0.5 * 1024 * 1024).fill('a')], { type: 'text/plain' }); // 0.5 MB of data
+      const startTime = performance.now();
+      fetch('https://cors-anywhere.herokuapp.com/https://httpbin.org/post', {
+        method: 'POST',
+        body: data,
+      })
+        .then(() => {
+          const endTime = performance.now();
+          const duration = (endTime - startTime) / 1000; // seconds
+          const fileSizeInBits = 5 * 8 * 1024 * 1024; // 5 MB in bits
+          const speedInBps = fileSizeInBits / duration; // bits per second
+          const speedInMbps = (speedInBps / (1024 * 1024)).toFixed(2); // Convert to Mbps
+          resolve(speedInMbps);
+        })
+        .catch(reject);
+    });
+  }
+
+  // Test Ping
+  function testPing() {
+    return new Promise(resolve => {
+      const startTime = performance.now();
+      fetch('https://www.google.com', { mode: 'no-cors' })
+        .then(() => {
+          const endTime = performance.now();
+          const ping = (endTime - startTime).toFixed(2);
+          resolve(ping);
+        })
+        .catch(() => resolve('N/A'));
+    });
+  }
+
+  // Animate the result display
+  function animateResult(elementId, speed, unit) {
+    let currentSpeed = 0;
+    const content = document.getElementById(elementId);
+    const targetSpeed = parseFloat(speed);
+
+    const increment = targetSpeed / 100;
+    const interval = setInterval(() => {
+      currentSpeed += increment;
+      content.innerHTML = `${elementId.split('SpeedDisplay')[0].charAt(0).toUpperCase() + elementId.split('SpeedDisplay')[0].slice(1)}: ` + currentSpeed.toFixed(2) + `<small>${unit}</small>`;
+      if (currentSpeed >= targetSpeed) {
+        clearInterval(interval);
+      }
+    }, 20);
+    content.classList.remove('hide');
+  }
+
+  // Download Results
+  document.getElementById('downloadResults').addEventListener('click', () => {
+    const downloadSpeed = document.getElementById('downloadSpeedDisplay').textContent.split(' ')[1];
+    const uploadSpeed = document.getElementById('uploadSpeedDisplay').textContent.split(' ')[1];
+    const ping = document.getElementById('pingDisplay').textContent.split(' ')[1];
+
+    const results = `Download Speed: ${downloadSpeed} Mbps\nUpload Speed: ${uploadSpeed} Mbps\nPing: ${ping} ms`;
+    const blob = new Blob([results], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'speed_test_results.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+
+</body>
+</html>

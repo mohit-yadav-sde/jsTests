@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Network Speed Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .shadow-custom {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        .button-animate {
+            transition: all 0.3s ease;
+        }
+        .button-animate:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center h-screen">
+<div class="bg-gray-800 p-8 rounded-lg shadow-custom w-full max-w-lg">
+    <h1 class="text-3xl mb-4 text-center">Network Speed Test</h1>
+    <div class="mb-4 text-center" id="results">
+        <canvas height="200" id="speedChart" width="400"></canvas>
+    </div>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded button-animate w-full" id="startTest">Start Test</button>
+    <button class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded button-animate w-full" id="downloadResults" style="display:none;">Download Results</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('speedChart').getContext('2d');
+  let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'Download Speed (Mbps)',
+        borderColor: 'rgb(75, 192, 192)',
+        data: [],
+        fill: false
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      },
+      animation: {
+        duration: 500
+      }
+    }
+  });
+
+  function updateChart(speed) {
+    chart.data.labels.push(new Date().toLocaleTimeString());
+    chart.data.datasets[0].data.push(speed);
+    if(chart.data.labels.length > 10) {
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update();
+  }
+
+  document.getElementById('startTest').addEventListener('click', function() {
+    // Here you would implement the actual speed test logic
+    // This is a mockup with random data
+    this.disabled = true;
+    let fakeSpeed = 0;
+    const interval = setInterval(() => {
+      fakeSpeed += Math.random() * 10;
+      if(fakeSpeed > 100) fakeSpeed = 100;
+      updateChart(fakeSpeed);
+      if(fakeSpeed >= 100) {
+        clearInterval(interval);
+        document.getElementById('downloadResults').style.display = 'block';
+        this.disabled = false;
+      }
+    }, 1000);
+  });
+
+  document.getElementById('downloadResults').addEventListener('click', function() {
+    // Logic to download results would go here
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chart.data));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "speed_test_results.json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  });
+</script>
+</body>
+</html>
