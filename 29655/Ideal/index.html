@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Travel Journal</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Mapbox CSS -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" referrerpolicy="no-referrer" rel="stylesheet" />
+</head>
+<body>
+<style>
+    /* Custom Styles */
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    header h1 {
+        font-weight: 700;
+        color: #343a40;
+    }
+
+    main h2 {
+        color: #343a40;
+    }
+
+    #tripsList .card,
+    #entriesList .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .card-title {
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        color: #6c757d;
+    }
+
+    .card-actions {
+        margin-top: 1rem;
+    }
+
+    .btn-custom {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .modal-body img {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    #gallery .col-md-4 {
+        margin-bottom: 1rem;
+    }
+
+    .closeModalBtn {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+    }
+
+    .closeModalBtn:hover {
+        color: #dc3545;
+    }
+</style>
+<div class="container my-5" id="app">
+    <header class="text-center mb-5">
+        <h1 class="display-4">Travel Journal</h1>
+    </header>
+    <main>
+        <section id="tripsSection">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Your Trips</h2>
+                <button class="btn btn-primary" id="newTripBtn"><i class="fas fa-plus"></i> New Trip</button>
+            </div>
+            <div class="row g-4" id="tripsList"></div>
+        </section>
+        <section id="entriesSection" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="tripTitle">Trip Entries</h2>
+                <div>
+                    <button class="btn btn-secondary" id="backToTripsBtn"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button class="btn btn-primary" id="newEntryBtn"><i class="fas fa-plus"></i> New Entry</button>
+                </div>
+            </div>
+            <div class="row g-4" id="entriesList"></div>
+        </section>
+    </main>
+</div>
+
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Trip Location</h5>
+                <button class="btn-close closeModalBtn" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <div id="map" style="width: 100%; height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Image Gallery</h5>
+                <button class="btn-close closeModalBtn" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3" id="gallery"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mapbox JS -->
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- App Script -->
+<script>
+  // Replace with your own Mapbox Access Token
+  const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWxlcnRpIiwiYSI6ImNtMTg4dWM3cDEwdzEybXNidTgybWFzaWsifQ.lKxHOwKINhE4h4SFkafVFA';
+
+  // Replace with your own OpenWeatherMap API Key
+  const OPENWEATHERMAP_API_KEY = 'b93eaa06c01616099ea3aeab0a313327';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Main App Elements
+    const newTripBtn = document.getElementById('newTripBtn');
+    const tripsList = document.getElementById('tripsList');
+    const entriesSection = document.getElementById('entriesSection');
+    const backToTripsBtn = document.getElementById('backToTripsBtn');
+    const newEntryBtn = document.getElementById('newEntryBtn');
+    const entriesList = document.getElementById('entriesList');
+    const tripTitleHeader = document.getElementById('tripTitle');
+
+    // Modals
+    const mapModalElement = document.getElementById('mapModal');
+    const mapModal = new bootstrap.Modal(mapModalElement);
+
+    const galleryModalElement = document.getElementById('galleryModal');
+    const galleryModal = new bootstrap.Modal(galleryModalElement);
+
+    // Map
+    let map;
+
+    // Data
+    let trips = [];
+    let currentTripId = null;
+
+    // Initialize App
+    trips = getTrips();
+    renderTrips();
+
+    // Helper Functions
+    function saveTrips() {
+      localStorage.setItem('trips', JSON.stringify(trips));
+    }
+
+    function getTrips() {
+      return JSON.parse(localStorage.getItem('trips') || '[]');
+    }
+
+    // Random Data Generators
+    const locations = ['Paris, France', 'Tokyo, Japan', 'New York City, USA', 'Sydney, Australia', 'Cape Town, South Africa', 'Rome, Italy', 'Barcelona, Spain', 'Berlin, Germany', 'Rio de Janeiro, Brazil', 'Beijing, China'];
+    const descriptions = [
+      'An amazing journey exploring the wonders of the city.',
+      'A thrilling adventure filled with unforgettable experiences.',
+      'A relaxing getaway to unwind and enjoy the scenery.',
+      'An exciting expedition into the heart of culture and history.',
+      'A captivating trip full of surprises and delights.',
+      'An unforgettable trip exploring hidden gems.',
+      'A cultural immersion into local traditions and lifestyle.',
+      'A scenic journey through breathtaking landscapes.',
+      'An exhilarating adventure packed with fun activities.',
+      'A delightful escape from the daily routine.'
+    ];
+    const notes = [
+      'Visited a famous landmark and took stunning photos.',
+      'Tried delicious local cuisine at a hidden gem restaurant.',
+      'Met friendly locals and learned about their traditions.',
+      'Enjoyed a breathtaking sunset over the skyline.',
+      'Explored the vibrant nightlife and made new friends.',
+      'Hiked through beautiful trails and witnessed amazing views.',
+      'Participated in a traditional festival full of colors.',
+      'Relaxed at a serene beach with crystal clear waters.',
+      'Discovered historical sites rich in heritage.',
+      'Shopped at local markets and bought unique souvenirs.'
+    ];
+
+    // Random Date Generator
+    function getRandomDate(start, end) {
+      const date = new Date(+start + Math.random() * (end - start));
+      return date.toISOString().split('T')[0];
+    }
+
+    // Generate Random Image URLs
+    function getRandomImageUrl() {
+      const random = Math.floor(Math.random() * 1000);
+      return `https://picsum.photos/seed/${random}/400/300`;
+    }
+
+    // Trips Management
+    newTripBtn.addEventListener('click', () => {
+      // Generate random trip data
+      const locationIndex = Math.floor(Math.random() * locations.length);
+      const title = `Trip to ${locations[locationIndex]}`;
+      const location = locations[locationIndex];
+      const startDate = getRandomDate(new Date(2023, 0, 1), new Date());
+      const endDate = getRandomDate(new Date(startDate), new Date());
+      const description = descriptions[Math.floor(Math.random() * descriptions.length)];
+
+      const trip = {
+        id: Date.now(),
+        title,
+        location,
+        startDate,
+        endDate,
+        description,
+        entries: []
+      };
+      trips.push(trip);
+      saveTrips();
+      renderTrips();
+    });
+
+    function renderTrips() {
+      tripsList.innerHTML = '';
+      if (trips.length === 0) {
+        tripsList.innerHTML = '<p>No trips found. Click "New Trip" to add one.</p>';
+        return;
+      }
+      trips.forEach(trip => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // Use Picsum for random images
+        const imageUrl = getRandomImageUrl();
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = trip.title;
+        img.className = 'card-img-top';
+        img.onerror = () => {
+          img.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+        };
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <h5 class="card-title">${trip.title}</h5>
+                <p class="card-text"><strong>Location:</strong> ${trip.location}</p>
+                <p class="card-text"><strong>Dates:</strong> ${trip.startDate} to ${trip.endDate}</p>
+                <p class="card-text">${trip.description}</p>
+            `;
+
+        const cardFooter = document.createElement('div');
+        cardFooter.className = 'card-footer d-flex flex-column';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn btn-secondary btn-custom';
+        viewBtn.innerHTML = '<i class="fas fa-eye"></i> View Entries';
+        viewBtn.addEventListener('click', () => {
+          currentTripId = trip.id;
+          tripTitleHeader.textContent = trip.title;
+          entriesSection.style.display = 'block';
+          tripsSection.style.display = 'none';
+          renderEntries();
+        });
+
+        const mapBtn = document.createElement('button');
+        mapBtn.className = 'btn btn-secondary btn-custom';
+        mapBtn.innerHTML = '<i class="fas fa-map-marked-alt"></i> View Map';
+        mapBtn.addEventListener('click', () => {
+          showMap(trip.location);
+        });
+
+        const weatherBtn = document.createElement('button');
+        weatherBtn.className = 'btn btn-secondary btn-custom';
+        weatherBtn.innerHTML = '<i class="fas fa-cloud-sun"></i> Weather';
+        weatherBtn.addEventListener('click', () => {
+          showWeather(trip.location);
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-custom';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete Trip';
+        deleteBtn.addEventListener('click', () => {
+          if (confirm('Are you sure you want to delete this trip?')) {
+            trips = trips.filter(t => t.id !== trip.id);
+            saveTrips();
+            renderTrips();
+          }
+        });
+
+        cardFooter.appendChild(viewBtn);
+        cardFooter.appendChild(mapBtn);
+        cardFooter.appendChild(weatherBtn);
+        cardFooter.appendChild(deleteBtn);
+
+        card.appendChild(img);
+        card.appendChild(cardBody);
+        card.appendChild(cardFooter);
+
+        col.appendChild(card);
+        tripsList.appendChild(col);
+      });
+    }
+
+    // Entries Management
+    backToTripsBtn.addEventListener('click', () => {
+      entriesSection.style.display = 'none';
+      tripsSection.style.display = 'block';
+    });
+
+    newEntryBtn.addEventListener('click', () => {
+      // Generate random entry data
+      const date = getRandomDate(new Date(2023, 0, 1), new Date());
+      const note = notes[Math.floor(Math.random() * notes.length)];
+      const photoUrls = [
+        getRandomImageUrl(),
+        getRandomImageUrl(),
+        getRandomImageUrl()
+      ];
+
+      const entry = {
+        id: Date.now(),
+        date,
+        notes: note,
+        photos: photoUrls
+      };
+      const trip = trips.find(t => t.id === currentTripId);
+      trip.entries.push(entry);
+      saveTrips();
+      renderEntries();
+    });
+
+    function renderEntries() {
+      entriesList.innerHTML = '';
+      const trip = trips.find(t => t.id === currentTripId);
+      if (trip.entries.length === 0) {
+        entriesList.innerHTML = '<p>No entries found. Click "New Entry" to add one.</p>';
+        return;
+      }
+      trip.entries.forEach(entry => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // Use first photo as thumbnail if available
+        let imageUrl = 'https://via.placeholder.com/400x300?text=No+Image';
+        if (entry.photos && entry.photos.length > 0) {
+          imageUrl = entry.photos[0];
+        }
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Entry Photo';
+        img.className = 'card-img-top';
+        img.onerror = () => {
+          img.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+        };
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <h5 class="card-title">${entry.date}</h5>
+                <p class="card-text">${entry.notes}</p>
+            `;
+
+        const cardFooter = document.createElement('div');
+        cardFooter.className = 'card-footer d-flex flex-column';
+
+        const galleryBtn = document.createElement('button');
+        galleryBtn.className = 'btn btn-secondary btn-custom';
+        galleryBtn.innerHTML = '<i class="fas fa-images"></i> View Gallery';
+        galleryBtn.addEventListener('click', () => {
+          showGallery(entry.photos);
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-custom';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete Entry';
+        deleteBtn.addEventListener('click', () => {
+          if (confirm('Are you sure you want to delete this entry?')) {
+            trip.entries = trip.entries.filter(e => e.id !== entry.id);
+            saveTrips();
+            renderEntries();
+          }
+        });
+
+        cardFooter.appendChild(galleryBtn);
+        cardFooter.appendChild(deleteBtn);
+
+        card.appendChild(img);
+        card.appendChild(cardBody);
+        card.appendChild(cardFooter);
+
+        col.appendChild(card);
+        entriesList.appendChild(col);
+      });
+    }
+
+    // Map Functionality
+    function showMap(location) {
+      if (map) {
+        map.remove();
+      }
+      mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
+      map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [0, 0],
+        zoom: 2
+      });
+      // Geocode location
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${MAPBOX_ACCESS_TOKEN}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.features.length > 0) {
+            const [lng, lat] = data.features[0].center;
+            map.setCenter([lng, lat]);
+            map.setZoom(10);
+            new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+            mapModal.show();
+          } else {
+            alert('Location not found on the map.');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching location:', error);
+        });
+    }
+
+    // Weather Functionality
+    function showWeather(location) {
+      // Fetch coordinates
+      fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            const { lat, lon } = data[0];
+            // Fetch weather data
+            return fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHERMAP_API_KEY}`);
+          } else {
+            throw new Error('Location not found.');
+          }
+        })
+        .then(response => response.json())
+        .then(weatherData => {
+          alert(`Current Weather in ${location}:\n${weatherData.weather[0].description}, ${weatherData.main.temp}°C`);
+        })
+        .catch(error => {
+          console.error('Error fetching weather data:', error);
+        });
+    }
+
+    // Gallery Functionality
+    function showGallery(photos) {
+      if (!photos || photos.length === 0) {
+        alert('No photos available.');
+        return;
+      }
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+      photos.forEach(photo => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+
+        const img = document.createElement('img');
+        img.src = photo;
+        img.alt = 'Gallery Photo';
+        img.className = 'img-fluid rounded';
+        img.onerror = () => {
+          img.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+        };
+
+        col.appendChild(img);
+        gallery.appendChild(col);
+      });
+      galleryModal.show();
+    }
+
+    // Close Modals
+    document.querySelectorAll('.closeModalBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mapModal.hide();
+        galleryModal.hide();
+      });
+    });
+  });
+</script>
+</body>
+</html>

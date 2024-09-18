@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Travel Journal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" rel="stylesheet">
+    <style>
+        .trip-card { margin: 20px; padding: 15px; }
+        .entry-image { max-width: 100px; cursor: pointer; }
+        .modal-content img { max-width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="journal"></div>
+
+<button class="button is-primary" onclick="addTrip()">Add New Trip</button>
+
+<div id="tripForm" style="display:none;">
+    <input class="input" id="tripName" placeholder="Trip Name" type="text">
+    <input class="input" id="tripDate" type="date">
+    <input class="input" id="tripLocation" placeholder="Location" type="text">
+    <textarea class="textarea" id="tripDescription" placeholder="Description"></textarea>
+    <button class="button is-link" onclick="saveTrip()">Save Trip</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  function addTrip() {
+    document.getElementById('tripForm').style.display = 'block';
+  }
+
+  async function saveTrip() {
+    const name = document.getElementById('tripName').value;
+    const date = document.getElementById('tripDate').value;
+    const location = document.getElementById('tripLocation').value;
+    const description = document.getElementById('tripDescription').value;
+    if (!name || !date || !location) return alert('Please fill all fields.');
+
+    try {
+      const weather = await getWeather(location);
+      const tripHTML = `
+                <div class="trip-card box">
+                    <h2 class="title">Trip to ${name}</h2>
+                    <p>${date}</p>
+                    <p>${description}</p>
+                    <p>Weather: ${weather}</p>
+                    <button class="button is-info" onclick="showMap('${location}')">View Map</button>
+                    <button class="button is-danger" onclick="deleteTrip(this)">Delete Trip</button>
+                    <div class="entries"></div>
+                    <button class="button is-success" onclick="addEntry(this)">Add Entry</button>
+                </div>`;
+      document.getElementById('journal').innerHTML += tripHTML;
+      document.getElementById('tripForm').style.display = 'none';
+    } catch (error) {
+      alert('Failed to save trip: ' + error.message);
+    }
+  }
+
+  function addEntry(button) {
+    // Implement entry addition logic here
+  }
+
+  function deleteTrip(button) {
+    button.closest('.trip-card').remove();
+  }
+
+  function showMap(location) {
+    // Here you would typically open a map in a modal or new tab
+    window.open(`https://www.google.com/maps?q=${encodeURIComponent(location)}`, '_blank');
+  }
+
+  async function getWeather(location) {
+    try {
+      const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=YOUR_API_KEY&units=metric`);
+      return `${response.data.main.temp}°C, ${response.data.weather[0].description}`;
+    } catch (error) {
+      console.error('Weather API error:', error);
+      return 'Weather data not available';
+    }
+  }
+</script>
+
+</body>
+</html>
