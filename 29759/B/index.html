@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Daily Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5/main.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5/main.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); transition: background 0.3s, color 0.3s; }
+        :root { --bg-color: #ffffff; --text-color: #333333; --panel-bg: #f4f4f4; }
+        .dark-theme { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; }
+        #app { padding: 20px; max-width: 1200px; margin: auto; }
+        .controls, .calendar, .list-view { background: var(--panel-bg); padding: 20px; margin-top: 20px; border-radius: 8px; }
+        .button { background-color: #5cb85c; border: none; color: white; padding: 10px 20px; text-align: center; display: inline-block; margin: 4px 2px; cursor: pointer; border-radius: 4px; }
+        .button:hover { background-color: #4cae4c; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: var(--panel-bg); margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
+        .theme-toggle { position: absolute; top: 10px; right: 10px; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <button class="button theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    <div class="controls">
+        <button class="button" onclick="openAddModal('task')">Add Task</button>
+        <button class="button" onclick="openAddModal('event')">Add Event</button>
+        <button class="button" onclick="openAddModal('note')">Add Note</button>
+        <button class="button" onclick="exportData()">Export Data</button>
+        <input id="importFile" onchange="importData(this.files[0])" style="display:none;" type="file">
+        <button class="button" onclick="document.getElementById('importFile').click()">Import Data</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="list-view">
+        <input id="search" onkeyup="searchItems()" placeholder="Search..." type="text">
+        <!-- Category filters and list items will be dynamically added here -->
+    </div>
+</div>
+
+<!-- Modals for adding/editing -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <form id="itemForm">
+            <!-- Form content will be dynamically filled -->
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5/main.min.js"></script>
+<script>
+  let items = JSON.parse(localStorage.getItem('plannerItems')) || [];
+  let calendar;
+  const categories = ['task', 'event', 'note'];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initCalendar();
+    renderItems();
+  });
+
+  function initCalendar() {
+    var calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      plugins: [ 'dayGrid' ],
+      initialView: 'dayGridMonth',
+      events: items.filter(item => item.type === 'event').map(event => ({
+        title: event.title,
+        start: event.date,
+        allDay: true,
+        id: event.id
+      })),
+      eventClick: function(info) {
+        openEditModal(info.event.id);
+      }
+    });
+    calendar.render();
+  }
+
+  function openAddModal(type) {
+    const form = document.getElementById('itemForm');
+    form.innerHTML = `
+                <h2>Add ${type.charAt(0).toUpperCase() + type.slice(1)}</h2>
+                <input type="hidden" name="type" value="${type}">
+                <input type="text" name="title" placeholder="Title" required><br>
+                <textarea name="description" placeholder="Description"></textarea><br>
+                ${type === 'event' ? '<input type="date" name="date" required><br>' : ''}
+                <button type="submit" class="button">Save</button>
+            `;
+    document.getElementById('modal').style.display = "block";
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      saveItem(type);
+    };
+  }
+
+  function saveItem(type) {
+    const form = document.getElementById('itemForm');
+    let item = {
+      id: Date.now(),
+      type: type,
+      title: form.title.value,
+      description: form.description.value,
+      date: form.date ? form.date.value : null,
+      completed: false
+    };
+    items.push(item);
+    closeModal();
+    updateLocalStorage();
+    renderItems();
+    if (type === 'event') calendar.addEvent({title: item.title, start: item.date, id: item.id});
+  }
+
+  function openEditModal(id) {
+    let item = items.find(i => i.id == id);
+    if (!item) return;
+    const form = document.getElementById('itemForm');
+    form.innerHTML = `
+                <h2>Edit ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</h2>
+                <input type="hidden" name="id" value="${item.id}">
+                <input type="text" name="title" value="${item.title}" placeholder="Title" required><br>
+                <textarea name="description">${item.description}</textarea><br>
+                ${item.type === 'event' ? `<input type="date" name="date" value="${item.date}" required><br>` : ''}
+                <label><input type="checkbox" name="completed" ${item.completed ? 'checked' : ''}> Completed</label><br>
+                <button type="submit" class="button">Update</button>
+                <button type="button" class="button" onclick="deleteItem(${item.id})">Delete</button>
+            `;
+    document.getElementById('modal').style.display = "block";
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      updateItem();
+    };
+  }
+
+  function updateItem() {
+    const form = document.getElementById('itemForm');
+    let index = items.findIndex(i => i.id == form.id.value);
+    if (index !== -1) {
+      items[index].title = form.title.value;
+      items[index].description = form.description.value;
+      items[index].date = form.date ? form.date.value : null;
+      items[index].completed = form.completed.checked;
+      updateLocalStorage();
+      renderItems();
+      calendar.getEventById(form.id.value).setProp('title', form.title.value);
+    }
+    closeModal();
+  }
+
+  function deleteItem(id) {
+    items = items.filter(i => i.id != id);
+    updateLocalStorage();
+    renderItems();
+    calendar.getEventById(id).remove();
+    closeModal();
+  }
+
+  function updateLocalStorage() {
+    localStorage.setItem('plannerItems', JSON.stringify(items));
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = "none";
+  }
+
+  function renderItems() {
+    // Implement rendering of items in list view with filters
+    // This should include creating filter buttons for categories
+  }
+
+  function searchItems() {
+    // Implement search functionality
+  }
+
+  function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "planner_data.json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  function importData(file) {
+    if (file) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedItems = JSON.parse(e.target.result);
+          items = items.concat(importedItems);
+          updateLocalStorage();
+          renderItems();
+          initCalendar(); // Refresh calendar to show new events
+        } catch (e) {
+          alert('Failed to import file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+  }
+
+  // Check for saved theme
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+  }
+</script>
+</body>
+</html>

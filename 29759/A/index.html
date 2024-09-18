@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Daily Planner</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet"/>
+    <style>
+        body { transition: background-color 0.3s, color 0.3s; }
+        .dark-theme { background-color: #333; color: #f4f4f4; }
+        .light-theme { background-color: #f4f4f4; color: #333; }
+        .fc-event { cursor: pointer; }
+    </style>
+</head>
+<body class="light-theme">
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <button id="themeToggle">Toggle Theme</button>
+            <!-- Sidebar content -->
+        </nav>
+        <main class="col-md-9 ml-sm-auto col-lg-10 px-4" role="main">
+            <div id="calendar"></div>
+            <!-- Modals for CRUD operations would go here -->
+        </main>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let calendarEl = document.getElementById('calendar');
+    let calendar = new FullCalendar.Calendar(calendarEl, {
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'month,agendaWeek,agendaDay'
+      },
+      events: loadEvents(),
+      eventClick: function(info) {
+        // Open modal with event details or edit form
+      }
+    });
+    calendar.render();
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      document.body.classList.toggle('dark-theme');
+      document.body.classList.toggle('light-theme');
+    });
+
+    function loadEvents() {
+      return JSON.parse(localStorage.getItem('events')) || [];
+    }
+
+    function saveEvents(events) {
+      localStorage.setItem('events', JSON.stringify(events));
+    }
+
+    // CRUD operations would interact with this function to save data
+    function addEvent(event) {
+      let events = loadEvents();
+      events.push(event);
+      saveEvents(events);
+      calendar.addEvent(event);
+    }
+
+    // JSON Import/Export
+    function exportData() {
+      const data = localStorage.getItem('events');
+      const blob = new Blob([data], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'planner_data.json';
+      a.click();
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const events = JSON.parse(e.target.result);
+        saveEvents(events);
+        calendar.refetchEvents();
+      };
+      reader.readAsText(file);
+    }
+
+    // Notifications would require permission and setup here
+    if ('Notification' in window) {
+      Notification.requestPermission();
+    }
+  });
+</script>
+</body>
+</html>

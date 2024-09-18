@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Planner App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+    <!-- Font Awesome for Icons -->
+    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-..." referrerpolicy="no-referrer" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<style>
+    /* Custom Styles */
+
+    /* Light Theme */
+    body.light-theme {
+        background-color: #f8f9fa;
+        color: #343a40;
+    }
+
+    body.light-theme .card {
+        background-color: #ffffff;
+        color: #343a40;
+    }
+
+    body.light-theme .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    body.light-theme .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    body.light-theme .me-2{
+        color:black;
+    }
+
+    body.light-theme .btn-success {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    body.light-theme .btn-info {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+
+    body.light-theme .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    /* Dark Theme */
+    body.dark-theme {
+        background-color: #212529;
+        color: #f8f9fa;
+    }
+
+    body.dark-theme .card {
+        background-color: #343a40;
+        color: #f8f9fa;
+    }
+
+    body.dark-theme .btn-primary {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+    body.dark-theme .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    body.dark-theme .btn-success {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    body.dark-theme .btn-info {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+
+    body.dark-theme .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    /* Card Styles */
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .card-title {
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        color: inherit;
+    }
+
+    .btn-custom {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .modal-body img {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    .closeModalBtn {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+    }
+
+    .closeModalBtn:hover {
+        color: #dc3545;
+    }
+
+    /* Accessibility Enhancements */
+    button:focus, input:focus, select:focus, textarea:focus {
+        outline: 2px dashed #0d6efd;
+        outline-offset: 2px;
+    }
+
+    /* Calendar Styles */
+    #calendar {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .fc-daygrid-event {
+        cursor: pointer;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .card-img-top {
+            height: 150px;
+        }
+    }
+</style>
+<div class="container my-5" id="app">
+    <header class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="display-4">Daily Planner</h1>
+        <div>
+            <button aria-label="Toggle Theme" class="btn btn-secondary me-2" id="themeToggleBtn">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button aria-label="Export Data" class="btn btn-success" id="exportBtn" style = "color:Black">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <input accept=".json, .csv" id="importInput" style="display:none;" type="file">
+        </div>
+    </header>
+    <main>
+        <!-- Search Bar -->
+        <div class="mb-4">
+            <input aria-label="Search" class="form-control" id="searchBar" placeholder="Search Tasks, Notes, Reminders, Events..." type="text">
+        </div>
+        <!-- Planner Sections -->
+        <div class="row">
+            <!-- Tasks Section -->
+            <div class="col-md-6 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Tasks</h2>
+                    <button aria-label="Add Task" class="btn btn-primary" id="newTaskBtn"><i class="fas fa-plus"></i> Add Task</button>
+                </div>
+                <div class="mb-3">
+                    <select aria-label="Filter Tasks by Category" class="form-select" id="taskCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="row g-4" id="tasksList"></div>
+            </div>
+            <!-- Notes Section -->
+            <div class="col-md-6 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Notes</h2>
+                    <button aria-label="Add Note" class="btn btn-primary" id="newNoteBtn"><i class="fas fa-plus"></i> Add Note</button>
+                </div>
+                <div class="mb-3">
+                    <select aria-label="Filter Notes by Category" class="form-select" id="noteCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Ideas">Ideas</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+                <div class="row g-4" id="notesList"></div>
+            </div>
+        </div>
+        <div class="row">
+            <!-- Reminders Section -->
+            <div class="col-md-6 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Reminders</h2>
+                    <button aria-label="Add Reminder" class="btn btn-primary" id="newReminderBtn"><i class="fas fa-plus"></i> Add Reminder</button>
+                </div>
+                <div class="mb-3">
+                    <select aria-label="Filter Reminders by Category" class="form-select" id="reminderCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Health">Health</option>
+                        <option value="Home">Home</option>
+                        <option value="Work">Work</option>
+                    </select>
+                </div>
+                <div class="row g-4" id="remindersList"></div>
+            </div>
+            <!-- Events Section -->
+            <div class="col-md-6 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Events</h2>
+                    <button aria-label="Add Event" class="btn btn-primary" id="newEventBtn"><i class="fas fa-plus"></i> Add Event</button>
+                </div>
+                <div class="mb-3">
+                    <select aria-label="Filter Events by Category" class="form-select" id="eventCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Work">Work</option>
+                        <option value="Social">Social</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+                <div class="row g-4" id="eventsList"></div>
+            </div>
+        </div>
+        <!-- Calendar Integration -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h2>Calendar</h2>
+                <div id='calendar'></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Details Modal -->
+<div aria-hidden="true" aria-labelledby="detailsModalLabel" class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalTitle">Details</h5>
+                <button aria-label="Close" class="btn-close closeModalBtn" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+                <!-- Details will be injected here -->
+            </div>
+            <div class="modal-footer">
+                <button aria-label="Close" class="btn btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div aria-hidden="true" aria-labelledby="editItemModalLabel" class="modal fade" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button aria-label="Close" class="btn-close closeModalBtn" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body" id="editItemModalBody">
+                <!-- Edit form will be injected here -->
+            </div>
+            <div class="modal-footer">
+                <button aria-label="Close" class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                <button class="btn btn-success" id="saveEditBtn" type="button">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Confirmation Modal -->
+<div aria-hidden="true" aria-labelledby="exportModalLabel" class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalTitle" style="color:Black">Export Data</h5>
+                <button aria-label="Close" class="btn-close closeModalBtn" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body" style="color:Black">
+                <p>Your planner data has been exported successfully!</p>
+                <a class="btn btn-primary" href="#" id="downloadLink">Download JSON</a>
+            </div>
+            <div class="modal-footer">
+                <button aria-label="Close" class="btn btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<!-- App Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Main App Elements
+    const newTaskBtn = document.getElementById('newTaskBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    const newReminderBtn = document.getElementById('newReminderBtn');
+    const newEventBtn = document.getElementById('newEventBtn');
+
+    const tasksList = document.getElementById('tasksList');
+    const notesList = document.getElementById('notesList');
+    const remindersList = document.getElementById('remindersList');
+    const eventsList = document.getElementById('eventsList');
+
+    const searchBar = document.getElementById('searchBar');
+
+    const taskCategoryFilter = document.getElementById('taskCategoryFilter');
+    const noteCategoryFilter = document.getElementById('noteCategoryFilter');
+    const reminderCategoryFilter = document.getElementById('reminderCategoryFilter');
+    const eventCategoryFilter = document.getElementById('eventCategoryFilter');
+
+    const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    const detailsModalTitle = document.getElementById('detailsModalTitle');
+    const detailsModalBody = document.getElementById('detailsModalBody');
+    const editItemBtn = document.getElementById('editItemBtn');
+
+    const editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+    const editItemModalTitle = document.getElementById('editItemModalTitle');
+    const editItemModalBody = document.getElementById('editItemModalBody');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importInput = document.getElementById('importInput');
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    const downloadLink = document.getElementById('downloadLink');
+
+    const calendarEl = document.getElementById('calendar');
+    let calendar;
+
+    // Data Initialization
+    let plannerData = getPlannerData();
+    if (!plannerData) {
+      plannerData = initializePlannerData();
+      savePlannerData();
+    }
+    renderPlanner();
+
+    // Helper Functions
+    function savePlannerData () {
+      localStorage.setItem('plannerData', JSON.stringify(plannerData));
+    }
+
+    function getPlannerData () {
+      return JSON.parse(localStorage.getItem('plannerData'));
+    }
+
+    function initializePlannerData () {
+      return {
+        tasks: [],
+        notes: [],
+        reminders: [],
+        events: []
+      };
+    }
+
+    function generateId () {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Sample Auto-Populated Data
+    const sampleTasks = [
+      {
+        title: 'Complete Project Report',
+        description: 'Finalize and submit the project report by end of the day.',
+        category: 'Work'
+      },
+      {title: 'Buy Groceries', description: 'Milk, Bread, Eggs, and Vegetables.', category: 'Personal'},
+      {title: 'Call John', description: 'Discuss the upcoming meeting details.', category: 'Urgent'},
+      {title: 'Workout Session', description: 'Attend the gym for a 1-hour workout.', category: 'Personal'},
+      {title: 'Client Meeting', description: 'Present the new project proposal.', category: 'Work'}
+    ];
+
+    const sampleNotes = [
+      {content: 'Meeting notes: Discussed project milestones and deadlines.', category: 'Meeting'},
+      {content: 'Ideas for the new marketing campaign.', category: 'Ideas'},
+      {content: 'Personal thoughts: Need to improve time management.', category: 'Personal'},
+      {content: 'Shopping list: Milk, Bread, Eggs, Butter.', category: 'Personal'},
+      {content: 'Books to read: "Atomic Habits", "Deep Work".', category: 'Ideas'}
+    ];
+
+    const sampleReminders = [
+      {message: 'Doctor\'s appointment at 3 PM.', category: 'Health'},
+      {message: 'Call the plumber to fix the sink.', category: 'Home'},
+      {message: 'Pick up groceries after work.', category: 'Home'},
+      {message: 'Pay electricity bill by Friday.', category: 'Work'},
+      {message: 'Schedule car maintenance.', category: 'Personal'}
+    ];
+
+    const sampleEvents = [
+      {
+        name: 'Lunch with Sarah',
+        date: '2024-05-15',
+        description: 'Discuss the upcoming project over lunch at Downtown Cafe.',
+        category: 'Social'
+      },
+      {
+        name: 'Yoga Class',
+        date: '2024-05-16',
+        description: 'Attend the evening yoga session at Sunrise Yoga Studio.',
+        category: 'Personal'
+      },
+      {
+        name: 'Webinar on AI',
+        date: '2024-05-17',
+        description: 'Participate in the AI advancements webinar hosted by TechWorld.',
+        category: 'Work'
+      },
+      {
+        name: 'Birthday Party',
+        date: '2024-05-18',
+        description: 'Celebrate John\'s birthday at his residence.',
+        category: 'Social'
+      },
+      {
+        name: 'Conference Call',
+        date: '2024-05-19',
+        description: 'Join the quarterly business review call with the management team.',
+        category: 'Work'
+      }
+    ];
+
+    // Render Planner Sections
+    function renderPlanner () {
+      renderTasks();
+      renderNotes();
+      renderReminders();
+      renderEvents();
+      initializeCalendar();
+    }
+
+    // Render Tasks
+    function renderTasks () {
+      tasksList.innerHTML = '';
+      const filteredTasks = filterItems(plannerData.tasks, taskCategoryFilter.value, searchBar.value);
+      if (filteredTasks.length === 0) {
+        tasksList.innerHTML = '<p>No tasks found.</p>';
+        return;
+      }
+      filteredTasks.forEach(task => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('aria-label', `Task: ${task.title}`);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <h5 class="card-title">${task.title}</h5>
+                <p class="card-text">${task.description}</p>
+                <p class="card-text"><strong>Category:</strong> ${task.category}</p>
+                <div class="d-flex">
+                    <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('tasks', '${task.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItem('tasks', '${task.id}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `;
+
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        tasksList.appendChild(col);
+      });
+    }
+
+    // Render Notes
+    function renderNotes () {
+      notesList.innerHTML = '';
+      const filteredNotes = filterItems(plannerData.notes, noteCategoryFilter.value, searchBar.value);
+      if (filteredNotes.length === 0) {
+        notesList.innerHTML = '<p>No notes found.</p>';
+        return;
+      }
+      filteredNotes.forEach(note => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('aria-label', `Note: ${note.content.substring(0, 20)}...`);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <p class="card-text">${note.content.substring(0, 50)}...</p>
+                <p class="card-text"><strong>Category:</strong> ${note.category}</p>
+                <div class="d-flex">
+                    <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('notes', '${note.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItem('notes', '${note.id}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `;
+
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        notesList.appendChild(col);
+      });
+    }
+
+    // Render Reminders
+    function renderReminders () {
+      remindersList.innerHTML = '';
+      const filteredReminders = filterItems(plannerData.reminders, reminderCategoryFilter.value, searchBar.value);
+      if (filteredReminders.length === 0) {
+        remindersList.innerHTML = '<p>No reminders found.</p>';
+        return;
+      }
+      filteredReminders.forEach(reminder => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('aria-label', `Reminder: ${reminder.message}`);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <p class="card-text">${reminder.message}</p>
+                <p class="card-text"><strong>Category:</strong> ${reminder.category}</p>
+                <div class="d-flex">
+                    <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('reminders', '${reminder.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItem('reminders', '${reminder.id}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `;
+
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        remindersList.appendChild(col);
+      });
+    }
+
+    // Render Events
+    function renderEvents () {
+      eventsList.innerHTML = '';
+      const filteredEvents = filterItems(plannerData.events, eventCategoryFilter.value, searchBar.value);
+      if (filteredEvents.length === 0) {
+        eventsList.innerHTML = '<p>No events found.</p>';
+        return;
+      }
+      filteredEvents.forEach(event => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('aria-label', `Event: ${event.name}`);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+
+        cardBody.innerHTML = `
+                <h5 class="card-title">${event.name}</h5>
+                <p class="card-text"><strong>Date:</strong> ${event.date}</p>
+                <p class="card-text">${event.description}</p>
+                <p class="card-text"><strong>Category:</strong> ${event.category}</p>
+                <div class="d-flex">
+                    <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('events', '${event.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItem('events', '${event.id}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            `;
+
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        eventsList.appendChild(col);
+      });
+    }
+
+    // Filter Items Based on Category and Search Query
+    function filterItems (items, category, query) {
+      return items.filter(item => {
+        const matchCategory = category === 'all' || item.category === category;
+        const matchQuery = item.title ? item.title.toLowerCase().includes(query.toLowerCase()) :
+          item.content ? item.content.toLowerCase().includes(query.toLowerCase()) :
+            item.message ? item.message.toLowerCase().includes(query.toLowerCase()) :
+              item.name ? item.name.toLowerCase().includes(query.toLowerCase()) : false;
+        return matchCategory && matchQuery;
+      });
+    }
+
+    // Add New Task
+    newTaskBtn.addEventListener('click', () => {
+      addTask();
+    });
+
+    function addTask () {
+      // Auto-populate task data
+      const randomTask = sampleTasks[Math.floor(Math.random() * sampleTasks.length)];
+      const task = {
+        id: generateId(),
+        title: randomTask.title,
+        description: randomTask.description,
+        category: randomTask.category
+      };
+      plannerData.tasks.push(task);
+      savePlannerData();
+      renderTasks();
+    }
+
+    // Add New Note
+    newNoteBtn.addEventListener('click', () => {
+      addNote();
+    });
+
+    function addNote () {
+      // Auto-populate note data
+      const randomNote = sampleNotes[Math.floor(Math.random() * sampleNotes.length)];
+      const note = {
+        id: generateId(),
+        content: randomNote.content,
+        category: randomNote.category
+      };
+      plannerData.notes.push(note);
+      savePlannerData();
+      renderNotes();
+    }
+
+    // Add New Reminder
+    newReminderBtn.addEventListener('click', () => {
+      addReminder();
+    });
+
+    function addReminder () {
+      // Auto-populate reminder data
+      const randomReminder = sampleReminders[Math.floor(Math.random() * sampleReminders.length)];
+      const reminder = {
+        id: generateId(),
+        message: randomReminder.message,
+        category: randomReminder.category,
+        date: new Date().toISOString()};
+      plannerData.reminders.push(reminder);
+      savePlannerData();
+      renderReminders();
+      scheduleNotification(reminder);
+    }
+
+    // Add New Event
+    newEventBtn.addEventListener('click', () => {
+      addEvent();
+    });
+
+    function addEvent () {
+      // Auto-populate event data
+      const randomEvent = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+      const event = {
+        id: generateId(),
+        name: randomEvent.name,
+        date: randomEvent.date,
+        description: randomEvent.description,
+        category: randomEvent.category
+      };
+      plannerData.events.push(event);
+      savePlannerData();
+      renderEvents();
+      addEventToCalendar(event);
+    }
+
+    // View Details Function
+    window.viewDetails = function (section, id) {
+      let content = '';
+      let title = '';
+      if (section === 'tasks') {
+        const task = plannerData.tasks.find(t => t.id === id);
+        if (task) {
+          content = `
+                    <h4 style="color:Black">${task.title}</h4>
+                    <p style="color:Black">${task.description}</p>
+                    <p style="color:Black"><strong>Category:</strong> ${task.category}</p>
+                `;
+          title = '';
+        }
+      } else if (section === 'notes') {
+        const note = plannerData.notes.find(n => n.id === id);
+        if (note) {
+          content = `
+                    <h4 style="color:Black">Note</h4>
+                    <p style="color:Black">${note.content}</p>
+                    <p style="color:Black"><strong>Category:</strong> ${note.category}</p>
+                `;
+          title = '';
+        }
+      } else if (section === 'reminders') {
+        const reminder = plannerData.reminders.find(r => r.id === id);
+        if (reminder) {
+          content = `
+                    <h4 style="color:Black">Reminder</h4>
+                    <p style="color:Black">${reminder.message}</p>
+                    <p style="color:Black"><strong>Category:</strong> ${reminder.category}</p>
+                    <p style="color:Black"><strong>Date:</strong> ${reminder.date}</p>
+                `;
+          title = '';
+        }
+      } else if (section === 'events') {
+        const event = plannerData.events.find(e => e.id === id);
+        if (event) {
+          content = `
+                    <h4 style="color:Black">${event.name}</h4>
+                    <p style="color:Black"> <strong>Date:</strong> ${event.date}</p>
+                    <p style="color:Black">${event.description}</p>
+                    <p style="color:Black"><strong>Category:</strong> ${event.category}</p>
+                `;
+          title = '';
+        }
+      }
+
+      detailsModalTitle.innerText = title;
+      detailsModalBody.innerHTML = content;
+      detailsModal.show();
+
+      // Set current item for editing
+      detailsModalTitle.setAttribute('data-section', section);
+      detailsModalTitle.setAttribute('data-id', id);
+    }
+
+    // Edit Item Function
+    window.editItem = function (section, id) {
+      const item = getItemById(section, id);
+      if (!item) return;
+
+      editItemModalTitle.innerText = `Edit ${capitalizeFirstLetter(section.slice(0, -1))}`;
+      let formContent = '';
+
+      if (section === 'tasks') {
+        formContent = `
+                <form>
+                    <div class="mb-3">
+                        <label for="editTaskTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="editTaskTitle" value="${item.title}" aria-label="Edit Task Title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTaskDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editTaskDescription" rows="3" aria-label="Edit Task Description">${item.description}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTaskCategory" class="form-label">Category</label>
+                        <select class="form-select" id="editTaskCategory" aria-label="Edit Task Category">
+                            <option value="Work" ${item.category === 'Work' ? 'selected' : ''}>Work</option>
+                            <option value="Personal" ${item.category === 'Personal' ? 'selected' : ''}>Personal</option>
+                            <option value="Urgent" ${item.category === 'Urgent' ? 'selected' : ''}>Urgent</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+      } else if (section === 'notes') {
+        formContent = `
+                <form>
+                    <div class="mb-3">
+                        <label for="editNoteContent" class="form-label">Content</label>
+                        <textarea class="form-control" id="editNoteContent" rows="4" aria-label="Edit Note Content">${item.content}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNoteCategory" class="form-label">Category</label>
+                        <select class="form-select" id="editNoteCategory" aria-label="Edit Note Category">
+                            <option value="Ideas" ${item.category === 'Ideas' ? 'selected' : ''}>Ideas</option>
+                            <option value="Meeting" ${item.category === 'Meeting' ? 'selected' : ''}>Meeting</option>
+                            <option value="Personal" ${item.category === 'Personal' ? 'selected' : ''}>Personal</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+      } else if (section === 'reminders') {
+        formContent = `
+                <form>
+                    <div class="mb-3">
+                        <label for="editReminderMessage" class="form-label">Message</label>
+                        <input type="text" class="form-control" id="editReminderMessage" value="${item.message}" aria-label="Edit Reminder Message">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editReminderCategory" class="form-label">Category</label>
+                        <select class="form-select" id="editReminderCategory" aria-label="Edit Reminder Category">
+                            <option value="Health" ${item.category === 'Health' ? 'selected' : ''}>Health</option>
+                            <option value="Home" ${item.category === 'Home' ? 'selected' : ''}>Home</option>
+                            <option value="Work" ${item.category === 'Work' ? 'selected' : ''}>Work</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+      } else if (section === 'events') {
+        formContent = `
+                <form>
+                    <div class="mb-3">
+                        <label for="editEventName" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="editEventName" value="${item.name}" aria-label="Edit Event Name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventDate" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="editEventDate" value="${item.date}" aria-label="Edit Event Date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editEventDescription" rows="3" aria-label="Edit Event Description">${item.description}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventCategory" class="form-label">Category</label>
+                        <select class="form-select" id="editEventCategory" aria-label="Edit Event Category">
+                            <option value="Work" ${item.category === 'Work' ? 'selected' : ''}>Work</option>
+                            <option value="Social" ${item.category === 'Social' ? 'selected' : ''}>Social</option>
+                            <option value="Personal" ${item.category === 'Personal' ? 'selected' : ''}>Personal</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+      }
+
+      editItemModalBody.innerHTML = formContent;
+      editItemModal.show();
+
+      // Set current edit context
+      editItemModalTitle.setAttribute('data-section', section);
+      editItemModalTitle.setAttribute('data-id', id);
+    }
+
+    // Save Edited Item
+    saveEditBtn.addEventListener('click', () => {
+      const section = editItemModalTitle.getAttribute('data-section');
+      const id = editItemModalTitle.getAttribute('data-id');
+
+      let updatedItem;
+      if (section === 'tasks') {
+        const title = document.getElementById('editTaskTitle').value.trim();
+        const description = document.getElementById('editTaskDescription').value.trim();
+        const category = document.getElementById('editTaskCategory').value;
+        if (!title || !description) {
+          alert('Please fill in all fields.');
+          return;
+        }
+        updatedItem = {
+          title,
+          description,
+          category
+        };
+        const taskIndex = plannerData.tasks.findIndex(t => t.id === id);
+        if (taskIndex !== -1) {
+          plannerData.tasks[taskIndex] = {id, ...updatedItem};
+        }
+      } else if (section === 'notes') {
+        const content = document.getElementById('editNoteContent').value.trim();
+        const category = document.getElementById('editNoteCategory').value;
+        if (!content) {
+          alert('Please fill in the content.');
+          return;
+        }
+        updatedItem = {
+          content,
+          category
+        };
+        const noteIndex = plannerData.notes.findIndex(n => n.id === id);
+        if (noteIndex !== -1) {
+          plannerData.notes[noteIndex] = {id, ...updatedItem};
+        }
+      } else if (section === 'reminders') {
+        const message = document.getElementById('editReminderMessage').value.trim();
+        const category = document.getElementById('editReminderCategory').value;
+        if (!message) {
+          alert('Please fill in the message.');
+          return;
+        }
+        updatedItem = {
+          message,
+          category
+        };
+        const reminderIndex = plannerData.reminders.findIndex(r => r.id === id);
+        if (reminderIndex !== -1) {
+          plannerData.reminders[reminderIndex] = {id, ...updatedItem};
+        }
+      } else if (section === 'events') {
+        const name = document.getElementById('editEventName').value.trim();
+        const date = document.getElementById('editEventDate').value;
+        const description = document.getElementById('editEventDescription').value.trim();
+        const category = document.getElementById('editEventCategory').value;
+        if (!name || !date || !description) {
+          alert('Please fill in all fields.');
+          return;
+        }
+        updatedItem = {
+          name,
+          date,
+          description,
+          category
+        };
+        const eventIndex = plannerData.events.findIndex(e => e.id === id);
+        if (eventIndex !== -1) {
+          plannerData.events[eventIndex] = {id, ...updatedItem};
+          updateCalendarEvent(id, updatedItem);
+        }
+      }
+
+      savePlannerData();
+      renderPlanner();
+      editItemModal.hide();
+    });
+
+    // Get Item by ID
+    function getItemById (section, id) {
+      if (section === 'tasks') {
+        return plannerData.tasks.find(t => t.id === id);
+      } else if (section === 'notes') {
+        return plannerData.notes.find(n => n.id === id);
+      } else if (section === 'reminders') {
+        return plannerData.reminders.find(r => r.id === id);
+      } else if (section === 'events') {
+        return plannerData.events.find(e => e.id === id);
+      }
+      return null;
+    }
+
+    // Delete Item Function
+    window.deleteItem = function (section, id) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        if (section === 'tasks') {
+          plannerData.tasks = plannerData.tasks.filter(t => t.id !== id);
+          renderTasks();
+        } else if (section === 'notes') {
+          plannerData.notes = plannerData.notes.filter(n => n.id !== id);
+          renderNotes();
+        } else if (section === 'reminders') {
+          plannerData.reminders = plannerData.reminders.filter(r => r.id !== id);
+          renderReminders();
+        } else if (section === 'events') {
+          plannerData.events = plannerData.events.filter(e => e.id !== id);
+          removeCalendarEvent(id);
+          renderEvents();
+        }
+        savePlannerData();
+      }
+    }
+
+    // Edit Item Function (accessible via modal)
+    window.editItem = function (section, id) {
+      // Function is defined earlier
+    }
+
+    // Theme Toggle Functionality
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      document.body.classList.toggle('light-theme');
+      // Update icon
+      if (document.body.classList.contains('dark-theme')) {
+        themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+      // Save theme preference
+      const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+      localStorage.setItem('theme', currentTheme);
+    });
+
+    // Initialize Theme Based on Preference
+    function initializeTheme () {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+      } else {
+        document.body.classList.add('light-theme');
+        themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+      }
+    }
+
+    initializeTheme();
+
+    // Search Functionality
+    searchBar.addEventListener('input', () => {
+      renderTasks();
+      renderNotes();
+      renderReminders();
+      renderEvents();
+    });
+
+// Export Data
+    exportBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(plannerData);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = 'plannerData.json';
+      exportModal.show();
+    });
+
+
+
+    importInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const importedData = JSON.parse(e.target.result);
+        plannerData = importedData;
+        savePlannerData();
+        renderPlanner();
+      };
+      reader.readAsText(file);
+    });
+
+// Initialize Calendar
+    function initializeCalendar() {
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 650,
+        events: getCalendarEvents(),
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        eventClick: function(info) {
+          const eventId = info.event.id;
+          viewDetails('events', eventId);
+        }
+      });
+      calendar.render();
+    }
+
+// Get Events for Calendar
+    function getCalendarEvents() {
+      return plannerData.events.map(event => ({
+        id: event.id,
+        title: event.name,
+        start: event.date
+      }));
+    }
+
+// Add Event to Calendar
+    function addEventToCalendar(event) {
+      calendar.addEvent({
+        id: event.id,
+        title: event.name,
+        start: event.date
+      });
+    }
+
+// Remove Event from Calendar
+    function removeCalendarEvent(id) {
+      const event = calendar.getEventById(id);
+      if (event) {
+        event.remove();
+      }
+    }
+
+// Update Event on Calendar
+    function updateCalendarEvent(id, updatedEvent) {
+      const event = calendar.getEventById(id);
+      if (event) {
+        event.setProp('title', updatedEvent.name);
+        event.setStart(updatedEvent.date);
+      }
+    }
+
+// Notification Handling (for reminders)
+    function scheduleNotification(reminder) {
+      const reminderTime = new Date(reminder.date).getTime();
+      const now = new Date().getTime();
+      const delay = reminderTime - now;
+
+      if (delay > 0) {
+        setTimeout(() => {
+          showBrowserNotification(reminder.message);
+        }, delay);
+      }
+    }
+
+// Show Browser Notification
+    function showBrowserNotification(message) {
+      if (Notification.permission === 'granted') {
+        new Notification('Reminder', { body: message });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            new Notification('Reminder', { body: message });
+          }
+        });
+      }
+    }
+
+// Request Notification Permission on Page Load
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  });
+
+</script>
+</body>
+</html>
