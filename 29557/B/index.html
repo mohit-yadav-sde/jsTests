@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Health Tracker</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #f8f9fa;
+        }
+        body.dark-mode {
+            --bg-color: #333;
+            --text-color: #e4e4e4;
+            --card-bg: #444;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .card {
+            background-color: var(--card-bg);
+        }
+        .theme-toggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h1 class="text-center">Health Tracker</h1>
+    <div class="theme-toggle text-right" onclick="toggleTheme()">🌙/☀️</div>
+    <div class="row">
+        <!-- Cards for each metric -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Steps</h5>
+                    <canvas height="200" id="stepsChart" width="400"></canvas>
+                    <div class="progress mt-2">
+                        <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar" id="stepsProgress" role="progressbar" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Repeat similar structure for Calories, Sleep, Water Intake -->
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+  }
+
+  function simulateData(metric) {
+    // Simulate data generation
+    let current = localStorage.getItem(metric) || 0;
+    current = parseInt(current) + Math.floor(Math.random() * 1000);
+    localStorage.setItem(metric, current);
+    return current;
+  }
+
+  function updateChartAndProgress(metric, chartId, progressId, goal) {
+    let current = simulateData(metric);
+    let percentage = (current / goal) * 100;
+    document.getElementById(progressId).style.width = percentage + '%';
+    document.getElementById(progressId).innerText = current + '/' + goal;
+
+    // Update Chart.js chart with dummy data
+    new Chart(document.getElementById(chartId), {
+      type: 'line',
+      data: {
+        labels: ['Day1', 'Day2', 'Day3', 'Day4', 'Day5', 'Day6', 'Day7'],
+        datasets: [{
+          label: metric,
+          data: [Math.random()*goal, Math.random()*goal, Math.random()*goal, Math.random()*goal, Math.random()*goal, Math.random()*goal, current],
+          borderColor: 'blue',
+          fill: false
+        }]
+      },
+      options: { responsive: true }
+    });
+  }
+
+  // Initialize all metrics
+  ['steps', 'calories', 'sleep', 'water'].forEach(metric => {
+    updateChartAndProgress(metric, metric + 'Chart', metric + 'Progress', metric === 'sleep' ? 8 : 10000);
+  });
+
+  // Alerts for goals
+  function checkGoal(metric, current, goal) {
+    if (current >= goal) {
+      alert(`Congratulations! You've met your ${metric} goal!`);
+    }
+  }
+
+  // Check goals on load or data update
+</script>
+</body>
+</html>

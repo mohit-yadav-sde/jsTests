@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Health Tracker</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-..." referrerpolicy="no-referrer" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Styles -->
+    <style>
+        /* Light and Dark Themes */
+        body.light-theme {
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+
+        body.dark-theme {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+
+        /* Card Styles */
+        .card {
+            margin: 20px 0;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .goal-check {
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        /* Progress Bar Styles */
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Smooth Alert Transitions */
+        .alert {
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="light-theme">
+<!-- Theme Toggle Button -->
+<button aria-label="Toggle Theme" class="btn btn-secondary theme-toggle-btn" onclick="toggleTheme()">
+    <i class="fas fa-moon"></i>
+</button>
+
+<div class="container">
+    <h1 class="text-center my-4">Health Tracker</h1>
+
+    <!-- Metrics Cards -->
+    <div class="row">
+        <!-- Daily Steps -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-shoe-prints me-2"></i>Daily Steps</h5>
+                    <div class="chart-container">
+                        <canvas id="stepsChart"></canvas>
+                    </div>
+                    <div class="goal-check">
+                        <label for="stepGoal"><strong>Set Daily Step Goal:</strong></label>
+                        <input class="form-control" id="stepGoal" placeholder="e.g. 10000" type="number">
+                        <button class="btn btn-primary mt-2" onclick="checkStepGoal()">
+                            <i class="fas fa-check"></i> Check Goal
+                        </button>
+                        <div class="progress mt-2">
+                            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar bg-info" id="stepsProgress" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100" onclick="logSteps()">
+                            <i class="fas fa-plus"></i> Log Steps
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calories Consumed -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-utensils me-2"></i>Calories Consumed</h5>
+                    <div class="chart-container">
+                        <canvas id="caloriesChart"></canvas>
+                    </div>
+                    <div class="goal-check">
+                        <label for="calorieGoal"><strong>Set Daily Calorie Goal:</strong></label>
+                        <input class="form-control" id="calorieGoal" placeholder="e.g. 2000" type="number">
+                        <button class="btn btn-primary mt-2" onclick="checkCalorieGoal()">
+                            <i class="fas fa-check"></i> Check Goal
+                        </button>
+                        <div class="progress mt-2">
+                            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar bg-warning" id="caloriesProgress" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100" onclick="logCalories()">
+                            <i class="fas fa-plus"></i> Log Calories
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Hours -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-bed me-2"></i>Sleep Hours</h5>
+                    <div class="chart-container">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                    <div class="goal-check">
+                        <label for="sleepGoal"><strong>Set Daily Sleep Goal (hours):</strong></label>
+                        <input class="form-control" id="sleepGoal" placeholder="e.g. 8" step="0.1" type="number">
+                        <button class="btn btn-primary mt-2" onclick="checkSleepGoal()">
+                            <i class="fas fa-check"></i> Check Goal
+                        </button>
+                        <div class="progress mt-2">
+                            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar bg-success" id="sleepProgress" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100" onclick="logSleep()">
+                            <i class="fas fa-plus"></i> Log Sleep
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Metrics: Water Intake -->
+    <div class="row">
+        <!-- Water Intake -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-tint me-2"></i>Water Intake (Liters)</h5>
+                    <div class="chart-container">
+                        <canvas id="waterChart"></canvas>
+                    </div>
+                    <div class="goal-check">
+                        <label for="waterGoal"><strong>Set Daily Water Goal (Liters):</strong></label>
+                        <input class="form-control" id="waterGoal" placeholder="e.g. 2" step="0.1" type="number">
+                        <button class="btn btn-primary mt-2" onclick="checkWaterGoal()">
+                            <i class="fas fa-check"></i> Check Goal
+                        </button>
+                        <div class="progress mt-2">
+                            <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar bg-primary" id="waterProgress" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100" onclick="logWater()">
+                            <i class="fas fa-plus"></i> Log Water
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- Control Buttons -->
+    <div class="d-flex justify-content-center mb-4">
+        <button class="btn btn-success me-3" onclick="generateData()">
+            <i class="fas fa-sync-alt"></i> Generate Weekly Data
+        </button>
+        <button class="btn btn-danger" onclick="resetData()">
+            <i class="fas fa-trash"></i> Reset Data
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JavaScript -->
+<script>
+  // Initialize or Retrieve Data from localStorage
+  let stepsData = JSON.parse(localStorage.getItem('stepsData')) || [5000, 7000, 8000, 6000, 9000, 10000, 7500];
+  let calorieData = JSON.parse(localStorage.getItem('calorieData')) || [1800, 2000, 1500, 2200, 2500, 1800, 2000];
+  let sleepData = JSON.parse(localStorage.getItem('sleepData')) || [6, 7, 8, 6.5, 7.5, 8, 7];
+  let waterData = JSON.parse(localStorage.getItem('waterData')) || [1.5, 2, 1.8, 2.2, 2, 1.9, 2.1];
+
+  // Initialize Goals from localStorage or set defaults
+  let stepGoal = parseInt(localStorage.getItem('stepGoal')) || 10000;
+  let calorieGoal = parseInt(localStorage.getItem('calorieGoal')) || 2000;
+  let sleepGoal = parseFloat(localStorage.getItem('sleepGoal')) || 8;
+  let waterGoal = parseFloat(localStorage.getItem('waterGoal')) || 2;
+
+  // Initialize Charts
+  document.addEventListener('DOMContentLoaded', () => {
+    createChart('stepsChart', 'Steps Taken', stepsData, 'rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 1)');
+    createChart('caloriesChart', 'Calories Consumed', calorieData, 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 1)');
+    createChart('sleepChart', 'Hours Slept', sleepData, 'rgba(153, 102, 255, 0.2)', 'rgba(153, 102, 255, 1)');
+    createChart('waterChart', 'Water Intake', waterData, 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+  });
+
+  // Function to create a chart
+  function createChart(canvasId, label, data, bgColor, borderColor) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: label,
+          data: data,
+          backgroundColor: bgColor,
+          borderColor: borderColor,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  // Function to update charts with new data
+  function updateChart(chartId, newData) {
+    const chart = Chart.getChart(chartId);
+    if (chart) {
+      chart.data.datasets[0].data = newData;
+      chart.update();
+    }
+  }
+
+  // Function to toggle theme
+  function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    document.body.classList.toggle('light-theme');
+    const themeBtn = document.querySelector('.theme-toggle-btn i');
+    if (document.body.classList.contains('dark-theme')) {
+      themeBtn.classList.remove('fa-moon');
+      themeBtn.classList.add('fa-sun');
+    } else {
+      themeBtn.classList.remove('fa-sun');
+      themeBtn.classList.add('fa-moon');
+    }
+  }
+
+  // Function to generate and save data
+  function generateData() {
+    // Generate random steps between 4000 and 12000
+    stepsData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 8000) + 4000);
+    // Generate random calories between 1500 and 3000
+    calorieData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 1500) + 1500);
+    // Generate random sleep between 5 and 9 hours
+    sleepData = Array.from({ length: 7 }, () => (Math.random() * 4) + 5);
+    // Generate random water intake between 1 and 3 liters
+    waterData = Array.from({ length: 7 }, () => (Math.random() * 2) + 1);
+
+    saveData();
+    refreshCharts();
+    showAlert('Weekly data generated successfully!', 'success');
+  }
+
+  // Function to reset all data
+  function resetData() {
+    if (confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
+      stepsData = [5000, 7000, 8000, 6000, 9000, 10000, 7500];
+      calorieData = [1800, 2000, 1500, 2200, 2500, 1800, 2000];
+      sleepData = [6, 7, 8, 6.5, 7.5, 8, 7];
+      waterData = [1.5, 2, 1.8, 2.2, 2, 1.9, 2.1];
+
+      // Reset goals to defaults
+      stepGoal = 10000;
+      calorieGoal = 2000;
+      sleepGoal = 8;
+      waterGoal = 2;
+
+      // Update input fields
+      document.getElementById('stepGoal').value = '';
+      document.getElementById('calorieGoal').value = '';
+      document.getElementById('sleepGoal').value = '';
+      document.getElementById('waterGoal').value = '';
+
+      saveData();
+      refreshCharts();
+      showAlert('All data has been reset.', 'danger');
+    }
+  }
+
+  // Function to save data to localStorage
+  function saveData() {
+    localStorage.setItem('stepsData', JSON.stringify(stepsData));
+    localStorage.setItem('calorieData', JSON.stringify(calorieData));
+    localStorage.setItem('sleepData', JSON.stringify(sleepData));
+    localStorage.setItem('waterData', JSON.stringify(waterData));
+    localStorage.setItem('stepGoal', stepGoal);
+    localStorage.setItem('calorieGoal', calorieGoal);
+    localStorage.setItem('sleepGoal', sleepGoal);
+    localStorage.setItem('waterGoal', waterGoal);
+  }
+
+  // Function to refresh all charts
+  function refreshCharts() {
+    updateChart('stepsChart', stepsData);
+    updateChart('caloriesChart', calorieData);
+    updateChart('sleepChart', sleepData);
+    updateChart('waterChart', waterData);
+    // Update progress bars
+    checkStepGoal(false);
+    checkCalorieGoal(false);
+    checkSleepGoal(false);
+    checkWaterGoal(false);
+  }
+
+  // Function to check step goal and update progress bar
+  function checkStepGoal(showAlertBox = true) {
+    const avgSteps = stepsData.reduce((a, b) => a + b, 0) / 7;
+    const percentage = ((avgSteps / stepGoal) * 100).toFixed(2);
+    updateProgressBar('stepsProgress', percentage);
+
+    if (showAlertBox) {
+      if (avgSteps >= stepGoal) {
+        showAlert(`Great job! You're meeting your step goal with an average of ${avgSteps.toFixed(2)} steps per day.`, 'success');
+      } else {
+        showAlert(`Keep going! You need to take more steps. Your current average is ${avgSteps.toFixed(2)} steps per day.`, 'warning');
+      }
+    }
+  }
+
+  // Function to check calorie goal and update progress bar
+  function checkCalorieGoal(showAlertBox = true) {
+    const avgCalories = calorieData.reduce((a, b) => a + b, 0) / 7;
+    const percentage = ((avgCalories / calorieGoal) * 100).toFixed(2);
+    updateProgressBar('caloriesProgress', percentage);
+
+    if (showAlertBox) {
+      if (avgCalories <= calorieGoal) {
+        showAlert(`You're on track! Your average calorie intake is ${avgCalories.toFixed(2)} calories per day.`, 'success');
+      } else {
+        showAlert(`Watch your intake! Your average calorie intake is ${avgCalories.toFixed(2)} calories per day.`, 'warning');
+      }
+    }
+  }
+
+  // Function to check sleep goal and update progress bar
+  function checkSleepGoal(showAlertBox = true) {
+    const avgSleep = sleepData.reduce((a, b) => a + b, 0) / 7;
+    const percentage = ((avgSleep / sleepGoal) * 100).toFixed(2);
+    updateProgressBar('sleepProgress', percentage);
+
+    if (showAlertBox) {
+      if (avgSleep >= sleepGoal) {
+        showAlert(`You're well-rested! Your average sleep is ${avgSleep.toFixed(2)} hours per day.`, 'success');
+      } else {
+        showAlert(`You need more rest. You're averaging ${avgSleep.toFixed(2)} hours of sleep per day.`, 'warning');
+      }
+    }
+  }
+
+  // Function to check water goal and update progress bar
+  function checkWaterGoal(showAlertBox = true) {
+    const avgWater = waterData.reduce((a, b) => a + b, 0) / 7;
+    const percentage = ((avgWater / waterGoal) * 100).toFixed(2);
+    updateProgressBar('waterProgress', percentage);
+
+    if (showAlertBox) {
+      if (avgWater >= waterGoal) {
+        showAlert(`Great job! You're meeting your water intake goal with an average of ${avgWater.toFixed(2)} liters per day.`, 'success');
+      } else {
+        showAlert(`Keep hydrating! You need to drink more water. Your current average is ${avgWater.toFixed(2)} liters per day.`, 'warning');
+      }
+    }
+  }
+
+  // Function to update progress bars
+  function updateProgressBar(barId, percentage) {
+    const progressBar = document.getElementById(barId);
+    percentage = percentage > 100 ? 100 : percentage;
+    progressBar.style.width = `${percentage}%`;
+    progressBar.setAttribute('aria-valuenow', percentage);
+  }
+
+  // Function to log steps manually
+  function logSteps() {
+    // For demonstration, generate a random step count
+    const steps = Math.floor(Math.random() * 6000) + 4000; // 4000 to 10000
+    stepsData.shift();
+    stepsData.push(steps);
+    saveData();
+    updateChart('stepsChart', stepsData);
+    checkStepGoal();
+    showAlert('Steps logged successfully!', 'info');
+  }
+
+  // Function to log calories manually
+  function logCalories() {
+    // For demonstration, generate a random calorie intake
+    const calories = Math.floor(Math.random() * 1500) + 1500; // 1500 to 3000
+    calorieData.shift();
+    calorieData.push(calories);
+    saveData();
+    updateChart('caloriesChart', calorieData);
+    checkCalorieGoal();
+    showAlert('Calories logged successfully!', 'info');
+  }
+
+  // Function to log sleep manually
+  function logSleep() {
+    // For demonstration, generate a random sleep hour count
+    const sleep = (Math.random() * 4) + 5; // 5 to 9 hours
+    sleepData.shift();
+    sleepData.push(parseFloat(sleep.toFixed(1)));
+    saveData();
+    updateChart('sleepChart', sleepData);
+    checkSleepGoal();
+    showAlert('Sleep hours logged successfully!', 'info');
+  }
+
+  // Function to log water intake manually
+  function logWater() {
+    // For demonstration, generate a random water intake
+    const water = (Math.random() * 2) + 1; // 1 to 3 liters
+    waterData.shift();
+    waterData.push(parseFloat(water.toFixed(1)));
+    saveData();
+    updateChart('waterChart', waterData);
+    checkWaterGoal();
+    showAlert('Water intake logged successfully!', 'info');
+  }
+
+  // Function to show alert messages
+  function showAlert(message, type) {
+    // Create alert div
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+    // Append to container
+    document.querySelector('.container').prepend(alertDiv);
+    // Automatically remove after 5 seconds
+    setTimeout(() => {
+      const alert = bootstrap.Alert.getInstance(alertDiv);
+      if (alert) {
+        alert.close();
+      }
+    }, 5000);
+  }
+
+  // Function to generate random data and save it
+  function generateData() {
+    // Generate random steps between 4000 and 12000
+    stepsData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 8000) + 4000);
+    // Generate random calories between 1500 and 3000
+    calorieData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 1500) + 1500);
+    // Generate random sleep between 5 and 9 hours
+    sleepData = Array.from({ length: 7 }, () => parseFloat((Math.random() * 4 + 5).toFixed(1)));
+    // Generate random water intake between 1 and 3 liters
+    waterData = Array.from({ length: 7 }, () => parseFloat((Math.random() * 2 + 1).toFixed(1)));
+
+    saveData();
+    refreshCharts();
+    showAlert('Weekly data generated successfully!', 'success');
+  }
+
+  // Function to reset all data
+  function resetData() {
+    if (confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
+      stepsData = [5000, 7000, 8000, 6000, 9000, 10000, 7500];
+      calorieData = [1800, 2000, 1500, 2200, 2500, 1800, 2000];
+      sleepData = [6, 7, 8, 6.5, 7.5, 8, 7];
+      waterData = [1.5, 2, 1.8, 2.2, 2, 1.9, 2.1];
+
+      // Reset goals to defaults
+      stepGoal = 10000;
+      calorieGoal = 2000;
+      sleepGoal = 8;
+      waterGoal = 2;
+
+      // Update input fields
+      document.getElementById('stepGoal').value = '';
+      document.getElementById('calorieGoal').value = '';
+      document.getElementById('sleepGoal').value = '';
+      document.getElementById('waterGoal').value = '';
+
+      saveData();
+      refreshCharts();
+      showAlert('All data has been reset.', 'danger');
+    }
+  }
+
+  // Function to save data to localStorage
+  function saveData() {
+    localStorage.setItem('stepsData', JSON.stringify(stepsData));
+    localStorage.setItem('calorieData', JSON.stringify(calorieData));
+    localStorage.setItem('sleepData', JSON.stringify(sleepData));
+    localStorage.setItem('waterData', JSON.stringify(waterData));
+    localStorage.setItem('stepGoal', stepGoal);
+    localStorage.setItem('calorieGoal', calorieGoal);
+    localStorage.setItem('sleepGoal', sleepGoal);
+    localStorage.setItem('waterGoal', waterGoal);
+  }
+
+  // Function to refresh all charts and progress bars
+  function refreshCharts() {
+    updateChart('stepsChart', stepsData);
+    updateChart('caloriesChart', calorieData);
+    updateChart('sleepChart', sleepData);
+    updateChart('waterChart', waterData);
+    // Update progress bars
+    checkStepGoal(false);
+    checkCalorieGoal(false);
+    checkSleepGoal(false);
+    checkWaterGoal(false);
+  }
+
+  // Initialize Goals and Progress Bars on Page Load
+  window.onload = function() {
+    // Set default goals if not set
+    document.getElementById('stepGoal').value = stepGoal;
+    document.getElementById('calorieGoal').value = calorieGoal;
+    document.getElementById('sleepGoal').value = sleepGoal;
+    document.getElementById('waterGoal').value = waterGoal;
+
+    // Initialize progress bars
+    checkStepGoal(false);
+    checkCalorieGoal(false);
+    checkSleepGoal(false);
+    checkWaterGoal(false);
+  };
+</script>
+</body>
+</html>

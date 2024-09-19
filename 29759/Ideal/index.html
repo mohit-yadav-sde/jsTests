@@ -482,6 +482,7 @@
                 <p class="card-text"><strong>Category:</strong> ${task.category}</p>
                 <div class="d-flex">
                     <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('tasks', '${task.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-success btn-sm me-2" onclick="editItem('tasks', '${task.id}')"><i class="fas fa-edit"></i> Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteItem('tasks', '${task.id}')"><i class="fas fa-trash"></i> Delete</button>
                 </div>
             `;
@@ -516,6 +517,8 @@
                 <p class="card-text"><strong>Category:</strong> ${note.category}</p>
                 <div class="d-flex">
                     <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('notes', '${note.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-success btn-sm me-2" onclick="editItem('tasks', '${note.id}')"><i class="fas fa-edit"></i> Edit</button>
+
                     <button class="btn btn-danger btn-sm" onclick="deleteItem('notes', '${note.id}')"><i class="fas fa-trash"></i> Delete</button>
                 </div>
             `;
@@ -550,6 +553,7 @@
                 <p class="card-text"><strong>Category:</strong> ${reminder.category}</p>
                 <div class="d-flex">
                     <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('reminders', '${reminder.id}')"><i class="fas fa-eye"></i> View</button>
+                     <button class="btn btn-success btn-sm me-2" onclick="editItem('tasks', '${reminder.id}')"><i class="fas fa-edit"></i> Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteItem('reminders', '${reminder.id}')"><i class="fas fa-trash"></i> Delete</button>
                 </div>
             `;
@@ -586,6 +590,7 @@
                 <p class="card-text"><strong>Category:</strong> ${event.category}</p>
                 <div class="d-flex">
                     <button class="btn btn-primary btn-sm me-2" onclick="viewDetails('events', '${event.id}')"><i class="fas fa-eye"></i> View</button>
+                    <button class="btn btn-success btn-sm me-2" onclick="editItem('tasks', '${event.id}')"><i class="fas fa-edit"></i> Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteItem('events', '${event.id}')"><i class="fas fa-trash"></i> Delete</button>
                 </div>
             `;
@@ -955,10 +960,10 @@
       }
     }
 
-    // Edit Item Function (accessible via modal)
+    // Edit Item Function
     window.editItem = function (section, id) {
-      // Function is defined earlier
-    }
+      alert("Edit not yet implemented");
+    };
 
     // Theme Toggle Functionality
     themeToggleBtn.addEventListener('click', () => {
