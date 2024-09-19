@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Real-Time Stock Market Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="light-theme">
+<style>
+    :root {
+        --bg-color: #f0f2f5;
+        --text-color: #333;
+        --card-bg: #fff;
+        --primary-color: #4e73df;
+        --success-color: #1cc88a;
+        --warning-color: #f6c23e;
+        --danger-color: #e74a3b;
+        --dark-bg: #1e1e1e;
+        --dark-text: #f0f2f5;
+        --dark-card-bg: #2c2c2c;
+    }
+
+    body.dark-theme {
+        --bg-color: #1e1e1e;
+        --text-color: #f0f2f5;
+        --card-bg: #2c2c2c;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .theme-toggle-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: var(--text-color);
+        transition: color 0.3s;
+    }
+
+    .market-indices, .stocks-section, .news-section {
+        margin-bottom: 40px;
+    }
+
+    .market-indices h2, .stocks-section h2, .news-section h2 {
+        margin-bottom: 20px;
+    }
+
+    .indices-grid, .stocks-grid, .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .stock-card, .index-card, .news-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .stock-card.dark-theme, .index-card.dark-theme, .news-card.dark-theme {
+        background-color: var(--dark-card-bg);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .card-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .card-info .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .card-info .change {
+        font-size: 1rem;
+    }
+
+    .change.positive {
+        color: var(--success-color);
+    }
+
+    .change.negative {
+        color: var(--danger-color);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 200px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .news-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .news-card h4 {
+        margin: 10px 0 5px 0;
+        font-size: 1.1rem;
+    }
+
+    .news-card p {
+        font-size: 0.9rem;
+        color: var(--text-color);
+    }
+
+    .news-card a {
+        margin-top: auto;
+        text-decoration: none;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .control-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #fff;
+        transition: background-color 0.3s;
+    }
+
+    .btn-export {
+        background-color: var(--primary-color);
+    }
+
+    .btn-export:hover {
+        background-color: #375a7f;
+    }
+
+    .btn-refresh {
+        background-color: var(--warning-color);
+    }
+
+    .btn-refresh:hover {
+        background-color: #c69500;
+    }
+
+    .alert-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .alert {
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        color: #fff;
+        opacity: 0.9;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    .alert-success {
+        background-color: var(--success-color);
+    }
+
+    .alert-warning {
+        background-color: var(--warning-color);
+    }
+
+    .alert-danger {
+        background-color: var(--danger-color);
+    }
+
+    .alert-info {
+        background-color: var(--primary-color);
+    }
+
+    @media (max-width: 600px) {
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .card-info .price {
+            font-size: 1.2rem;
+        }
+
+        .card-info .change {
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+    }
+</style>
+<div class="container">
+    <div class="header">
+        <h1>Real-Time Stock Market And News Dashboard</h1>
+        <button aria-label="Toggle Dark/Light Theme" class="theme-toggle-btn" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <section class="market-indices">
+        <h2>Market Indices</h2>
+        <div class="indices-grid" id="indicesGrid">
+        </div>
+    </section>
+
+    <section class="stocks-section">
+        <h2>Tracked Stocks</h2>
+        <div class="stocks-grid" id="stocksGrid">
+        </div>
+    </section>
+
+    <section class="news-section">
+        <h2>Latest News</h2>
+        <div class="news-grid" id="newsGrid">
+        </div>
+    </section>
+
+    <div class="control-buttons">
+        <button class="btn btn-export" onclick="exportData()">
+            <i class="fas fa-download"></i> Export Data
+        </button>
+        <button class="btn btn-refresh" onclick="refreshData()">
+            <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+    </div>
+</div>
+
+<div class="alert-container" id="alertContainer"></div>
+
+<script>
+  const STOCK_API_KEY = 'crm4ie1r01qsa2l9vgg0crm4ie1r01qsa2l9vggg'; // Replace with your Stock API key (e.g., Alpha Vantage)
+  const NEWS_API_KEY = 'e774f6adeaf64aeb90aaab060f43c450';   // Replace with your NewsAPI key
+  const STOCK_SYMBOLS = ['AAPL', 'GOOGL', 'AMZN', 'MSFT', 'TSLA']; // Stocks to track, you add more of your choice
+  const MARKET_INDICES = [
+    { symbol: 'DJI', name: 'Dow Jones Industrial Average' },
+    { symbol: 'IXIC', name: 'NASDAQ Composite' },
+    { symbol: 'INX', name: 'S&P 500' }
+  ];
+
+  const stocksGrid = document.getElementById('stocksGrid');
+  const indicesGrid = document.getElementById('indicesGrid');
+  const newsGrid = document.getElementById('newsGrid');
+  const alertContainer = document.getElementById('alertContainer');
+
+  const stockData = {};
+
+  const indicesData = {};
+
+  const charts = {};
+
+  async function fetchStockData(symbol) {
+    try {
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${STOCK_API_KEY}`);
+      const data = await response.json();
+      if (data.c) {
+        const latestPrice = data.c;
+        return latestPrice;
+      } else {
+        showAlert(`Error fetching data for ${symbol}: ${data.error}`, 'danger');
+        return null;
+      }
+    } catch (error) {
+      showAlert(`Error fetching data for ${symbol}: ${error.message}`, 'danger');
+      return null;
+    }
+  }
+  async function fetchHistoricalData(symbol) {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const oneMonthAgo = now - (30 * 24 * 60 * 60);
+      const response = await
+        fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${oneMonthAgo}&to=${now}&token=${STOCK_API_KEY}`);
+      const data = await response.json();
+
+      if (data.s === 'ok') {
+        const dates = data.t.map(timestamp => new Date(timestamp * 1000).toLocaleDateString());
+        const prices = data.c;
+        return { dates, prices };
+      } else {
+        return { dates: [], prices: [] };
+      }
+    } catch (error) {
+      return { dates: [], prices: [] };
+    }
+  }
+
+  async function fetchIndicesData(symbol) {
+    try {
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${STOCK_API_KEY}`);
+      const data = await response.json();
+      if (data.c) {
+        const latestPrice = data.c;
+        const previousClose = data.pc;
+        const change = data.d;
+        const changePercent = data.dp;
+        return { latestPrice, previousClose, change, changePercent };
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function fetchNews() {
+    try {
+      const response = await fetch(`https://newsapi.org/v2/everything?q=stock&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`);
+      const data = await response.json();
+      if (data.articles) {
+        return data.articles.slice(0, 10);
+      } else {
+        showAlert(`Error fetching news: ${data['Message'] || 'Unknown error'}`, 'danger');
+        return [];
+      }
+    } catch (error) {
+      showAlert(`Error fetching news: ${error.message}`, 'danger');
+      return [];
+    }
+  }
+
+  async function createStockCards() {
+    for (const symbol of STOCK_SYMBOLS) {
+      const stock = { symbol };
+      stock.currentPrice = await fetchStockData(symbol);
+      stock.historical = await fetchHistoricalData(symbol);
+      stockData[symbol] = stock;
+
+      const card = document.createElement('div');
+      card.classList.add('stock-card');
+      card.id = `${symbol}-card`;
+
+      const cardHeader = document.createElement('div');
+      cardHeader.classList.add('card-header');
+
+      const stockName = document.createElement('h3');
+      stockName.textContent = `${symbol}`;
+
+      const stockInfo = document.createElement('div');
+      stockInfo.classList.add('card-info');
+
+      const stockPrice = document.createElement('p');
+      stockPrice.classList.add('price');
+      stockPrice.id = `${symbol}-price`;
+      stockPrice.textContent = stock.currentPrice ? `$${stock.currentPrice.toFixed(2)}` : 'N/A';
+
+      const stockChange = document.createElement('p');
+      stockChange.classList.add('change');
+      stockChange.id = `${symbol}-change`;
+      stockChange.textContent = '0.00%';
+
+      stockInfo.appendChild(stockPrice);
+      stockInfo.appendChild(stockChange);
+
+      cardHeader.appendChild(stockName);
+      cardHeader.appendChild(stockInfo);
+
+      // Chart Container
+      const chartContainer = document.createElement('div');
+      chartContainer.classList.add('chart-container');
+
+      const canvas = document.createElement('canvas');
+      canvas.id = `${symbol}-chart`;
+
+      chartContainer.appendChild(canvas);
+
+      // Append Header and Chart to Card
+      card.appendChild(cardHeader);
+      card.appendChild(chartContainer);
+
+      // Append Card to Grid
+      stocksGrid.appendChild(card);
+
+      // Initialize Chart
+      initializeChart(symbol);
+    }
+
+    // Update Stock Prices Every Minute
+    setInterval(updateStockPrices, 60000); // 60,000 ms = 1 minute
+  }
+
+  function initializeChart(symbol) {
+    const ctx = document.getElementById(`${symbol}-chart`).getContext('2d');
+    charts[symbol] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: stockData[symbol].historical.dates,
+        datasets: [{
+          label: `${symbol} Price`,
+          data: stockData[symbol].historical.prices,
+          borderColor: getColor(symbol),
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 0 // Disable animation for real-time updates
+        },
+        scales: {
+          x: {
+            display: false
+          },
+          y: {
+            beginAtZero: false
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
+
+  function getColor(symbol) {
+    const colors = {
+      'AAPL': 'rgba(75, 192, 192, 1)',
+      'GOOGL': 'rgba(255, 159, 64, 1)',
+      'AMZN': 'rgba(153, 102, 255, 1)',
+      'MSFT': 'rgba(255, 205, 86, 1)',
+      'TSLA': 'rgba(255, 99, 132, 1)'
+    };
+    return colors[symbol] || 'rgba(54, 162, 235, 1)';
+  }
+
+  async function updateStockPrices() {
+    for (const symbol of STOCK_SYMBOLS) {
+      const newPrice = await fetchStockData(symbol);
+      if (newPrice) {
+        const stock = stockData[symbol];
+        const previousPrice = stock.currentPrice;
+        stock.currentPrice = newPrice;
+
+        const priceElement = document.getElementById(`${symbol}-price`);
+        priceElement.textContent = `$${newPrice.toFixed(2)}`;
+
+        const percentChange = (((newPrice - previousPrice) / previousPrice) * 100).toFixed(2);
+        const changeElement = document.getElementById(`${symbol}-change`);
+        changeElement.textContent = `${percentChange >= 0 ? '+' : ''}${percentChange}%`;
+
+        if (percentChange >= 0) {
+          changeElement.classList.remove('negative');
+          changeElement.classList.add('positive');
+        } else {
+          changeElement.classList.remove('positive');
+          changeElement.classList.add('negative');
+        }
+
+        const chart = charts[symbol];
+        chart.data.labels.push(new Date().toLocaleDateString());
+        chart.data.datasets[0].data.push(newPrice);
+        if (chart.data.labels.length > 30) {
+          chart.data.labels.shift();
+          chart.data.datasets[0].data.shift();
+        }
+        chart.update();
+
+        checkAlerts(symbol, newPrice, percentChange);
+      }
+    }
+  }
+
+  function checkAlerts(symbol, price, change) {
+    const alerts = {
+      'GOOGL': { above: 3500 },
+      'TSLA': { below: 700 }
+    };
+
+    if (alerts[symbol]) {
+      if (alerts[symbol].above && price > alerts[symbol].above) {
+        showAlert(`${symbol} has risen above $${alerts[symbol].above}! Current Price: $${price.toFixed(2)}`, 'success');
+      }
+      if (alerts[symbol].below && price < alerts[symbol].below) {
+        showAlert(`${symbol} has fallen below $${alerts[symbol].below}! Current Price: $${price.toFixed(2)}`, 'danger');
+      }
+    }
+  }
+
+  async function createIndicesCards() {
+    for (const index of MARKET_INDICES) {
+      const data = await fetchIndicesData(index.symbol);
+      if (data) {
+        indicesData[index.symbol] = data;
+
+        const card = document.createElement('div');
+        card.classList.add('index-card');
+
+        const cardHeader = document.createElement('div');
+        cardHeader.classList.add('card-header');
+
+        const indexName = document.createElement('h3');
+        indexName.textContent = index.name;
+
+        const indexInfo = document.createElement('div');
+        indexInfo.classList.add('card-info');
+
+        const indexPrice = document.createElement('p');
+        indexPrice.classList.add('price');
+        indexPrice.id = `${index.symbol}-price`;
+        indexPrice.textContent = data.latestPrice ? `$${data.latestPrice.toFixed(2)}` : 'N/A';
+
+        const indexChange = document.createElement('p');
+        indexChange.classList.add('change');
+        indexChange.id = `${index.symbol}-change`;
+        indexChange.textContent = `${data.changePercent}%`;
+
+        indexInfo.appendChild(indexPrice);
+        indexInfo.appendChild(indexChange);
+
+        cardHeader.appendChild(indexName);
+        cardHeader.appendChild(indexInfo);
+
+        // Append Header to Card
+        card.appendChild(cardHeader);
+
+        // Append Card to Grid
+        indicesGrid.appendChild(card);
+
+        // Update Change Color
+        if (data.changePercent >= 0) {
+          indexChange.classList.add('positive');
+        } else {
+          indexChange.classList.add('negative');
+        }
+      }
+    }
+
+    // Update Indices Data Every Minute
+    setInterval(updateIndicesData, 60000); // 60,000 ms = 1 minute
+  }
+
+  async function updateIndicesData() {
+    for (const index of MARKET_INDICES) {
+      const data = await fetchIndicesData(index.symbol);
+      if (data) {
+        indicesData[index.symbol] = data;
+
+        const priceElement = document.getElementById(`${index.symbol}-price`);
+        priceElement.textContent = `$${data.latestPrice.toFixed(2)}`;
+
+        const changeElement = document.getElementById(`${index.symbol}-change`);
+        changeElement.textContent = `${data.changePercent}%`;
+
+        if (data.changePercent >= 0) {
+          changeElement.classList.remove('negative');
+          changeElement.classList.add('positive');
+        } else {
+          changeElement.classList.remove('positive');
+          changeElement.classList.add('negative');
+        }
+      }
+    }
+  }
+
+  async function createNewsFeed() {
+    const articles = await fetchNews();
+    for (const article of articles) {
+      const card = document.createElement('div');
+      card.classList.add('news-card');
+
+      const img = document.createElement('img');
+      img.src = article.urlToImage || 'https://via.placeholder.com/300x150';
+      img.alt = article.title;
+
+      const title = document.createElement('h4');
+      title.textContent = article.title;
+
+      const description = document.createElement('p');
+      description.textContent = article.description || '';
+
+      const readMore = document.createElement('a');
+      readMore.href = article.url;
+      readMore.target = '_blank';
+      readMore.textContent = 'Read More';
+
+      card.appendChild(img);
+      card.appendChild(title);
+      card.appendChild(description);
+      card.appendChild(readMore);
+
+      newsGrid.appendChild(card);
+    }
+
+    // Refresh News Every Hour
+    setInterval(refreshNews, 3600000); // 3,600,000 ms = 1 hour
+  }
+
+  async function refreshNews() {
+    newsGrid.innerHTML = '';
+    const articles = await fetchNews();
+    for (const article of articles) {
+      const card = document.createElement('div');
+      card.classList.add('news-card');
+
+      const img = document.createElement('img');
+      img.src = article.urlToImage || 'https://via.placeholder.com/300x150';
+      img.alt = article.title;
+
+      const title = document.createElement('h4');
+      title.textContent = article.title;
+
+      const description = document.createElement('p');
+      description.textContent = article.description || '';
+
+      const readMore = document.createElement('a');
+      readMore.href = article.url;
+      readMore.target = '_blank';
+      readMore.textContent = 'Read More';
+
+      card.appendChild(img);
+      card.appendChild(title);
+      card.appendChild(description);
+      card.appendChild(readMore);
+
+      newsGrid.appendChild(card);
+    }
+  }
+
+  async function fetchNews() {
+    try {
+      const response = await fetch(`https://newsapi.org/v2/everything?q=stock&sortBy=publishedAt&language=en&pageSize=10&apiKey=${NEWS_API_KEY}`);
+      const data = await response.json();
+      if (data.articles) {
+        return data.articles;
+      } else {
+        showAlert(`Error fetching news: ${data['message'] || 'Unknown error'}`, 'danger');
+        return [];
+      }
+    } catch (error) {
+      showAlert(`Error fetching news: ${error.message}`, 'danger');
+      return [];
+    }
+  }
+
+  createIndicesCards();
+
+  createStockCards();
+
+  createNewsFeed();
+
+  function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle('dark-theme');
+    body.classList.toggle('light-theme');
+
+    // Update Theme Toggle Icon
+    const themeBtnIcon = document.querySelector('.theme-toggle-btn i');
+    if (body.classList.contains('dark-theme')) {
+      themeBtnIcon.classList.remove('fa-moon');
+      themeBtnIcon.classList.add('fa-sun');
+    } else {
+      themeBtnIcon.classList.remove('fa-sun');
+      themeBtnIcon.classList.add('fa-moon');
+    }
+  }
+
+  function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.classList.add('alert', `alert-${type}`);
+    alertDiv.textContent = message;
+
+    alertContainer.appendChild(alertDiv);
+
+    // Automatically remove after 5 seconds
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 5000);
+  }
+
+  function exportData() {
+    let csvContent = 'Symbol,Current Price,Change (%)\n';
+    STOCK_SYMBOLS.forEach(symbol => {
+      const price = stockData[symbol].currentPrice ? stockData[symbol].currentPrice.toFixed(2) : 'N/A';
+      const changeText = document.getElementById(`${symbol}-change`).textContent;
+      csvContent += `${symbol},${price},${changeText}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'stock_data.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function refreshData() {
+    updateStockPrices();
+    updateIndicesData();
+    refreshNews();
+    showAlert('Data has been refreshed!', 'success');
+  }
+</script>
+</body>
+</html>

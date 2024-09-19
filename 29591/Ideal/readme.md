@@ -1,0 +1,1 @@
+To see the recent indices, click `Refresh Data` data button

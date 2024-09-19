@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Stock Market Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+        .light-mode {
+            background-color: white;
+            color: black;
+        }
+        .card { margin: 10px 0; }
+    </style>
+</head>
+<body class="light-mode">
+<div class="container mt-4">
+    <button class="btn btn-light" id="themeToggle">Toggle Dark Mode</button>
+    <button class="btn btn-info" id="exportCSV">Export to CSV</button>
+
+    <canvas height="200" id="stockChart" width="400"></canvas>
+
+    <div id="indicesContainer"></div>
+
+    <div class="mt-4" id="newsContainer"></div>
+</div>
+
+<script>
+  const finnhubApiKey = 'YOUR_FINNHUB_API_KEY'; // Replace with your API key
+  const newsApiKey = 'YOUR_NEWSAPI_KEY'; // Replace with your API key
+  let stockChart;
+
+  // Theme toggling
+  document.getElementById('themeToggle').addEventListener('click', function() {
+    document.body.classList.toggle('dark-mode');
+    document.body.classList.toggle('light-mode');
+  });
+
+  // Initialize Chart
+  const ctx = document.getElementById('stockChart').getContext('2d');
+  stockChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Stock Price',
+        data: [],
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'minute'
+          }
+        }
+      }
+    }
+  });
+
+  async function fetchStockData(symbol = 'AAPL') {
+    const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${finnhubApiKey}`);
+    const data = await response.json();
+    const time = new Date();
+    stockChart.data.labels.push(time);
+    stockChart.data.datasets[0].data.push(data.c);
+    if (stockChart.data.labels.length > 10) {
+      stockChart.data.labels.shift();
+      stockChart.data.datasets[0].data.shift();
+    }
+    stockChart.update();
+  }
+
+  async function fetchIndices() {
+    const indices = [
+      { symbol: '^DJI', name: 'Dow Jones' },
+    ];
+
+    for (const index of indices) {
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${index.symbol}&token=${finnhubApiKey}`);
+      const data = await response.json();
+      const container = document.getElementById('indicesContainer');
+      container.innerHTML += `<div class="card"><div class="card-body">${index.name}: ${data.c}</div></div>`;
+    }
+  }
+
+  // Fetch News
+  async function fetchNews() {
+    const response = await fetch(`https://newsapi.org/v2/everything?q=stocks&apiKey=${newsApiKey}`);
+    const data = await response.json();
+    const newsContainer = document.getElementById('newsContainer');
+    data.articles.slice(0, 5).forEach(article => {
+      newsContainer.innerHTML += `<div class="card"><div class="card-body"><h5 class="card-title">${article.title}</h5><p class="card-text">${article.description}</p><a href="${article.url}" target="_blank" class="btn btn-primary">Read More</a></div></div>`;
+    });
+  }
+
+  document.getElementById('exportCSV').addEventListener('click', function() {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Timestamp,Price\n";
+    stockChart.data.labels.forEach((time, index) => {
+      const row = `${time.toISOString()},${stockChart.data.datasets[0].data[index]}\n`;
+      csvContent += row;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "stock_data.csv");
+    document.body.appendChild(link);
+    link.click();
+  });
+
+  fetchStockData();
+  fetchIndices();
+  fetchNews();
+  setInterval(fetchStockData, 60000);
+</script>
+</body>
+</html>

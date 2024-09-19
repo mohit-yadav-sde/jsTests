@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Market Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .dark-mode { background-color: #333; color: #f0f0f0; }
+        #charts, #news { padding: 20px; }
+        canvas { background: white; }
+        .dark-mode canvas { background: #444; }
+        #themeToggle { position: fixed; right: 20px; top: 20px; }
+    </style>
+</head>
+<body>
+<button id="themeToggle" onclick="toggleTheme()">Toggle Theme</button>
+<div id="charts">
+    <canvas id="stockChart"></canvas>
+    <button onclick="exportToCSV()">Export to CSV</button>
+</div>
+<div id="news"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
+<script>
+  const ctx = document.getElementById('stockChart').getContext('2d');
+  let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Stock Price',
+        borderColor: 'rgb(75, 192, 192)',
+        data: []
+      }]
+    },
+    options: {
+      responsive: true
+    }
+  });
+
+  function updateChart(data) {
+    chart.data.labels.push(new Date().toLocaleTimeString());
+    chart.data.datasets[0].data.push(data.currentPrice);
+    if (chart.data.labels.length > 10) { // Keep last 10 data points
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update();
+  }
+
+  // Mock fetch for Finnhub - replace with actual WebSocket or polling
+  function fetchStockPrice() {
+    fetch('https://finnhub.io/api/v1/quote?symbol=AAPL&token=YOUR_FINNHUB_API_KEY')
+      .then(response => response.json())
+      .then(data => updateChart({currentPrice: data.c}));
+  }
+
+  setInterval(fetchStockPrice, 5000); // Fetch every 5 seconds
+
+  function fetchNews() {
+    fetch('https://newsapi.org/v2/everything?q=stocks&apiKey=YOUR_NEWSAPI_KEY')
+      .then(response => response.json())
+      .then(data => {
+        let newsDiv = document.getElementById('news');
+        newsDiv.innerHTML = data.articles.slice(0, 5).map(article =>
+          `<div><h3>${article.title}</h3><p>${article.description}</p></div>`
+        ).join('');
+      });
+  }
+
+  fetchNews();
+  setInterval(fetchNews, 60000); // Update news every minute
+
+  function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+  }
+
+  function exportToCSV() {
+    let csvContent = "data:text/csv;charset=utf-8,"
+      + chart.data.labels.map((_, i) =>
+        [chart.data.labels[i], chart.data.datasets[0].data[i]].join(',')
+      ).join('\n');
+
+    var encodedUri = encodeURI(csvContent);
+    var link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "stock_data.csv");
+    document.body.appendChild(link); // Required for FF
+    link.click();
+  }
+</script>
+</body>
+</html>
