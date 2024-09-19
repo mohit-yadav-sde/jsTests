@@ -75,7 +75,6 @@
     </div>
 
     <div class="row">
-        <!-- Draggable Variables -->
         <div class="col-md-4">
             <h3>Variables</h3>
             <div class="draggable-container">
@@ -86,7 +85,6 @@
             </div>
         </div>
 
-        <!-- Simulation Zone -->
         <div class="col-md-8">
             <h3>Simulation</h3>
             <div class="dropzone" id="simulationZone">
@@ -106,7 +104,6 @@
         </div>
     </div>
 
-    <!-- Modal for Adjusting Values -->
     <div aria-hidden="true" aria-labelledby="adjustModalLabel" class="modal fade" id="adjustModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -328,13 +325,13 @@
     if (storeData) saveToLocalStorage(); // Save updated chart data to localStorage
   }
 
-  // Simple Calculation for GDP and Inflation based on variable adjustment
+  // Calculation for GDP and Inflation based on variable adjustment
   function calculateGDP(value) {
-    return 1000 + value * 10; // Sample formula for GDP calculation
+    return 1000 + value * 10; //  GDP calculation
   }
 
   function calculateInflation(value) {
-    return 2 + value / 10; // Sample formula for Inflation calculation
+    return 2 + value / 10; // formula for Inflation calculation
   }
 
   // Display the impact of variable adjustment
