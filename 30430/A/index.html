@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Economic Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" rel="stylesheet">
+    <style>
+        /* Theme variables */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --modal-bg: #fefefe;
+        }
+        body.dark-theme {
+            --bg-color: #333;
+            --text-color: #ddd;
+            --modal-bg: #444;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .modal-content {
+            background-color: var(--modal-bg);
+        }
+        .drag-item {
+            cursor: move;
+        }
+        /* Additional CSS for layout and styling */
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="columns" id="variables">
+        <div class="column is-one-quarter">
+            <h2 class="title">Variables</h2>
+            <div class="drag-item box" data-value="taxRate" draggable="true">Tax Rate</div>
+            <div class="drag-item box" data-value="unemploymentRate" draggable="true">Unemployment Rate</div>
+        </div>
+        <div class="column">
+            <canvas height="200" id="myChart" width="400"></canvas>
+        </div>
+    </div>
+    <button class="button" onclick="toggleTheme()">Toggle Theme</button>
+    <button class="button" onclick="resetSimulation()">Reset</button>
+    <button class="button" onclick="exportToCSV()">Export to CSV</button>
+</div>
+
+<!-- Modal for adjusting variables -->
+<div class="modal" id="adjustModal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <div class="box">
+            <input class="input" id="variableValue" placeholder="Enter new value" type="number">
+            <button class="button is-primary" onclick="updateVariable()">Update</button>
+        </div>
+    </div>
+    <button aria-label="close" class="modal-close is-large"></button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // JavaScript for application functionality
+  const app = {
+    data: {
+      taxRate: 20,
+      unemploymentRate: 5,
+      gdp: 10000,
+      inflation: 2
+    },
+    chart: null,
+
+    init: function() {
+      this.loadData();
+      this.setupDragAndDrop();
+      this.renderChart();
+    },
+
+    setupDragAndDrop: function() {
+      const dragItems = document.querySelectorAll('.drag-item');
+      dragItems.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', e.target.dataset.value);
+        });
+      });
+      // Add drop functionality if needed
+    },
+
+    showModal: function(variable) {
+      document.getElementById('variableValue').value = this.data[variable];
+      document.getElementById('adjustModal').classList.add('is-active');
+      document.onclick = (e) => {
+        if (e.target.className.includes('modal-background') || e.target.className.includes('modal-close')) {
+          this.closeModal();
+        }
+      };
+    },
+
+    closeModal: function() {
+      document.getElementById('adjustModal').classList.remove('is-active');
+    },
+
+    updateVariable: function() {
+      const variable = document.activeElement.dataset.value; // Assuming focus is on the input
+      const value = parseFloat(document.getElementById('variableValue').value);
+      if (!isNaN(value)) {
+        this.data[variable] = value;
+        this.saveData();
+        this.updateChart();
+      }
+      this.closeModal();
+    },
+
+    renderChart: function() {
+      if (this.chart) this.chart.destroy();
+      const ctx = document.getElementById('myChart').getContext('2d');
+      this.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['GDP', 'Inflation'],
+          datasets: [{
+            label: 'Economic Indicators',
+            data: [this.data.gdp, this.data.inflation],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {}
+      });
+    },
+
+    updateChart: function() {
+      // Simplified economic model
+      this.data.gdp = 10000 - (this.data.taxRate * 100) - (this.data.unemploymentRate * 50);
+      this.data.inflation = 2 + (this.data.taxRate * 0.1) + (this.data.unemploymentRate * 0.2);
+      this.renderChart();
+    },
+
+    saveData: function() {
+      localStorage.setItem('economicData', JSON.stringify(this.data));
+    },
+
+    loadData: function() {
+      const savedData = JSON.parse(localStorage.getItem('economicData'));
+      if (savedData) Object.assign(this.data, savedData);
+      this.updateChart();
+    },
+
+    resetSimulation: function() {
+      this.data = { taxRate: 20, unemploymentRate: 5, gdp: 10000, inflation: 2 };
+      this.saveData();
+      this.updateChart();
+    },
+
+    exportToCSV: function() {
+      let csvContent = "data:text/csv;charset=utf-8,"
+        + Object.keys(this.data).map(key => key).join(",") + "\n"
+        + Object.values(this.data).join(",");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "economic_data.csv");
+      document.body.appendChild(link); // Required for FF
+      link.click();
+    },
+
+    toggleTheme: function() {
+      document.body.classList.toggle('dark-theme');
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+  });
+</script>
+</body>
+</html>
